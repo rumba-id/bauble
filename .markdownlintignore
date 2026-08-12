@@ -1,0 +1,11 @@
+# Third-party dependencies
+node_modules
+vendor
+target
+
+# Standard license text
+LICENSE.md
+
+# YAML files (not Markdown)
+.github/workflows/*.yml
+.github/workflows/*.yaml

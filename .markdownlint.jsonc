@@ -1,0 +1,71 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DavidAnson/markdownlint/refs/heads/main/schema/markdownlint-config-schema-strict.json",
+  "default": true,
+  "MD003": {
+    "style": "atx"
+  },
+  "MD004": {
+    "style": "dash"
+  },
+  "MD007": {
+    "indent": 2
+  },
+  "MD013": {
+    "line_length": 100,
+    "code_blocks": false,
+    "tables": false,
+    "headings": false,
+    "strict": false
+  },
+  // MD024: Disabled for changelog-style repeated headings
+  "MD024": false,
+  "MD029": {
+    "style": "ordered"
+  },
+  "MD033": {
+    "allowed_elements": [
+      "a",
+      "br",
+      "details",
+      "div",
+      "figcaption",
+      "figure",
+      "img",
+      "picture",
+      "source",
+      "strong",
+      "sub",
+      "summary",
+      "sup"
+    ]
+  },
+  "MD035": {
+    "style": "---"
+  },
+  "MD040": {
+    "allowed_languages": [
+      "bash",
+      "c",
+      "diff",
+      "dockerfile",
+      "json",
+      "ldif",
+      "mermaid",
+      "pgsql",
+      "powershell",
+      "rust",
+      "shell",
+      "sql",
+      "text",
+      "toml",
+      "xml",
+      "yaml"
+    ],
+    "language_only": false
+  },
+  "MD046": {
+    "style": "fenced"
+  },
+  // MD060: Table column style - disabled for mixed table styles
+  "MD060": false
+}
