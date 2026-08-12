@@ -179,6 +179,89 @@ def password_modify_request_value(new_password: str, user_dn: str = "") -> bytes
     return _encode_sequence(parts)
 
 
+def _build_modify_increment(message_id: int, dn: str, attribute: str, increment_by: int) -> bytes:
+    """Build an LDAPMessage containing a Modify-Increment request.
+
+    ModifyRequest ::= [APPLICATION 6] SEQUENCE {
+        object   LDAPDN,
+        changes  SEQUENCE OF change SEQUENCE {
+            operation       ENUMERATED { ..., increment (3) },
+            modification    AttributeTypeAndValues
+        }
+    }
+    """
+    # modification: SEQUENCE { attributeType, SET OF AttributeValue }
+    attr_value = _encode_octet_string(str(increment_by))
+    attr_set = b"\x31" + _encode_length(len(attr_value)) + attr_value
+    mod = _encode_sequence(_encode_octet_string(attribute) + attr_set)
+
+    # change: SEQUENCE { operation ENUMERATED(3), modification }
+    op_enum = b"\x0a\x01\x03"  # ENUMERATED, length 1, value 3
+    change = _encode_sequence(op_enum + mod)
+
+    # changes: SEQUENCE OF change
+    changes = _encode_sequence(change)
+
+    # ModifyRequest: [APPLICATION 6] SEQUENCE { object DN, changes }
+    object_dn = _encode_octet_string(dn)
+    modify_contents = object_dn + changes
+    modify_request = b"\x66" + _encode_length(len(modify_contents)) + modify_contents
+
+    return _encode_sequence(_encode_integer(message_id) + modify_request)
+
+
+def _parse_ldap_result(data: bytes) -> Outcome | None:
+    """Parse a generic LDAPResult from a raw LDAP message.
+
+    Handles ModifyResponse [APPLICATION 7], AddResponse [APPLICATION 9],
+    DeleteResponse [APPLICATION 11], etc. — any PDU containing:
+    resultCode ENUMERATED, matchedDN OCTET STRING, diagnosticMessage OCTET STRING.
+    """
+    pos = 0
+    # Skip outer SEQUENCE + length.
+    if pos >= len(data) or data[pos] != 0x30:
+        return None
+    pos += 1
+    _, pos = _parse_length(data, pos)
+
+    # Skip messageID (INTEGER).
+    if pos >= len(data) or data[pos] != 0x02:
+        return None
+    pos += 1
+    int_len, pos = _parse_length(data, pos)
+    pos += int_len
+
+    # Expect [APPLICATION 7] = 0x67 (ModifyResponse), etc.
+    # We accept any APPLICATION tag >= 0x60.
+    if pos >= len(data) or not (0x60 <= data[pos] <= 0x7F):
+        return None
+    pos += 1
+    _, pos = _parse_length(data, pos)
+
+    # resultCode (ENUMERATED 0x0a).
+    if pos >= len(data) or data[pos] != 0x0A:
+        return None
+    pos += 1
+    code_len, pos = _parse_length(data, pos)
+    result_code = int.from_bytes(data[pos : pos + code_len], "big")
+    pos += code_len
+
+    matched_dn = ""
+    message = ""
+    if pos < len(data) and data[pos] == 0x04:
+        pos += 1
+        dn_len, pos = _parse_length(data, pos)
+        matched_dn = data[pos : pos + dn_len].decode("utf-8", errors="replace")
+        pos += dn_len
+    if pos < len(data) and data[pos] == 0x04:
+        pos += 1
+        msg_len, pos = _parse_length(data, pos)
+        message = data[pos : pos + msg_len].decode("utf-8", errors="replace")
+        pos += msg_len
+
+    return Outcome(result_code=result_code, matched_dn=matched_dn, message=message)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -221,3 +304,22 @@ class RawConnection:
         server disconnected (expected for malformed PDUs)."""
         response = self._send_and_receive(payload)
         return response if response else None
+
+    def modify_increment(
+        self,
+        dn: str,
+        attribute: str,
+        increment_by: int,
+        message_id: int = 1,
+    ) -> Outcome:
+        """Send a Modify-Increment request (RFC 4525).
+
+        Modify operation type 3 increments all values of ``attribute``
+        on ``dn`` by ``increment_by``.
+        """
+        payload = _build_modify_increment(message_id, dn, attribute, increment_by)
+        response = self._send_and_receive(payload)
+        outcome = _parse_ldap_result(response)
+        if outcome is None:
+            return Outcome(result_code=-1, message="no valid LDAPResult")
+        return outcome
