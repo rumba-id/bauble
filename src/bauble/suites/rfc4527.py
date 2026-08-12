@@ -3,7 +3,14 @@
 from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import Session
 from bauble.suites._base import assertion
-from bauble.suites._helpers import ADMIN_DN, ADMIN_PW, TEST_BASE, bind_admin, cleanup, test_entry_attrs
+from bauble.suites._helpers import (
+    ADMIN_DN,
+    ADMIN_PW,
+    TEST_BASE,
+    bind_admin,
+    cleanup,
+    test_entry_attrs,
+)
 
 _STANDARD = frozenset({Profile.STANDARD})
 _ADVANCED = frozenset({Profile.ADVANCED})
