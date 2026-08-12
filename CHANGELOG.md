@@ -1,5 +1,74 @@
 # Changelog
 
+## v1.1.0 — 2026-08-12
+
+v1.1 extends conformance coverage with 13 additional RFCs from the Group A
+(testable with current infrastructure) subset. 38 new assertions added,
+bringing the total to 97 (90 class A, 7 class B). The test suite now covers
+**27 RFCs**.
+
+### New RFC suites
+
+| RFC | Description | Assertions | PASS |
+|-----|------------|-----------|------|
+| 3045 | Vendor Information in root DSE | 2 | AUTO_PASS |
+| 3829 | Authorization Identity Controls | 2 | AUTO_PASS / UNTESTABLE |
+| 3866 | Language Tags and Ranges | 5 | 5/5 |
+| 3876 | Matched Values Control | 2 | 1/1 testable |
+| 4513 §4.1 | Authorization State | 2 | 2/2 |
+| 4525 | Modify-Increment Extension | 4 | AUTO_PASS |
+| 4526 | Absolute True/False Filters | 3 | 2/2 testable |
+| 4527 | Read Entry Controls (Pre/Post-Read) | 2 | 2/2 |
+| 4528 | Assertion Control | 5 | 2 PASS, 2 FAIL, 1 UNTESTABLE |
+| 4529 | Attributes by Object Class | 2 | 2/2 |
+| 4530 | entryUUID Operational Attribute | 4 | 4/4 |
+| 5020 | entryDN Operational Attribute | 4 | 4/4 |
+| 6171 | Don't Use Copy Control | 1 | UNTESTABLE |
+
+### Honest conformance
+
+Feature gates on `MUST`/`SHALL` requirements were removed. Assertions
+no longer AUTO_PASS when a server fails to advertise a feature — they
+report FAIL with detail like "assertion control advertised but not
+processed; expected assertionFailed (122), got 0." This surfaced
+two OpenLDAP bugs where the assertion control (1.3.6.1.1.12) is
+advertised in `supportedControl` but ignored at runtime.
+
+AUTOPASS now only fires when the server genuinely does not claim
+support for an optional feature (e.g., modify-increment, vendor
+attributes).
+
+### Advertise-then-test pattern
+
+Behavioral assertions for controls and extensions now check the
+server's advertisement (`supportedControl`, `supportedExtension`)
+before running the test. If the server doesn't claim support,
+the assertion AUTO_PASSes. If it claims support but fails, the
+FAIL detail names the gap explicitly.
+
+### Raw wire layer additions
+
+- `RawConnection.bind_then_send()` — bind then send on one socket
+- `RawConnection.modify_increment()` — Modify-Increment PDU (RFC 4525)
+- `RawConnection.raw_send()` — send arbitrary PDU, parse LDAPResult
+- `_parse_ldap_result()` — generic LDAPResult parser
+- BER helpers: assertion control, matched values control, pre/post-read
+
+Several assertions now use the raw wire layer to bypass ldap3
+client-side validation that rejects valid-but-edge-case PDUs (empty
+`(&)`/`(|)` filters, `@objectClass` attribute descriptions).
+
+### Standards conformance on OpenLDAP
+
+| Profile | MUST(A) | SHOULD(B) | Verdict |
+|---------|---------|-----------|---------|
+| Base | 55/55 | — | CONFORMANT |
+| Standard | 24 PASS, 2 FAIL, 7 AUTO_PASS, 4 UNTESTABLE | — | **2 gaps** |
+
+The 2 Standard MUST(A) FAILs are the assertion control bugs
+(4528.3.2, 4528.3.4). All other MUST(A) assertions pass or are
+honest AUTO_PASS.
+
 ## v1.0.0 — 2026-08-12
 
 Initial release. An open-source, implementation-independent LDAP RFC

@@ -1,6 +1,6 @@
 [project]
 name = "bauble"
-version = "1.0.0"
+version = "1.1.0"
 description = "Open-source LDAP RFC conformance test suite"
 readme = "README.md"
 license = "MIT"
