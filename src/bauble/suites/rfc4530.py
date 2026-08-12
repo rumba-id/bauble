@@ -126,6 +126,9 @@ def entry_uuid_valid_format(session: Session) -> Result:
     profiles=_CORE,
     text="entryUUID is immutable — same value across reads.",
     strategy="Read the same entry twice and verify entryUUID is unchanged.",
+    preconditions="Existing entry uid=alice in the DIT.",
+    stimulus="Two consecutive base-scope Search for entryUUID on the same entry.",
+    expected_observables="Both reads return the same entryUUID value; no modification occurred.",
 )
 def entry_uuid_immutable(session: Session) -> Result:
     dn = f"uid=alice,{TEST_BASE}"

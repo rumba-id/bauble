@@ -150,6 +150,15 @@ class Assertion:
     requires_features: tuple[str, ...] = ()
     """Capability feature names that must be supported for this to apply."""
 
+    preconditions: str = ""
+    """What must be true before the test runs (e.g. 'entry exists', 'session is anonymous')."""
+
+    stimulus: str = ""
+    """The operation being performed (e.g. 'ModifyRequest with assertion control')."""
+
+    expected_observables: str = ""
+    """What to verify beyond a result code (e.g. 'entryUUID unchanged', 'response control present')."""
+
 
 @dataclass(frozen=True)
 class Result:

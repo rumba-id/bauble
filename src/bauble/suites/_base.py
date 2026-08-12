@@ -31,6 +31,9 @@ def assertion(
     requires: tuple[str, ...] = (),
     mutates: bool = False,
     requires_features: tuple[str, ...] = (),
+    preconditions: str = "",
+    stimulus: str = "",
+    expected_observables: str = "",
 ) -> Callable[[Runner], Runner]:
     """Register an assertion and its runner in the default registry."""
 
@@ -49,6 +52,9 @@ def assertion(
                 requires=requires,
                 mutates=mutates,
                 requires_features=requires_features,
+                preconditions=preconditions,
+                stimulus=stimulus,
+                expected_observables=expected_observables,
             ),
             runner=runner,
         )
