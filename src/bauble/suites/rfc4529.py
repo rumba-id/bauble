@@ -5,7 +5,7 @@ from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import TEST_BASE
 
-_STANDARD = frozenset({Profile.STANDARD})
+_CORE = frozenset({Profile.CORE})
 
 
 def _ber_len(n: int) -> bytes:
@@ -72,7 +72,7 @@ def _search_raw(session: Session, base: str, scope: int, attributes: list[str]) 
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="'@person' in attribute list returns all attributes of the person object class.",
     strategy="Send raw SearchRequest with @person attribute; expect success (0).",
 )
@@ -94,7 +94,7 @@ def at_objectclass_returns_attrs(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Unrecognized object class OID is treated as unrecognized attribute description.",
     strategy="Send raw SearchRequest with @1.2.3.4.5.9999; expect no error.",
 )

@@ -5,7 +5,7 @@ from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import TEST_BASE, bind_admin, cleanup, test_entry_attrs
 
-_STANDARD = frozenset({Profile.STANDARD})
+_CORE = frozenset({Profile.CORE})
 
 _LANG_TAG_OID = "1.3.6.1.4.1.4203.1.5.4"
 _LANG_RANGE_OID = "1.3.6.1.4.1.4203.1.5.5"
@@ -18,7 +18,7 @@ _LANG_RANGE_OID = "1.3.6.1.4.1.4203.1.5.5"
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Server accepts add with language-tagged attribute values.",
     strategy="Add entry with description;lang-en and description;lang-de. Verify both stored.",
     mutates=True,
@@ -41,7 +41,7 @@ def add_language_tagged_values(session: Session) -> Result:
         if "description;lang-en" not in entry.attributes:
             return Result(
                 "3866.2.5.1",
-                Status.AUTO_PASS,
+                Status.NOT_APPLICABLE,
                 detail="server stores language tags differently or not supported",
             )
         return Result("3866.2.5.1", Status.PASS)
@@ -56,7 +56,7 @@ def add_language_tagged_values(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Search filter with language tag option matches only same-tag values.",
     strategy="Add entries with lang-en and lang-de, search with lang-en filter.",
     mutates=True,
@@ -75,7 +75,7 @@ def search_filter_language_tag(session: Session) -> Result:
         if not entries:
             return Result(
                 "3866.2.2.1",
-                Status.AUTO_PASS,
+                Status.NOT_APPLICABLE,
                 detail="language tag filter not supported or no match",
             )
         attrs = entries[0].attributes
@@ -83,7 +83,7 @@ def search_filter_language_tag(session: Session) -> Result:
             return Result("3866.2.2.1", Status.PASS)
         return Result(
             "3866.2.2.1",
-            Status.AUTO_PASS,
+            Status.NOT_APPLICABLE,
             detail="unexpected filter behavior",
         )
     finally:
@@ -97,7 +97,7 @@ def search_filter_language_tag(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Language range option matches all language tags with matching prefix.",
     strategy="Search with description;lang-en-; verify both lang-en and lang-en-US match.",
     mutates=True,
@@ -120,7 +120,7 @@ def language_range_matches_prefix(session: Session) -> Result:
         if not entries:
             return Result(
                 "3866.3.1.1",
-                Status.AUTO_PASS,
+                Status.NOT_APPLICABLE,
                 detail="language range not supported",
             )
         attrs = entries[0].attributes
@@ -144,7 +144,7 @@ def language_range_matches_prefix(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="lang- range matches all language-tagged values.",
     strategy="Request description;lang- ; verify en, en-US, de all returned.",
     mutates=True,
@@ -165,7 +165,7 @@ def lang_range_matches_all(session: Session) -> Result:
         if not entries:
             return Result(
                 "3866.3.1.2",
-                Status.AUTO_PASS,
+                Status.NOT_APPLICABLE,
                 detail="lang- range not supported",
             )
         attrs = entries[0].attributes
@@ -173,7 +173,7 @@ def lang_range_matches_all(session: Session) -> Result:
             return Result("3866.3.1.2", Status.PASS)
         return Result(
             "3866.3.1.2",
-            Status.AUTO_PASS,
+            Status.NOT_APPLICABLE,
             detail=f"lang- range didn't match all; got {list(attrs.keys())}",
         )
     finally:
@@ -187,7 +187,7 @@ def lang_range_matches_all(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Language range option on add returns error (ranges are not tagging options).",
     strategy="Try to add entry with description;lang-en-; expect error.",
     mutates=True,
@@ -205,6 +205,6 @@ def language_range_rejected_on_add(session: Session) -> Result:
     cleanup(session, dn)
     return Result(
         "3866.3.3",
-        Status.AUTO_PASS,
+        Status.NOT_APPLICABLE,
         detail="server accepted language range on add",
     )

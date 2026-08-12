@@ -1,7 +1,7 @@
 """The operator's conformance statement: what the server under test implements.
 
-Drives AUTO_PASS: an assertion gated on a feature the server does not support
-is reported as AUTO_PASS rather than FAIL, because the server genuinely does
+Drives NOT_APPLICABLE: an assertion gated on a feature the server does not support
+is reported as NOT_APPLICABLE rather than FAIL, because the server genuinely does
 not implement that feature (and is not non-conformant for its absence).
 """
 

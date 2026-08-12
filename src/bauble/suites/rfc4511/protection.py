@@ -7,7 +7,7 @@ from bauble.session import MOD_DELETE, MOD_REPLACE, Modification, Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import bind_admin
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 
 
 @assertion(
@@ -17,7 +17,7 @@ _BASE = frozenset({Profile.BASE})
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     mutates=True,
     text="The objectClass attribute cannot be removed from an entry.",
     strategy="Try to delete objectClass from an entry via modify; expect an error.",
@@ -40,7 +40,7 @@ def object_class_cannot_be_removed(session: Session) -> Result:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     mutates=True,
     text="Operational attributes (createTimestamp) cannot be modified by clients.",
     strategy="Try to modify createTimestamp on an entry; expect an error.",

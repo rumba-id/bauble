@@ -6,7 +6,7 @@ from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 _SUBSCHEMA = "cn=Subschema"
 
 
@@ -34,7 +34,7 @@ def _has_advertised(session: Session, attribute: str, expected: str) -> tuple[bo
     category=Category.SCHEMA,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="The inetOrgPerson object class is advertised in the subschema.",
     strategy="Search cn=Subschema for objectClasses containing 'inetOrgPerson'.",
 )
@@ -50,7 +50,7 @@ def inet_org_person_advertised(session: Session) -> Result:
     category=Category.SCHEMA,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="The organizationalUnit object class is advertised in the subschema.",
     strategy="Search cn=Subschema for objectClasses containing 'organizationalUnit'.",
 )
@@ -66,7 +66,7 @@ def organizational_unit_advertised(session: Session) -> Result:
     category=Category.SCHEMA,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="The dc (domainComponent) attribute type is advertised in the subschema.",
     strategy="Search cn=Subschema for attributeTypes containing 'dc'.",
 )

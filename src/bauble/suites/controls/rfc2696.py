@@ -7,7 +7,7 @@ from bauble.raw import paged_results_control_value
 from bauble.session import SCOPE_WHOLE_SUBTREE, Control, Session
 from bauble.suites._base import assertion
 
-_STANDARD = frozenset({Profile.STANDARD})
+_CORE = frozenset({Profile.CORE})
 
 _PAGED_OID = "1.2.840.113556.1.4.319"
 
@@ -19,7 +19,7 @@ _PAGED_OID = "1.2.840.113556.1.4.319"
     category=Category.CONTROL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="A search with the paged-results control (size=2) is accepted.",
     strategy="Search the base DIT with paged-results control, page size 2; expect code 0.",
 )

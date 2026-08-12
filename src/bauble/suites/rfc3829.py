@@ -9,7 +9,7 @@ from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import ADMIN_DN, ADMIN_PW
 
-_STANDARD = frozenset({Profile.STANDARD})
+_CORE = frozenset({Profile.CORE})
 
 _AUTHZID_REQUEST_OID = "2.16.840.1.113730.3.4.16"
 _AUTHZID_RESPONSE_OID = "2.16.840.1.113730.3.4.15"
@@ -22,7 +22,7 @@ _AUTHZID_RESPONSE_OID = "2.16.840.1.113730.3.4.15"
     category=Category.AUTH,
     severity=Severity.SHOULD,
     test_class=TestClass.B,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Server SHOULD publish 2.16.840.1.113730.3.4.16/15 in supportedControl.",
     strategy="Read root DSE supportedControl and check for both OIDs.",
 )
@@ -45,7 +45,7 @@ def authzid_controls_advertised(session: Session) -> Result:
     category=Category.AUTH,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Successful bind with AuthzId Request control returns response control with authzId.",
     strategy="Bind as admin with request control; verify response control contains authzId.",
     mutates=True,
@@ -85,6 +85,6 @@ def authzid_response_on_bind(session: Session) -> Result:
         return Result("3829.4.1", Status.PASS)
     return Result(
         "3829.4.1",
-        Status.AUTO_PASS,
+        Status.NOT_APPLICABLE,
         detail="no authzId response control returned",
     )

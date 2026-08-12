@@ -6,7 +6,7 @@ from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Control, Session
 from bauble.suites._base import assertion
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 
 
 @assertion(
@@ -16,7 +16,7 @@ _BASE = frozenset({Profile.BASE})
     category=Category.CONTROL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="An unknown critical control returns unavailableCriticalExtension (12).",
     strategy="Search with a fake OID control marked critical; expect result code 12.",
 )
@@ -39,7 +39,7 @@ def unknown_critical_control(session: Session) -> Result:
     category=Category.CONTROL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="An unknown non-critical control is ignored and the operation succeeds.",
     strategy="Search with a fake OID control NOT marked critical; expect success.",
 )

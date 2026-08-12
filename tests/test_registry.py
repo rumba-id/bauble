@@ -24,7 +24,7 @@ def _assertion(assertion_id: str = "1.0.0.1") -> Assertion:
         category=Category.PROTOCOL,
         severity=Severity.MUST,
         test_class=TestClass.A,
-        profiles=frozenset({Profile.BASE}),
+        profiles=frozenset({Profile.INTEROP}),
         text=assertion_id,
     )
 
@@ -43,9 +43,9 @@ def test_lookup_helpers() -> None:
     registry = Registry()
     registry.register(_assertion("1.0.0.1"))
     assert len(registry.by_rfc(1)) == 1
-    assert len(registry.by_profile(Profile.BASE)) == 1
+    assert len(registry.by_profile(Profile.INTEROP)) == 1
     assert len(registry.by_category(Category.PROTOCOL)) == 1
-    assert len(registry.by_profile(Profile.STANDARD)) == 0
+    assert len(registry.by_profile(Profile.CORE)) == 0
 
 
 def test_duplicate_raises() -> None:

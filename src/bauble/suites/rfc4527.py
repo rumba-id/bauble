@@ -12,8 +12,8 @@ from bauble.suites._helpers import (
     test_entry_attrs,
 )
 
-_STANDARD = frozenset({Profile.STANDARD})
-_ADVANCED = frozenset({Profile.ADVANCED})
+_CORE = frozenset({Profile.CORE})
+_EXTENDED = frozenset({Profile.EXTENDED})
 
 _PRE_READ_OID = "1.3.6.1.1.13.1"
 _POST_READ_OID = "1.3.6.1.1.13.2"
@@ -61,7 +61,7 @@ def _build_read_control(oid: str) -> bytes:
     category=Category.CONTROL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_ADVANCED,
+    profiles=_EXTENDED,
     text="Pre-Read request control on Modify returns entry before update.",
     strategy="Modify with Pre-Read control; verify response includes Pre-Read response control.",
     mutates=True,
@@ -95,7 +95,7 @@ def pre_read_on_modify(session: Session) -> Result:
         if outcome.result_code != 0:
             return Result(
                 "4527.3.1.1",
-                Status.AUTO_PASS,
+                Status.NOT_APPLICABLE,
                 detail=f"pre-read modify failed: {outcome.result_code}",
             )
 
@@ -107,7 +107,7 @@ def pre_read_on_modify(session: Session) -> Result:
             return Result("4527.3.1.1", Status.PASS)
         return Result(
             "4527.3.1.1",
-            Status.AUTO_PASS,
+            Status.NOT_APPLICABLE,
             detail="modify applied but pre-read control behavior unclear",
         )
     finally:
@@ -121,7 +121,7 @@ def pre_read_on_modify(session: Session) -> Result:
     category=Category.CONTROL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_ADVANCED,
+    profiles=_EXTENDED,
     text="Post-Read request control on Add returns newly created entry.",
     strategy="Add with Post-Read control; verify add succeeds.",
     mutates=True,
@@ -158,10 +158,12 @@ def post_read_on_add(session: Session) -> Result:
         _, entries = session.search(dn, 0, "(objectClass=*)", ["cn"])
         if entries:
             return Result("4527.3.2.1", Status.PASS)
-        return Result("4527.3.2.1", Status.AUTO_PASS, detail="add succeeded but cannot verify")
+        return Result(
+            "4527.3.2.1", Status.NOT_APPLICABLE, detail="add succeeded but cannot verify"
+        )
     cleanup(session, dn)
     return Result(
         "4527.3.2.1",
-        Status.AUTO_PASS,
+        Status.NOT_APPLICABLE,
         detail=f"post-read add failed: {outcome.result_code}",
     )

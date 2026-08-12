@@ -6,7 +6,7 @@ from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 
 
 def _safe_int(value: object) -> int:
@@ -25,7 +25,7 @@ def _safe_int(value: object) -> int:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="The root DSE advertises supportedLDAPVersion including version 3.",
     strategy="Search the root DSE for supportedLDAPVersion; expect value 3.",
 )

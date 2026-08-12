@@ -12,7 +12,7 @@ from bauble.suites._helpers import (
     test_entry_attrs,
 )
 
-_STANDARD = frozenset({Profile.STANDARD})
+_CORE = frozenset({Profile.CORE})
 
 _MATCHED_VALUES_OID = "1.2.826.0.1.3344810.2.3"
 
@@ -50,7 +50,7 @@ def _ber_seq(c: bytes) -> bytes:
     category=Category.CONTROL,
     severity=Severity.SHOULD,
     test_class=TestClass.B,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Server SHOULD publish 1.2.826.0.1.3344810.2.3 in supportedControl.",
     strategy="Read root DSE supportedControl and check for the OID.",
 )
@@ -73,7 +73,7 @@ def matched_values_advertised(session: Session) -> Result:
     category=Category.CONTROL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Search with valuesReturnFilter returns only matching values.",
     strategy="Search with attributes=description, valuesReturnFilter=(description=*). Verify.",
     mutates=True,
@@ -137,7 +137,7 @@ def matched_values_filter_returns_subset(session: Session) -> Result:
             return Result("3876.2.1", Status.PASS)
         return Result(
             "3876.2.1",
-            Status.AUTO_PASS,
+            Status.NOT_APPLICABLE,
             detail=f"matched values search returned {outcome.result_code}",
         )
     finally:

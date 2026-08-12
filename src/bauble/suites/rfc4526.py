@@ -7,7 +7,7 @@ from bauble.session import Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import TEST_BASE
 
-_STANDARD = frozenset({Profile.STANDARD})
+_CORE = frozenset({Profile.CORE})
 
 _TRUE_FALSE_FEATURE_OID = "1.3.6.1.4.1.4203.1.5.3"
 
@@ -112,7 +112,7 @@ def _search_result_code(session: Session, filter_ber: bytes) -> int:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="An 'and' filter with zero elements (&) SHALL evaluate to True.",
     strategy="Send raw SearchRequest with empty AND filter (a0 00); expect success (0).",
 )
@@ -131,7 +131,7 @@ def absolute_true_filter(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="An 'or' filter with zero elements (|) SHALL evaluate to False.",
     strategy="Send raw SearchRequest with empty OR filter (a1 00); expect success (no entries).",
 )
@@ -150,7 +150,7 @@ def absolute_false_filter(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.SHOULD,
     test_class=TestClass.B,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Server SHOULD publish 1.3.6.1.4.1.4203.1.5.3 in supportedFeatures.",
     strategy="Read root DSE supportedFeatures and check for the OID.",
 )
@@ -161,8 +161,8 @@ def true_false_filters_advertised(session: Session) -> Result:
         "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedFeatures"]
     )
     if outcome.result_code != 0 or not entries:
-        return Result("4526.2.3", Status.AUTO_PASS, detail="root DSE not readable")
+        return Result("4526.2.3", Status.NOT_APPLICABLE, detail="root DSE not readable")
     features = entries[0].attributes.get("supportedFeatures", [])
     if _TRUE_FALSE_FEATURE_OID in features:
         return Result("4526.2.3", Status.PASS)
-    return Result("4526.2.3", Status.AUTO_PASS, detail="feature OID not advertised")
+    return Result("4526.2.3", Status.NOT_APPLICABLE, detail="feature OID not advertised")

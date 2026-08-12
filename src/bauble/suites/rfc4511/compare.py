@@ -6,7 +6,7 @@ from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import Session
 from bauble.suites._base import assertion
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 _ALICE = "uid=alice,ou=people,dc=bauble,dc=test"
 
 
@@ -17,7 +17,7 @@ _ALICE = "uid=alice,ou=people,dc=bauble,dc=test"
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Compare a matching value returns compareTrue (6).",
     strategy="Compare uid=alice attribute uid with value alice; expect 6.",
 )
@@ -37,7 +37,7 @@ def compare_true(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Compare a non-matching value returns compareFalse (5).",
     strategy="Compare uid=alice attribute uid with value bob; expect 5.",
 )
@@ -57,7 +57,7 @@ def compare_false(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Compare with a missing attribute returns noSuchAttribute (16).",
     strategy="Compare uid=alice on a non-existent attribute; expect 16.",
 )
@@ -77,7 +77,7 @@ def compare_missing_attribute(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Compare a non-existent entry returns noSuchObject (32).",
     strategy="Compare on a DN that does not exist; expect 32.",
 )

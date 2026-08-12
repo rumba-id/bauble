@@ -8,7 +8,7 @@ from bauble.session import Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import bind_admin
 
-_STANDARD = frozenset({Profile.STANDARD})
+_CORE = frozenset({Profile.CORE})
 _PWMOD_OID = "1.3.6.1.4.1.4203.1.11.1"
 _BOB_PW = "bob-secret"
 _BOB_DN = "uid=bob,ou=people,dc=bauble,dc=test"
@@ -21,7 +21,7 @@ _BOB_DN = "uid=bob,ou=people,dc=bauble,dc=test"
     category=Category.EXTENDED,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="The Password Modify extended operation is accepted for a valid user.",
     strategy="Send Password Modify as admin for bob with a new password; expect 0; restore.",
 )

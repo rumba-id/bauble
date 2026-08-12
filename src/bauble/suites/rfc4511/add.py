@@ -7,7 +7,7 @@ from bauble.session import Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import bind_admin, cleanup, test_entry_attrs
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 
 
 @assertion(
@@ -17,7 +17,7 @@ _BASE = frozenset({Profile.BASE})
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     mutates=True,
     text="Add a valid entry returns success.",
     strategy="Add an inetOrgPerson under ou=people; expect 0; clean up.",
@@ -42,7 +42,7 @@ def add_valid(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     mutates=True,
     text="Add a duplicate entry returns entryAlreadyExists (68).",
     strategy="Add an entry, then add it again; expect 68; clean up.",
@@ -69,7 +69,7 @@ def add_duplicate(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     mutates=True,
     text="Add with a missing parent returns noSuchObject (32).",
     strategy="Add under a non-existent branch; expect 32.",
@@ -92,7 +92,7 @@ def add_missing_parent(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     mutates=True,
     text="Add violating schema (missing MUST attribute) returns objectClassViolation (65).",
     strategy="Add an inetOrgPerson without the required sn attribute; expect 65.",
@@ -122,7 +122,7 @@ def add_schema_violation(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="The matchedDN field is set when an add fails with noSuchObject (32).",
     strategy="Add under a non-existent parent; expect matchedDN contains the grandparent.",
 )

@@ -7,7 +7,7 @@ from bauble.session import Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import bind_admin, cleanup, test_entry_attrs
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 
 
 @assertion(
@@ -17,7 +17,7 @@ _BASE = frozenset({Profile.BASE})
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     mutates=True,
     text="Delete an existing leaf entry returns success.",
     strategy="Add a test entry, then delete it; expect 0.",
@@ -41,7 +41,7 @@ def delete_leaf(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Delete a non-existent entry returns noSuchObject (32).",
     strategy="Delete a DN that does not exist; expect 32.",
 )
@@ -62,7 +62,7 @@ def delete_nonexistent(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     mutates=True,
     text="Delete an entry with subordinate entries fails.",
     strategy="Add a parent with a child, then try to delete the parent; expect 66.",
@@ -94,7 +94,7 @@ def delete_with_children(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="The matchedDN field is set when a delete fails with noSuchObject (32).",
     strategy="Delete a non-existent DN; expect 32 with matchedDN containing the parent.",
 )

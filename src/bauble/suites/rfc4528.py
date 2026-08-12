@@ -12,7 +12,7 @@ from bauble.suites._helpers import (
     test_entry_attrs,
 )
 
-_STANDARD = frozenset({Profile.STANDARD})
+_CORE = frozenset({Profile.CORE})
 
 _ASSERTION_CONTROL_OID = "1.3.6.1.1.12"
 
@@ -77,7 +77,7 @@ def _control_advertised(session: Session, oid: str) -> bool:
     category=Category.CONTROL,
     severity=Severity.SHOULD,
     test_class=TestClass.B,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Server SHOULD publish 1.3.6.1.1.12 in supportedControl.",
     strategy="Read root DSE supportedControl; check for the OID.",
 )
@@ -117,7 +117,7 @@ def _build_modify_with_assertion(
     category=Category.CONTROL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Operation with TRUE assertion filter proceeds normally.",
     strategy="Modify with TRUE assertion (present objectClass) on existing entry; expect success.",
     mutates=True,
@@ -132,7 +132,9 @@ def assertion_true_proceeds(session: Session) -> Result:
     session.add(dn, test_entry_attrs("assert-true"))
     try:
         if not _control_advertised(session, _ASSERTION_CONTROL_OID):
-            return Result("4528.3.1", Status.AUTO_PASS, detail="assertion control not advertised")
+            return Result(
+                "4528.3.1", Status.NOT_APPLICABLE, detail="assertion control not advertised"
+            )
         payload = _build_modify_with_assertion(
             1, dn, "description", ["assertion-test"], _TRUE_FILTER
         )
@@ -156,7 +158,7 @@ def assertion_true_proceeds(session: Session) -> Result:
     category=Category.CONTROL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Operation with FALSE assertion filter returns assertionFailed (122).",
     strategy="Modify with FALSE assertion (NOT present objectClass); expect 122.",
     mutates=True,
@@ -171,7 +173,9 @@ def assertion_false_returns_122(session: Session) -> Result:
     session.add(dn, test_entry_attrs("assert-false"))
     try:
         if not _control_advertised(session, _ASSERTION_CONTROL_OID):
-            return Result("4528.3.2", Status.AUTO_PASS, detail="assertion control not advertised")
+            return Result(
+                "4528.3.2", Status.NOT_APPLICABLE, detail="assertion control not advertised"
+            )
         payload = _build_modify_with_assertion(
             1, dn, "description", ["should-not-happen"], _FALSE_FILTER
         )
@@ -195,7 +199,7 @@ def assertion_false_returns_122(session: Session) -> Result:
     category=Category.CONTROL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Assertion control works with Delete operation.",
     strategy="Delete with TRUE assertion on temp entry; expect success.",
     mutates=True,
@@ -210,7 +214,9 @@ def assertion_delete_true(session: Session) -> Result:
     session.add(dn, test_entry_attrs("assert-del"))
     try:
         if not _control_advertised(session, _ASSERTION_CONTROL_OID):
-            return Result("4528.3.3", Status.AUTO_PASS, detail="assertion control not advertised")
+            return Result(
+                "4528.3.3", Status.NOT_APPLICABLE, detail="assertion control not advertised"
+            )
         # DeleteRequest: [APPLICATION 10] LDAPDN — the DN bytes directly,
         # NOT wrapped in OCTET STRING (implicit tagging replaces the tag).
         dn_bytes = dn.encode()
@@ -240,7 +246,7 @@ def assertion_delete_true(session: Session) -> Result:
     category=Category.CONTROL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Search with FALSE assertion on baseObject returns assertionFailed.",
     strategy="Search with FALSE assertion on baseObject; expect 122.",
 )
@@ -248,7 +254,7 @@ def assertion_search_false(session: Session) -> Result:
     from bauble.raw import RawConnection
 
     if not _control_advertised(session, _ASSERTION_CONTROL_OID):
-        return Result("4528.3.4", Status.AUTO_PASS, detail="assertion control not advertised")
+        return Result("4528.3.4", Status.NOT_APPLICABLE, detail="assertion control not advertised")
     dn = f"uid=alice,{TEST_BASE}"
 
     controls = _ber_seq(_build_assertion_control(_FALSE_FILTER))

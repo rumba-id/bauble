@@ -6,8 +6,8 @@ from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
 
-_BASE = frozenset({Profile.BASE})
-_STANDARD = frozenset({Profile.STANDARD})
+_INTEROP = frozenset({Profile.INTEROP})
+_CORE = frozenset({Profile.CORE})
 _SUBSCHEMA = "cn=Subschema"
 
 
@@ -18,7 +18,7 @@ _SUBSCHEMA = "cn=Subschema"
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="The subschema advertises ldapSyntaxes.",
     strategy="Search cn=Subschema for ldapSyntaxes; verify it has values.",
 )
@@ -46,7 +46,7 @@ def ldap_syntaxes_present(session: Session) -> Result:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="The subschema advertises matchingRules.",
     strategy="Search cn=Subschema for matchingRules; verify it has values.",
 )

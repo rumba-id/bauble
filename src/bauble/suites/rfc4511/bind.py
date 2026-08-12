@@ -17,7 +17,7 @@ _ALICE = "uid=alice,ou=people,dc=bauble,dc=test"
 _ALICE_PW = "alice-secret"
 _BOB = "uid=bob,ou=people,dc=bauble,dc=test"
 _BOB_PW = "bob-secret"
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 
 
 # ---------------------------------------------------------------------------
@@ -32,7 +32,7 @@ _BASE = frozenset({Profile.BASE})
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Anonymous bind (empty DN + empty password) returns success.",
     strategy="Bind with empty DN and empty password; expect result code 0.",
 )
@@ -50,7 +50,7 @@ def anonymous_bind(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Simple bind with valid credentials returns success.",
     strategy="Bind as a known user with the correct password; expect 0.",
 )
@@ -68,7 +68,7 @@ def simple_bind_valid(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Simple bind with invalid credentials returns invalidCredentials (49).",
     strategy="Bind as a known user with a wrong password; expect 49.",
 )
@@ -86,7 +86,7 @@ def simple_bind_invalid(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Re-bind on an already-bound connection succeeds.",
     strategy="Bind as one user, then re-bind as a different user; expect both 0.",
     requires=("4511.4.2.2",),
@@ -117,7 +117,7 @@ def rebind(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Simple bind with non-empty name and empty password does not authenticate.",
     strategy="Raw BindRequest with a named DN and empty password; expect non-zero.",
 )
@@ -140,7 +140,7 @@ def empty_password_rejected(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Successful simple-bind response carries no serverSaslCreds.",
     strategy="Raw simple-auth bind with valid creds; check serverSaslCreds is absent.",
     requires=("4511.4.2.2",),
@@ -166,7 +166,7 @@ def no_server_sasl_creds(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Bind with unrecognized protocol version returns protocolError.",
     strategy="Raw BindRequest with version 99; expect result code 2.",
 )
@@ -187,7 +187,7 @@ def bad_protocol_version(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Malformed BindRequest PDU returns protocolError and disconnect.",
     strategy="Send garbage bytes; expect the server to disconnect (no response).",
 )

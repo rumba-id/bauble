@@ -5,7 +5,7 @@ from bauble.session import SCOPE_BASE_OBJECT, SCOPE_WHOLE_SUBTREE, Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import TEST_BASE, bind_admin, cleanup, test_entry_attrs
 
-_STANDARD = frozenset({Profile.STANDARD})
+_CORE = frozenset({Profile.CORE})
 
 
 @assertion(
@@ -15,7 +15,7 @@ _STANDARD = frozenset({Profile.STANDARD})
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="entryDN is present on entries when '+' (all operational attributes) is requested.",
     strategy="Search with '+' and verify entryDN is present on each entry.",
 )
@@ -38,7 +38,7 @@ def entry_dn_present(session: Session) -> Result:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="entryDN value equals the entry's actual DN.",
     strategy="Read entryDN for a known entry and compare to its DN.",
 )
@@ -67,7 +67,7 @@ def entry_dn_equals_dn(session: Session) -> Result:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="entryDN is SINGLE-VALUE and NO-USER-MODIFICATION.",
     strategy="Check entryDN has exactly 1 value. Attempt to modify it — must be rejected.",
     mutates=True,
@@ -113,7 +113,7 @@ def entry_dn_single_value_read_only(session: Session) -> Result:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="entryDN supports distinguishedNameMatch equality in search filters.",
     strategy="Search using (entryDN=<dn>) and verify the correct entry is returned.",
 )

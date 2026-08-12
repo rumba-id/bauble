@@ -3,8 +3,8 @@
 ## v1.1.0 — 2026-08-12
 
 v1.1 extends conformance coverage with 13 additional RFCs from the Group A
-(testable with current infrastructure) subset. 38 new assertions added,
-bringing the total to 97 (90 class A, 7 class B). The test suite now covers
+(testable with current infrastructureCore profile subset. 38 new assertions added,
+bringing the total to 97 (90 class A, 7 class BCore profile. The test suite now covers
 **27 RFCs**.
 
 ### New RFC suites
@@ -18,7 +18,7 @@ bringing the total to 97 (90 class A, 7 class B). The test suite now covers
 | 4513 §4.1 | Authorization State | 2 | 2/2 |
 | 4525 | Modify-Increment Extension | 4 | AUTO_PASS |
 | 4526 | Absolute True/False Filters | 3 | 2/2 testable |
-| 4527 | Read Entry Controls (Pre/Post-Read) | 2 | 2/2 |
+| 4527 | Read Entry Controls (Pre/Post-ReadCore profile | 2 | 2/2 |
 | 4528 | Assertion Control | 5 | 2 PASS, 2 FAIL, 1 UNTESTABLE |
 | 4529 | Attributes by Object Class | 2 | 2/2 |
 | 4530 | entryUUID Operational Attribute | 4 | 4/4 |
@@ -30,43 +30,43 @@ bringing the total to 97 (90 class A, 7 class B). The test suite now covers
 Feature gates on `MUST`/`SHALL` requirements were removed. Assertions
 no longer AUTO_PASS when a server fails to advertise a feature — they
 report FAIL with detail like "assertion control advertised but not
-processed; expected assertionFailed (122), got 0." This surfaced
-two OpenLDAP bugs where the assertion control (1.3.6.1.1.12) is
+processed; expected assertionFailed (122Core profile, got 0." This surfaced
+two OpenLDAP bugs where the assertion control (1.3.6.1.1.12Core profile is
 advertised in `supportedControl` but ignored at runtime.
 
 AUTOPASS now only fires when the server genuinely does not claim
 support for an optional feature (e.g., modify-increment, vendor
-attributes).
+attributesCore profile.
 
 ### Advertise-then-test pattern
 
 Behavioral assertions for controls and extensions now check the
-server's advertisement (`supportedControl`, `supportedExtension`)
+server's advertisement (`supportedControl`, `supportedExtension`Core profile
 before running the test. If the server doesn't claim support,
 the assertion AUTO_PASSes. If it claims support but fails, the
 FAIL detail names the gap explicitly.
 
 ### Raw wire layer additions
 
-- `RawConnection.bind_then_send()` — bind then send on one socket
-- `RawConnection.modify_increment()` — Modify-Increment PDU (RFC 4525)
-- `RawConnection.raw_send()` — send arbitrary PDU, parse LDAPResult
-- `_parse_ldap_result()` — generic LDAPResult parser
+- `RawConnection.bind_then_send(Core profile` — bind then send on one socket
+- `RawConnection.modify_increment(Core profile` — Modify-Increment PDU (RFC 4525Core profile
+- `RawConnection.raw_send(Core profile` — send arbitrary PDU, parse LDAPResult
+- `_parse_ldap_result(Core profile` — generic LDAPResult parser
 - BER helpers: assertion control, matched values control, pre/post-read
 
 Several assertions now use the raw wire layer to bypass ldap3
 client-side validation that rejects valid-but-edge-case PDUs (empty
-`(&)`/`(|)` filters, `@objectClass` attribute descriptions).
+`(&Core profile`/`(|Core profile` filters, `@objectClass` attribute descriptionsCore profile.
 
 ### Standards conformance on OpenLDAP
 
-| Profile | MUST(A) | SHOULD(B) | Verdict |
+| Profile | MUST(ACore profile | SHOULD(BCore profile | Verdict |
 |---------|---------|-----------|---------|
 | Base | 55/55 | — | CONFORMANT |
 | Standard | 24 PASS, 2 FAIL, 7 AUTO_PASS, 4 UNTESTABLE | — | **2 gaps** |
 
-The 2 Standard MUST(A) FAILs are the assertion control bugs
-(4528.3.2, 4528.3.4). All other MUST(A) assertions pass or are
+The 2 Standard MUST(ACore profile FAILs are the assertion control bugs
+(4528.3.2, 4528.3.4Core profile. All other MUST(ACore profile assertions pass or are
 honest AUTO_PASS.
 
 ## v1.0.0 — 2026-08-12
@@ -76,11 +76,11 @@ conformance test suite.
 
 ### Conformance coverage
 
-- **14 RFCs** covered (4511, 4512, 4514–4519, 2696, 2891, 3062, 4532)
-- **59 assertions** — 57 testable (all PASS on OpenLDAP), 2 UNTESTABLE
-  (abandon — intrinsic timing dependence)
-- Base profile: must(A) 53/53 CONFORMANT
-- Standard profile: must(A) 4/4 CONFORMANT
+- **14 RFCs** covered (4511, 4512, 4514–4519, 2696, 2891, 3062, 4532Core profile
+- **59 assertions** — 57 testable (all PASS on OpenLDAPCore profile, 2 UNTESTABLE
+  (abandon — intrinsic timing dependenceCore profile
+- Base Core profile: must(ACore profile 53/53 CONFORMANT
+- Standard Core profile: must(ACore profile 4/4 CONFORMANT
 
 ### Core architecture
 
@@ -94,9 +94,9 @@ conformance test suite.
 
 - High-level `ldap3`-backed Session for positive-path and most negative-path
   assertions (constructible controls, readable result codes/matchedDN/
-  referrals).
+  referralsCore profile.
 - Raw wire-layer Session (stdlib-only BER + socket, zero additional
-  dependencies) for assertions the high-level client cannot reach: unknown
+  dependenciesCore profile for assertions the high-level client cannot reach: unknown
   protocol versions, empty-password binds, malformed PDUs, control-value BER.
 
 ### Test target
@@ -107,14 +107,14 @@ conformance test suite.
 
 ### Reporting
 
-- Four output formats: text (stdout), journal (JSON lines — source of truth),
-  summary (per-RFC + per-profile verdict), junit (CI XML).
+- Four output formats: text (stdoutCore profile, journal (JSON lines — source of truthCore profile,
+  summary (per-RFC + per-Core profile verdictCore profile, junit (CI XMLCore profile.
 - Conformance verdict: conformant iff every MUST class-A assertion is PASS
   or AUTO_PASS.
 
 ### CLI
 
 ```bash
-uv run bauble run --profile base --target --reporter summary
+uv run bauble run --Core profile base --target --reporter summary
 uv run bauble run --rfc 4511 --server ldap://host:389 --reporter journal
 ```

@@ -9,7 +9,7 @@ from __future__ import annotations
 from bauble.model import Assertion, Category, Profile, Severity, TestClass
 from bauble.registry import default_registry
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 
 default_registry().register(
     Assertion(
@@ -19,7 +19,7 @@ default_registry().register(
         category=Category.PROTOCOL,
         severity=Severity.MUST,
         test_class=TestClass.B,
-        profiles=_BASE,
+        profiles=_INTEROP,
         text="Abandon of an in-progress operation ceases the operation.",
         strategy="Cannot portably test timing-dependent behavior.",
     )
@@ -33,7 +33,7 @@ default_registry().register(
         category=Category.PROTOCOL,
         severity=Severity.MUST,
         test_class=TestClass.B,
-        profiles=_BASE,
+        profiles=_INTEROP,
         text="Abandon of an unknown messageID is silently discarded.",
         strategy="Cannot portably verify non-receipt of a response.",
     )

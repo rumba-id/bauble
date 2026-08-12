@@ -7,7 +7,7 @@ from bauble.session import MOD_ADD, MOD_REPLACE, Modification, Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import bind_admin, cleanup, test_entry_attrs
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 
 
 @assertion(
@@ -17,7 +17,7 @@ _BASE = frozenset({Profile.BASE})
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     mutates=True,
     text="Modify (replace) an attribute succeeds.",
     strategy="Add a test entry, replace its cn; expect 0; clean up.",
@@ -42,7 +42,7 @@ def modify_replace(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     mutates=True,
     text="Modify (add value) to an attribute succeeds.",
     strategy="Add a test entry, add a description value; expect 0; clean up.",
@@ -67,7 +67,7 @@ def modify_add_value(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Modify a non-existent entry returns noSuchObject (32).",
     strategy="Modify a DN that does not exist; expect 32.",
 )
