@@ -54,9 +54,7 @@ def authzid_response_on_bind(session: Session) -> Result:
     cfg = ServerConfig(session.host, session.port)
     raw_session = LdapSession(cfg)
     raw_session._ensure_open()  # type: ignore[reportPrivateUsage]
-    import ldap3
-
-    conn: ldap3.Connection = raw_session._connection  # type: ignore[assignment]
+    conn = raw_session._connection  # type: ignore[reportPrivateUsage]
     conn.rebind(  # type: ignore[reportUnknownMemberType]
         user=ADMIN_DN,  # type: ignore[reportCallIssue]
         password=ADMIN_PW,  # type: ignore[reportCallIssue]
@@ -75,9 +73,8 @@ def authzid_response_on_bind(session: Session) -> Result:
     # Check for response control
     response_controls: list = getattr(conn.result, "controls", None) or []  # type: ignore[reportUnknownVariableType]
     found = any(
-        c.controlType == _AUTHZID_RESPONSE_OID
-        for c in response_controls  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
-    )
+        getattr(c, "controlType", None) == _AUTHZID_RESPONSE_OID for c in response_controls
+    )  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
     if found:
         return Result("3829.4.1", Status.PASS)
     return Result(
