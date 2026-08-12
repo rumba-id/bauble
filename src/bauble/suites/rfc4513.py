@@ -5,7 +5,7 @@ from bauble.session import SCOPE_WHOLE_SUBTREE, Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import TEST_BASE
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 
 
 @assertion(
@@ -15,7 +15,7 @@ _BASE = frozenset({Profile.BASE})
     category=Category.AUTH,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Upon initial session establishment, the authorization state is anonymous.",
     strategy="Open a fresh unauthenticated session and issue a search; must succeed.",
 )
@@ -41,7 +41,7 @@ def initial_session_anonymous(session: Session) -> Result:
     category=Category.AUTH,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Any operation before Bind MUST be treated as post-anonymous-Bind.",
     strategy="Issue search, then bind as admin, then search again — both succeed.",
 )

@@ -26,7 +26,7 @@ def _assertion(
         category=Category.PROTOCOL,
         severity=Severity.MUST,
         test_class=test_class,
-        profiles=frozenset({Profile.BASE}),
+        profiles=frozenset({Profile.INTEROP}),
         text=assertion_id,
         requires=requires,
         mutates=mutates,
@@ -75,7 +75,7 @@ def test_auto_pass_when_not_writable() -> None:
         runner=lambda s: Result("1.0.0.1", Status.PASS),
     )
     statuses = _statuses(run(Selector(), registry, Capability(writable=False), FakeSession()))
-    assert statuses["1.0.0.1"] is Status.AUTO_PASS
+    assert statuses["1.0.0.1"] is Status.NOT_APPLICABLE
 
 
 def test_auto_pass_when_feature_unsupported() -> None:
@@ -85,7 +85,7 @@ def test_auto_pass_when_feature_unsupported() -> None:
         runner=lambda s: Result("1.0.0.1", Status.PASS),
     )
     statuses = _statuses(run(Selector(), registry, Capability(alt_server=False), FakeSession()))
-    assert statuses["1.0.0.1"] is Status.AUTO_PASS
+    assert statuses["1.0.0.1"] is Status.NOT_APPLICABLE
 
 
 def test_runner_exception_is_fail() -> None:

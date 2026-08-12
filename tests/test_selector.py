@@ -10,7 +10,7 @@ def _assertion(
     assertion_id: str,
     *,
     rfc: int = 4511,
-    profiles: frozenset[Profile] = frozenset({Profile.BASE}),
+    profiles: frozenset[Profile] = frozenset({Profile.INTEROP}),
     category: Category = Category.PROTOCOL,
     severity: Severity = Severity.MUST,
     test_class: TestClass = TestClass.A,
@@ -41,10 +41,10 @@ def test_or_within_rfc_dimension() -> None:
 
 
 def test_and_across_dimensions() -> None:
-    selector = Selector(rfcs=frozenset({4511}), profiles=frozenset({Profile.BASE}))
-    assert selector.matches(_assertion("1", rfc=4511, profiles=frozenset({Profile.BASE})))
-    assert not selector.matches(_assertion("2", rfc=4511, profiles=frozenset({Profile.STANDARD})))
-    assert not selector.matches(_assertion("3", rfc=4512, profiles=frozenset({Profile.BASE})))
+    selector = Selector(rfcs=frozenset({4511}), profiles=frozenset({Profile.INTEROP}))
+    assert selector.matches(_assertion("1", rfc=4511, profiles=frozenset({Profile.INTEROP})))
+    assert not selector.matches(_assertion("2", rfc=4511, profiles=frozenset({Profile.CORE})))
+    assert not selector.matches(_assertion("3", rfc=4512, profiles=frozenset({Profile.INTEROP})))
 
 
 def test_exclude() -> None:

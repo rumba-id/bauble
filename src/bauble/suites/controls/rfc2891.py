@@ -7,7 +7,7 @@ from bauble.raw import sort_control_value
 from bauble.session import SCOPE_WHOLE_SUBTREE, Control, Session
 from bauble.suites._base import assertion
 
-_STANDARD = frozenset({Profile.STANDARD})
+_CORE = frozenset({Profile.CORE})
 
 _SORT_OID = "1.2.840.113556.1.4.473"
 
@@ -19,7 +19,7 @@ _SORT_OID = "1.2.840.113556.1.4.473"
     category=Category.CONTROL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="A search with the server-side sorting control returns sorted results.",
     strategy="Search people with sort control on uid; expect alice before bob.",
 )

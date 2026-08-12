@@ -6,7 +6,7 @@ from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, SCOPE_SINGLE_LEVEL, SCOPE_WHOLE_SUBTREE, Session
 from bauble.suites._base import assertion
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 _ROOT = "dc=bauble,dc=test"
 _PEOPLE = "ou=people,dc=bauble,dc=test"
 
@@ -18,7 +18,7 @@ _PEOPLE = "ou=people,dc=bauble,dc=test"
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Base-object search returns the base entry.",
     strategy="Search dc=bauble,dc=test with base scope; expect 1 entry, result 0.",
 )
@@ -40,7 +40,7 @@ def search_base_scope(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Single-level search returns direct children.",
     strategy="Search ou=people with one-level scope; expect at least 2 entries (alice, bob).",
 )
@@ -62,7 +62,7 @@ def search_one_level(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Subtree search with a filter returns matching entries.",
     strategy="Search dc=bauble,dc=test subtree for (uid=alice); expect exactly 1.",
 )
@@ -84,7 +84,7 @@ def search_subtree_filter(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Search with a non-existent base returns noSuchObject (32).",
     strategy="Search a DN that does not exist; expect 32.",
 )
@@ -104,7 +104,7 @@ def search_no_such_object(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="The matchedDN field is set when a search base does not exist (32).",
     strategy="Search a non-existent base; expect 32 with matchedDN.",
 )

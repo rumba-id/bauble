@@ -55,11 +55,22 @@ class TestClass(Enum):
 
 
 class Status(Enum):
-    """Outcome of running, or deciding not to run, an assertion."""
+    """Outcome of running, or deciding not to run, an assertion.
+
+    Members:
+        PASS: tested and demonstrated conformant.
+        FAIL: tested and violated.
+        NOT_APPLICABLE: requirement conditional on an unimplemented
+            optional feature the server does not claim to support.
+        SKIP: not selected for this run.
+        BLOCKED: a prerequisite failed.
+        UNTESTABLE: applicable, but no portable test exists.
+        NA: not applicable for other reasons.
+    """
 
     PASS = "pass"
     FAIL = "fail"
-    AUTO_PASS = "auto_pass"
+    NOT_APPLICABLE = "not_applicable"
     SKIP = "skip"
     BLOCKED = "blocked"
     UNTESTABLE = "untestable"
@@ -67,11 +78,19 @@ class Status(Enum):
 
 
 class Profile(Enum):
-    """Conformance capability tier. A profile is a selection of assertions."""
+    """Conformance capability tier. A profile is a selection of assertions.
 
-    BASE = "base"
-    STANDARD = "standard"
-    ADVANCED = "advanced"
+    Members:
+        INTEROP: minimum needed to interoperate — bind, CRUD, over TCP.
+        CORE: the main LDAPv3 conformance surface — root DSE, operational
+            attributes, controls, extended operations, language features.
+        EXTENDED: optional extensions such as read-entry controls.
+        NONE: no profile restriction.
+    """
+
+    INTEROP = "interop"
+    CORE = "core"
+    EXTENDED = "extended"
     NONE = "none"
 
 

@@ -54,17 +54,17 @@ def _decide(
 ) -> Result:
     for req in assertion.requires:
         prior = results.get(req)
-        if prior is None or prior.status not in (Status.PASS, Status.AUTO_PASS):
+        if prior is None or prior.status not in (Status.PASS, Status.NOT_APPLICABLE):
             return Result(assertion.id, Status.BLOCKED, detail=f"prerequisite {req} not satisfied")
     runner = registry.runner(assertion.id)
     if assertion.test_class in (TestClass.B, TestClass.D) or runner is None:
         return Result(assertion.id, Status.UNTESTABLE, detail="no portable test")
     if assertion.mutates and not capability.writable and not selector.allow_mutation:
-        return Result(assertion.id, Status.AUTO_PASS, detail="server not writable")
+        return Result(assertion.id, Status.NOT_APPLICABLE, detail="server not writable")
     for feature in assertion.requires_features:
         if not capability.supports(feature):
             return Result(
-                assertion.id, Status.AUTO_PASS, detail=f"feature {feature} not supported"
+                assertion.id, Status.NOT_APPLICABLE, detail=f"feature {feature} not supported"
             )
     try:
         return runner(session)

@@ -7,7 +7,7 @@ from bauble.session import Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import bind_admin, cleanup, test_entry_attrs
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 
 
 @assertion(
@@ -17,7 +17,7 @@ _BASE = frozenset({Profile.BASE})
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     mutates=True,
     text="ModifyDN (rename RDN) succeeds.",
     strategy="Add a test entry, rename it; expect 0; clean up.",
@@ -43,7 +43,7 @@ def rename(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     mutates=True,
     text="ModifyDN to an existing DN returns entryAlreadyExists (68).",
     strategy="Create two entries; rename one to the other's DN; expect 68; clean up.",

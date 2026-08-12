@@ -6,7 +6,7 @@ from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import Session
 from bauble.suites._base import assertion
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 
 
 @assertion(
@@ -16,7 +16,7 @@ _BASE = frozenset({Profile.BASE})
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="An unbind request returns without error.",
     strategy="Call unbind on a connected session; expect no exception.",
 )

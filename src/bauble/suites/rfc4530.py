@@ -7,7 +7,7 @@ from bauble.session import SCOPE_BASE_OBJECT, SCOPE_WHOLE_SUBTREE, Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import TEST_BASE, bind_admin, cleanup, test_entry_attrs
 
-_STANDARD = frozenset({Profile.STANDARD})
+_CORE = frozenset({Profile.CORE})
 
 # Regex for RFC 4122 UUID string representation.
 _UUID_RE = re.compile(
@@ -23,7 +23,7 @@ _UUID_RE = re.compile(
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Server SHALL assign an entryUUID to each entry upon addition.",
     strategy="Search any entry with '+' (all operational attrs) and check entryUUID is present.",
 )
@@ -46,7 +46,7 @@ def entry_uuid_present(session: Session) -> Result:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="entryUUID is SINGLE-VALUE and NO-USER-MODIFICATION.",
     strategy="Check entryUUID has exactly 1 value. Attempt to modify it — must be rejected.",
     mutates=True,
@@ -93,7 +93,7 @@ def entry_uuid_single_value_read_only(session: Session) -> Result:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="entryUUID values use the RFC 4122 string representation (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).",
     strategy="Read entryUUID and validate against the UUID hex-octet regex.",
 )
@@ -123,7 +123,7 @@ def entry_uuid_valid_format(session: Session) -> Result:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="entryUUID is immutable — same value across reads.",
     strategy="Read the same entry twice and verify entryUUID is unchanged.",
 )

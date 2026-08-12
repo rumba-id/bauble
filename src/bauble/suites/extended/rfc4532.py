@@ -6,7 +6,7 @@ from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import Session
 from bauble.suites._base import assertion
 
-_STANDARD = frozenset({Profile.STANDARD})
+_CORE = frozenset({Profile.CORE})
 _WHOAMI_OID = "1.3.6.1.4.1.4203.1.11.3"
 _ALICE = "uid=alice,ou=people,dc=bauble,dc=test"
 _ALICE_PW = "alice-secret"
@@ -19,7 +19,7 @@ _ALICE_PW = "alice-secret"
     category=Category.EXTENDED,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="The Who-Am-I extended operation returns the authenticated identity.",
     strategy="Bind as alice, send Who-Am-I extended op; expect the DN in the response.",
 )

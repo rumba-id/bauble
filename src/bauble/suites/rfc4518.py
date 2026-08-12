@@ -6,7 +6,7 @@ from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_WHOLE_SUBTREE, Session
 from bauble.suites._base import assertion
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 _ROOT = "dc=bauble,dc=test"
 
 
@@ -17,7 +17,7 @@ _ROOT = "dc=bauble,dc=test"
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="A case-insensitive match on uid ignores casing differences.",
     strategy="Search for (uid=ALICE); expect alice is returned (caseIgnoreMatch).",
 )

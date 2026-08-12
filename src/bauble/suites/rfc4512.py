@@ -6,8 +6,8 @@ from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, SCOPE_WHOLE_SUBTREE, Session
 from bauble.suites._base import assertion
 
-_BASE = frozenset({Profile.BASE})
-_STANDARD = frozenset({Profile.STANDARD})
+_INTEROP = frozenset({Profile.INTEROP})
+_CORE = frozenset({Profile.CORE})
 _SUBSCHEMA = "cn=Subschema"
 
 
@@ -18,7 +18,7 @@ _SUBSCHEMA = "cn=Subschema"
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="The root DSE is accessible and returns entries.",
     strategy="Search the root DSE (base scope) with (objectClass=*); expect at least 1 entry.",
 )
@@ -40,7 +40,7 @@ def root_dse_accessible(session: Session) -> Result:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="The subschema subentry is accessible and carries objectClasses.",
     strategy="Search cn=Subschema; verify objectClasses attribute has values.",
 )
@@ -68,7 +68,7 @@ def subschema_has_object_classes(session: Session) -> Result:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="The subschema subentry carries attributeTypes.",
     strategy="Search cn=Subschema; verify attributeTypes attribute has values.",
 )
@@ -96,7 +96,7 @@ def subschema_has_attribute_types(session: Session) -> Result:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="Every searchable entry has an objectClass attribute.",
     strategy="Search the base DIT subtree; verify every entry has objectClass.",
 )

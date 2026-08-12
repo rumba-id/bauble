@@ -6,7 +6,7 @@ from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 
 
 @assertion(
@@ -16,7 +16,7 @@ _BASE = frozenset({Profile.BASE})
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="A simple DN (cn=Alice Anderson,...) is correctly parsed by the server.",
     strategy="Search for uid=alice with base scope and verify the returned DN is correct.",
 )
@@ -37,7 +37,7 @@ def simple_dn_parsing(session: Session) -> Result:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="DNs in search results are case-preserving for attribute values.",
     strategy="Search for alice; verify the returned DN preserves the case of the uid value.",
 )

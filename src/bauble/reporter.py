@@ -139,7 +139,7 @@ def profile_verdict(records: list[JournalRecord], profile: str) -> ProfileVerdic
     """Conformance verdict for ``profile``.
 
     Conformant iff every mandatory-testable (severity MUST, class A) assertion
-    in the profile is PASS or AUTO_PASS. SHOULD/MAY and class B/D never fail
+    in the profile is PASS or NOT_APPLICABLE. SHOULD/MAY and class B/D never fail
     conformance.
     """
     in_profile = [r for r in records if profile in r.profiles]

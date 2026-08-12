@@ -6,7 +6,7 @@ from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_WHOLE_SUBTREE, Session
 from bauble.suites._base import assertion
 
-_BASE = frozenset({Profile.BASE})
+_INTEROP = frozenset({Profile.INTEROP})
 _ROOT = "dc=bauble,dc=test"
 
 
@@ -17,7 +17,7 @@ _ROOT = "dc=bauble,dc=test"
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="An AND filter returns entries matching both criteria.",
     strategy="Search with (&(uid=alice)(sn=Anderson)); expect 1 entry.",
 )
@@ -43,7 +43,7 @@ def and_filter(session: Session) -> Result:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="An OR filter returns entries matching either criterion.",
     strategy="Search with (|(uid=alice)(uid=bob)); expect 2 entries.",
 )
@@ -69,7 +69,7 @@ def or_filter(session: Session) -> Result:
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_BASE,
+    profiles=_INTEROP,
     text="A NOT filter excludes matching entries.",
     strategy="Search with (!(uid=alice)); expect alice is NOT in results.",
 )

@@ -5,7 +5,7 @@ from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import TEST_BASE, bind_admin, cleanup, test_entry_attrs
 
-_STANDARD = frozenset({Profile.STANDARD})
+_CORE = frozenset({Profile.CORE})
 
 _INCREMENT_FEATURE_OID = "1.3.6.1.1.14"
 
@@ -17,7 +17,7 @@ _INCREMENT_FEATURE_OID = "1.3.6.1.1.14"
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Server publishes 1.3.6.1.1.14 in supportedFeatures if increment is supported.",
     strategy="Read root DSE supportedFeatures and check for the OID.",
     requires_features=(_INCREMENT_FEATURE_OID,),
@@ -29,11 +29,11 @@ def increment_feature_advertised(session: Session) -> Result:
         "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedFeatures"]
     )
     if outcome.result_code != 0 or not entries:
-        return Result("4525.2.1", Status.AUTO_PASS, detail="root DSE not readable")
+        return Result("4525.2.1", Status.NOT_APPLICABLE, detail="root DSE not readable")
     features = entries[0].attributes.get("supportedFeatures", [])
     if _INCREMENT_FEATURE_OID in features:
         return Result("4525.2.1", Status.PASS)
-    return Result("4525.2.1", Status.AUTO_PASS, detail="feature OID not advertised")
+    return Result("4525.2.1", Status.NOT_APPLICABLE, detail="feature OID not advertised")
 
 
 @assertion(
@@ -43,7 +43,7 @@ def increment_feature_advertised(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Increment operation adds specified value to existing attribute values.",
     strategy="Add entry with uidNumber=1000, increment by 1, read back uidNumber=1001.",
     mutates=True,
@@ -92,7 +92,7 @@ def increment_adds_to_value(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Increment with multiple values returns protocolError.",
     strategy="Send increment with two values via raw layer; expect protocolError (2).",
     mutates=True,
@@ -171,7 +171,7 @@ def increment_multiple_values_error(session: Session) -> Result:
     category=Category.PROTOCOL,
     severity=Severity.MUST,
     test_class=TestClass.A,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Increment on non-incrementable attribute returns constraintViolation or appropriate error.",
     strategy="Try increment on cn (Directory String); expect constraintViolation (19) or similar.",
     mutates=True,

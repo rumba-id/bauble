@@ -116,12 +116,12 @@ def test_to_records_enriches_from_registry() -> None:
             category=Category.PROTOCOL,
             severity=Severity.MUST,
             test_class=TestClass.A,
-            profiles=frozenset({Profile.BASE}),
+            profiles=frozenset({Profile.INTEROP}),
             text="anonymous bind",
         )
     )
     records = to_records([Result("4511.4.2.1", Status.PASS, detail="ok")], registry)
-    assert records == [JournalRecord("4511.4.2.1", 4511, "pass", "must", "A", ("base",), "ok")]
+    assert records == [JournalRecord("4511.4.2.1", 4511, "pass", "must", "A", ("interop",), "ok")]
 
 
 def test_get_reporter_default_is_text() -> None:

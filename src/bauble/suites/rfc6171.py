@@ -4,7 +4,7 @@ from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
 
-_STANDARD = frozenset({Profile.STANDARD})
+_CORE = frozenset({Profile.CORE})
 
 _DONT_USE_COPY_OID = "1.3.6.1.1.22"
 
@@ -16,7 +16,7 @@ _DONT_USE_COPY_OID = "1.3.6.1.1.22"
     category=Category.CONTROL,
     severity=Severity.SHOULD,
     test_class=TestClass.B,
-    profiles=_STANDARD,
+    profiles=_CORE,
     text="Server SHOULD publish 1.3.6.1.1.22 in supportedControl.",
     strategy="Read root DSE supportedControl and check for the OID.",
 )
