@@ -161,6 +161,18 @@ def assertion_true_proceeds(session: Session) -> Result:
     profiles=_CORE,
     text="Operation with FALSE assertion filter returns assertionFailed (122).",
     strategy="Modify with FALSE assertion (NOT present objectClass); expect 122.",
+    preconditions=(
+        "Server advertises 1.3.6.1.1.12 in supportedControl. "
+        "Entry exists with an objectClass attribute."
+    ),
+    stimulus=(
+        "ModifyRequest with assertion control carrying a NOT-present filter "
+        "(!(objectClass=*)) that evaluates to FALSE for any entry."
+    ),
+    expected_observables=(
+        "ModifyResponse resultCode is assertionFailed (122). "
+        "The entry's description attribute is unchanged."
+    ),
     mutates=True,
 )
 def assertion_false_returns_122(session: Session) -> Result:
