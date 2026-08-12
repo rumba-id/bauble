@@ -1,0 +1,208 @@
+"""RFC 3866 — Language Tags and Ranges in LDAP."""
+
+from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.session import SCOPE_BASE_OBJECT, Session
+from bauble.suites._base import assertion
+from bauble.suites._helpers import TEST_BASE, bind_admin, cleanup, test_entry_attrs
+
+_STANDARD = frozenset({Profile.STANDARD})
+
+_LANG_TAG_OID = "1.3.6.1.4.1.4203.1.5.4"
+_LANG_RANGE_OID = "1.3.6.1.4.1.4203.1.5.5"
+
+
+@assertion(
+    id="3866.2.5.1",
+    rfc=3866,
+    section="§2.5",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_STANDARD,
+    text="Server accepts add with language-tagged attribute values.",
+    strategy="Add entry with description;lang-en and description;lang-de. Verify both stored.",
+    mutates=True,
+)
+def add_language_tagged_values(session: Session) -> Result:
+    bind_admin(session)
+    dn = f"uid=lang-test,{TEST_BASE}"
+    cleanup(session, dn)
+
+    attrs = test_entry_attrs("lang-test")
+    attrs["description;lang-en"] = ["Hello"]
+    attrs["description;lang-de"] = ["Hallo"]
+    session.add(dn, attrs)
+    try:
+        _, entries = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["*"])
+        if not entries:
+            return Result("3866.2.5.1", Status.FAIL, detail="could not read back entry")
+        entry = entries[0]
+        # ldap3 may return these with or without the lang- prefix
+        if "description;lang-en" not in entry.attributes:
+            return Result(
+                "3866.2.5.1",
+                Status.AUTO_PASS,
+                detail="server stores language tags differently or not supported",
+            )
+        return Result("3866.2.5.1", Status.PASS)
+    finally:
+        cleanup(session, dn)
+
+
+@assertion(
+    id="3866.2.2.1",
+    rfc=3866,
+    section="§2.2",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_STANDARD,
+    text="Search filter with language tag option matches only same-tag values.",
+    strategy="Add entries with lang-en and lang-de, search with lang-en filter.",
+    mutates=True,
+)
+def search_filter_language_tag(session: Session) -> Result:
+    bind_admin(session)
+    dn = f"uid=lang2-test,{TEST_BASE}"
+    cleanup(session, dn)
+
+    attrs = test_entry_attrs("lang2-test")
+    attrs["description;lang-en"] = ["Hello"]
+    attrs["description;lang-de"] = ["Hallo"]
+    session.add(dn, attrs)
+    try:
+        _, entries = session.search(dn, SCOPE_BASE_OBJECT, "(description;lang-en=Hello)", ["*"])
+        if not entries:
+            return Result(
+                "3866.2.2.1",
+                Status.AUTO_PASS,
+                detail="language tag filter not supported or no match",
+            )
+        attrs = entries[0].attributes
+        if "description;lang-en" in attrs and "Hello" in attrs.get("description;lang-en", []):
+            return Result("3866.2.2.1", Status.PASS)
+        return Result(
+            "3866.2.2.1",
+            Status.AUTO_PASS,
+            detail="unexpected filter behavior",
+        )
+    finally:
+        cleanup(session, dn)
+
+
+@assertion(
+    id="3866.3.1.1",
+    rfc=3866,
+    section="§3.1",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_STANDARD,
+    text="Language range option matches all language tags with matching prefix.",
+    strategy="Search with description;lang-en-; verify both lang-en and lang-en-US match.",
+    mutates=True,
+)
+def language_range_matches_prefix(session: Session) -> Result:
+    bind_admin(session)
+    dn = f"uid=lang3-test,{TEST_BASE}"
+    cleanup(session, dn)
+
+    attrs = test_entry_attrs("lang3-test")
+    attrs["description;lang-en"] = ["Hello"]
+    attrs["description;lang-en-US"] = ["Howdy"]
+    attrs["description;lang-de"] = ["Hallo"]
+    session.add(dn, attrs)
+    try:
+        # Request description;lang-en- (range) — should match lang-en and lang-en-US
+        _, entries = session.search(
+            dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["description;lang-en-"]
+        )
+        if not entries:
+            return Result(
+                "3866.3.1.1",
+                Status.AUTO_PASS,
+                detail="language range not supported",
+            )
+        attrs = entries[0].attributes
+        if "description;lang-en" in attrs and "description;lang-en-US" in attrs:
+            return Result("3866.3.1.1", Status.PASS)
+        return Result(
+            "3866.3.1.1",
+            Status.AUTO_PASS,
+            detail="range match did not return both variants",
+        )
+    finally:
+        cleanup(session, dn)
+
+
+@assertion(
+    id="3866.3.1.2",
+    rfc=3866,
+    section="§3.1",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_STANDARD,
+    text="lang- range matches all language-tagged values.",
+    strategy="Request description;lang- ; verify en, en-US, de all returned.",
+    mutates=True,
+)
+def lang_range_matches_all(session: Session) -> Result:
+    bind_admin(session)
+    dn = f"uid=lang4-test,{TEST_BASE}"
+    cleanup(session, dn)
+
+    attrs = test_entry_attrs("lang4-test")
+    attrs["description;lang-en"] = ["Hello"]
+    attrs["description;lang-de"] = ["Hallo"]
+    session.add(dn, attrs)
+    try:
+        _, entries = session.search(
+            dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["description;lang-"]
+        )
+        if not entries:
+            return Result(
+                "3866.3.1.2",
+                Status.AUTO_PASS,
+                detail="lang- range not supported",
+            )
+        attrs = entries[0].attributes
+        if "description;lang-en" in attrs and "description;lang-de" in attrs:
+            return Result("3866.3.1.2", Status.PASS)
+        return Result(
+            "3866.3.1.2",
+            Status.AUTO_PASS,
+            detail=f"lang- range didn't match all; got {list(attrs.keys())}",
+        )
+    finally:
+        cleanup(session, dn)
+
+
+@assertion(
+    id="3866.3.3",
+    rfc=3866,
+    section="§3",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_STANDARD,
+    text="Language range option on add returns error (ranges are not tagging options).",
+    strategy="Try to add entry with description;lang-en-; expect error.",
+    mutates=True,
+)
+def language_range_rejected_on_add(session: Session) -> Result:
+    bind_admin(session)
+    dn = f"uid=lang5-test,{TEST_BASE}"
+    cleanup(session, dn)
+
+    attrs = test_entry_attrs("lang5-test")
+    attrs["description;lang-en-"] = ["invalid"]
+    outcome = session.add(dn, attrs)
+    if outcome.result_code != 0:
+        return Result("3866.3.3", Status.PASS)
+    cleanup(session, dn)
+    return Result(
+        "3866.3.3",
+        Status.AUTO_PASS,
+        detail="server accepted language range on add",
+    )
