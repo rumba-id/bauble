@@ -113,20 +113,22 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"{a.id}  [{a.test_class.value}/{a.severity.value}]  {a.text}")
         print(f"{len(selected)} assertion(s) selected")
         return 0
-    if args.target:
+    if args.target or args.fresh_target:
         from bauble.fixtures.container import OpenLDAPTarget
 
         target = OpenLDAPTarget()
-        target.build()
-        target.start()
+        if args.fresh_target:
+            target.build()
+            target.start()
+        else:
+            target.ensure_running()
+        session = LdapSession(target.server_config(use_start_tls=args.starttls))
         try:
-            session = LdapSession(target.server_config(use_start_tls=args.starttls))
-            try:
-                results = run(selector, registry, capability, session)
-            finally:
-                session.unbind()
+            results = run(selector, registry, capability, session)
         finally:
-            target.stop()
+            session.unbind()
+        # Container left running for reuse; self-cleaning assertions keep the
+        # DIT at base seed.  Use --fresh-target for a forced reset.
         _render(results, registry, args.reporter, args.out)
         return 0
     if args.server:
@@ -193,7 +195,14 @@ def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
     run_parser.add_argument("--dry-run", action="store_true")
     run_parser.add_argument("--server", help="LDAP server URI (e.g. ldap://host:389)")
     run_parser.add_argument(
-        "--target", action="store_true", help="start the podman OpenLDAP test target"
+        "--target",
+        action="store_true",
+        help="reuse (or start) the podman OpenLDAP test target; stays running",
+    )
+    run_parser.add_argument(
+        "--fresh-target",
+        action="store_true",
+        help="force a fresh container reset before running",
     )
     run_parser.add_argument(
         "--starttls", action="store_true", help="issue StartTLS after connecting"

@@ -49,6 +49,27 @@ class OpenLDAPTarget:
             capture_output=True,
         )
 
+    def is_running(self) -> bool:
+        """Whether the container is currently running."""
+        result = subprocess.run(
+            ["podman", "inspect", "--format", "{{.State.Running}}", self.name],
+            capture_output=True,
+            check=False,
+            text=True,
+        )
+        return result.returncode == 0 and result.stdout.strip() == "true"
+
+    def ensure_running(self) -> None:
+        """Reuse the running container, or build+start if it is not up.
+
+        This is the default isolation model: the base seed is the contract,
+        and mutating assertions self-clean, so a long-lived container does
+        not drift between runs.  Use :meth:`start` for a forced fresh start.
+        """
+        if not self.is_running():
+            self.build()
+            self.start()
+
     def start(self) -> None:
         """Start a fresh container and wait until slapd answers."""
         self.stop()
