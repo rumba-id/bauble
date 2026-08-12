@@ -4,7 +4,7 @@ An open-source, implementation-independent LDAP RFC conformance test suite.
 
 ## Overview
 
-Bauble is a Python-based test suite that verifies LDAP server compliance with the core LDAPv3 RFCs. It is modeled on the industry reference LDAP conformance model, but is fully open-source and server-independent.
+Bauble is a Python-based test suite that verifies LDAP server compliance with the core LDAPv3 RFCs. It is open-source, MIT-licensed, and implementation-independent: point it at any LDAP server and get a conformance report.
 
 ## Author
 
@@ -82,7 +82,7 @@ tests/
 
 This project is based on:
 
-- **Reference Conformance Assertions** — the industry LDAP conformance assertion model
+- **Assertion-driven model** — every test maps to a single RFC requirement, with severity and testability tracked independently
 - **RFC 4510–4519** — The LDAPv3 protocol suite
 - **ldap3** — Python LDAP client library (LGPL v3)
 - **sldap3** — Python LDAP server library (LGPL v3)

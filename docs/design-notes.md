@@ -1,119 +1,152 @@
-# Conformance Reference Notes
+# Design Notes
 
-Analysis of the industry reference LDAP conformance model that informed
-bauble's design.
+Rationale for bauble's conformance-testing model. These notes explain the
+decisions behind the assertion model, profiles, selection, execution, and
+reporting so contributors understand why the suite is shaped the way it is.
 
-The reference suite is the established conformance model. It is proprietary
-(Java over a third-party test controller) and tied to the older RFC 2251-2256
-series. bauble mirrors its structure with open-source Python and targets the
-modern RFC 4510-4519 series.
+## Assertion as the atomic unit
 
-## Assertion schema
+Every test maps to one normative requirement from an RFC, stated as an
+assertion. Each assertion carries:
 
-Every test maps to one assertion with these fields:
+- **ID** — a structured identifier (see below).
+- **Test class** — whether the requirement can be tested portably.
+- **Severity** — the requirement strength from RFC 2119.
+- **Profile** — which capability tier the assertion belongs to.
+- **Text** — the requirement, stated in plain language.
+- **Ref** — the RFC section the assertion verifies.
+- **Strategy** — how the test is realized, including a
+  `PROCEDURE / INPUT / EXPECTED` block where useful.
 
-- **ID** — dotted-decimal `w.x.y.z`.
-  - `w` = source document: RFC2251=1, RFC2252=2, RFC2253=3, RFC2254=4,
-    RFC2255=5, RFC2256=6, RFC2459=7, SSLv3=8.
-  - `x.y` = section and subsection of document `w`.
-  - `z` = assertion number within that section.
-- **Class** — ISO 1003.3 testability, orthogonal to severity.
-  - `A` mandatory, testable
-  - `B` mandatory, untestable (portably)
-  - `C` optional, testable
-  - `D` optional, untestable
-- **Profile** — `BASE`, `STANDARD`, `ADVANCED`, or `NONE`.
-- **Text** — the requirement statement.
-- **Ref** — RFC section reference, e.g. `rfc2251#4.2`.
-- **Strategy** — implementation notes. Either a referenced prior test
-  procedure (e.g. `BLITS 3.3.4.2.1`) or an explicit
-  `PROCEDURE / INPUT / EXPECTED` block.
+Asserting at the requirement level — rather than writing free-form tests —
+keeps coverage traceable to the RFC text and makes gaps visible. A reader
+can answer "which RFC requirements does this suite verify?" by reading the
+assertion list.
 
-The Strategy field is the directly-translatable material for Python tests.
+## Assertion IDs
+
+IDs are dotted-decimal `w.x.y.z`:
+
+- `w` identifies the source RFC.
+- `x.y` is the section and subsection of that RFC.
+- `z` is the assertion number within that section.
+
+A structured ID lets assertions be grouped, selected, and cross-referenced
+without parsing prose, and lets a conformance report point back to the exact
+RFC section it is making a claim about. bauble uses the RFC 4510 series as
+its `w` namespace.
 
 ## Testability is separate from severity
 
-Severity in RFCs is RFC 2119 (`MUST`/`SHOULD`/`MAY`). A large fraction of
-`MUST` assertions in the reference suite are Class B (untestable). Recorded
-reasons include:
+RFCs express requirement strength with RFC 2119 keywords
+(`MUST` / `SHOULD` / `MAY`). But many requirements — even `MUST` ones —
+cannot be tested portably. They depend on server-internal timing, on state a
+network client cannot observe, or on access to protocol units (PDUs) below
+what a client library exposes. Examples include "abandon an in-flight
+operation", "generate an unsolicited notification", or "every entry has an
+objectClass".
 
-- "can not portably test assertions which rely on operation processing time"
-- "Access to PDU not portably testable"
-- "Can not portably generate an unsolicited notification"
-- "Not able to portably force a server to require a rebind"
-- "`Every` statements require exhaustive testing"
+If severity and testability shared one axis, the suite would either
+over-claim coverage (marking untestable requirements as passing) or lose
+them (silently dropping them). So bauble tracks two independent axes:
 
-Consequence: bauble tracks `TestClass` separately from `Severity`. A `MUST`
-assertion can be Class B and surface as `UNTESTABLE` rather than silently
-omitted.
+- **Severity** — `MUST` / `SHOULD` / `MAY`.
+- **Test class** — testable vs. untestable.
+
+A `MUST` requirement with no portable test is recorded as `UNTESTABLE` with
+the reason, not silently omitted. The conformance report then states
+honestly what was actually verified.
 
 ## Profiles
 
-Three profiles, not two:
+Three profiles organize assertions into increasing capability tiers:
 
 - **BASE** — core operations: simple bind, search, add, delete, modify,
-  modify DN; TCP and SSL transport.
+  modify DN; over TCP and TLS.
 - **STANDARD** — builds on BASE: root DSE, alias dereferencing, operational
   attributes, controls, extended operations, referrals, continuation
   references.
-- **ADVANCED** — SASL controls, extensibleObject, and other optional
-  surfaces.
+- **ADVANCED** — optional surfaces such as SASL controls and the
+  extensibleObject object class.
 
-Base certification is a prerequisite for Standard.
+Base is a prerequisite for Standard: a server that fails core operations
+cannot be meaningfully judged on the advanced surface.
 
-## Scenarios are selections, not code
+## Profiles and scenarios are selections, not code
 
-The reference suite's scenarios (`search`, `extensibleMatch`, ...) are lists
-of assertion IDs. One assertion can appear in many scenarios. Scenarios are
-manifests. This validates the design choice that profiles and scenarios are
-selection sets over a flat assertion registry.
+A profile or scenario is a set of assertion IDs. The same assertion can
+belong to many selections. Tests are written once; selections only decide
+which to run. This avoids duplicating test logic per profile and keeps the
+registry flat. An operator can also build an ad-hoc selection (a single RFC,
+a single assertion, a category) without writing new tests.
 
 ## Capability declaration
 
-The Standard profile exposes optional server features as capability flags
-the operator declares. The operator states which of the following the server
-implements:
+Some requirements only apply if the server advertises a feature — a root-DSE
+attribute, a supported control, or a supported extended operation. bauble
+takes a capability statement from the operator declaring which optional
+features the target server implements.
 
-- `altServer`
-- `namingContext`
-- `supportedExtension`
-- the OID of a supported extended operation
+When a feature is declared unsupported, its presence test auto-passes. The
+server genuinely does not implement the feature, so its absence is
+conformant, not a failure. The capability statement also lets bauble target
+extended-operation tests at OIDs the server actually supports.
 
-Rule: if a feature is not supported, its presence test auto-passes. bauble
-mirrors this with a TOML capability file and an `AUTO_PASS` status.
+## Execution model: prerequisites and blocked propagation
 
-## Harness mechanics
+LDAP operations depend on one another. A server that cannot bind cannot be
+meaningfully tested for search; a server whose add fails cannot be tested
+for modify. bauble models assertions and RFCs as a prerequisite graph that
+mirrors the RFC dependency tree. Tests run in dependency order, and when a
+prerequisite fails its dependents are marked `BLOCKED` rather than `FAIL`.
+A single early failure then produces one real failure plus a set of
+honestly-blocked dependents, not a cascade of misleading failures.
 
-- Tests are source files under the suite's test sources directory, one
-  assertion ID each.
-- The controller runs `build`, `execute`, `clean` phases over a scenario.
-- Configuration is via profile-specific config files.
-- Raw results are **journal** files; a `report` program summarizes them.
-- Certification submission = journal + signed summary.
+## Result statuses
 
-bauble replaces the third-party controller with a Python runner and
-pluggable reporters, but keeps the journal-plus-summary output shape.
+- **PASS** — assertion holds.
+- **FAIL** — assertion violated.
+- **AUTO_PASS** — requirement does not apply (feature declared unsupported).
+- **SKIP** — excluded by the operator's selection.
+- **BLOCKED** — a prerequisite failed.
+- **UNTESTABLE** — no portable test exists.
+- **NA** — server feature not advertised.
 
-## Standard profile test setup
+A conformance verdict for a profile: every mandatory, testable assertion in
+the profile is `PASS` or `AUTO_PASS`, with no `FAIL`. Optional (`SHOULD`/
+`MAY`) failures are reported as warnings, not conformance failures.
 
-From the configuration guide:
+## Reporting
 
-- Schema extensions: add `friends` and `roomNumber` attributes.
-- Referral testing: server returns a reference for a base DN it does not
-  manage. The test client parses the returned URL but does not follow it.
-- Continuation references: a second slave server manages
-  `ou=Servers,o=IMC,c=US` as a subordinate knowledge reference. Again the
-  client parses but does not follow.
-- Test data: import `Alias.ldif` and `Cert-Standard.ldif` on top of the
-  Base profile data.
+bauble emits two outputs:
 
-bauble's harness must seed equivalent fixtures and document the optional
-second-server setup.
+- A **journal** — the raw, machine-readable record of every assertion and
+  its result. This is the source of truth and is suitable for archival and
+  for diffing results across runs or server versions.
+- A **summary** — a human-readable rollup: per-assertion, per-RFC, and
+  per-profile, ending in an overall conformance verdict.
 
-## What bauble changes
+The journal is primary; the summary is derived from it.
 
-- Modern RFC series (4510-4519) instead of 2251-2256.
-- Python instead of Java; `ldap3` as the client engine.
-- No third-party test controller dependency; a single `bauble` command.
-- Open-source (MIT) instead of proprietary.
-- Assertion IDs extended to the 4510 series namespace.
+## Standard-profile fixtures
+
+Standard-profile assertions need a richer directory than Base:
+
+- **Schema extensions** beyond the core — additional attribute and object
+  classes so schema-handling assertions have something to exercise.
+- **Referral entries** the server returns for naming contexts it does not
+  manage. The client inspects the returned URL but does not follow it.
+- **Continuation references**, which require a second server holding a
+  subordinate branch configured as a knowledge reference. Again the client
+  inspects the reference without following it.
+
+bauble's harness seeds these fixtures and documents the optional
+second-server setup so an operator can run the Standard profile without
+guessing at the DIT shape.
+
+## What bauble targets
+
+- The modern RFC 4510-4519 series.
+- Python with `ldap3` as the LDAP client engine.
+- A single `bauble` CLI; no external test controller.
+- MIT-licensed and open-source.
