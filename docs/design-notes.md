@@ -60,19 +60,34 @@ honestly what was actually verified.
 ## Coverage boundary
 
 bauble drives the server under test through a high-level LDAP client. That
-choice buys portability and a small dependency surface, but it sets a hard
-edge on what can be tested: any requirement that needs a *malformed* request,
-an unknown-critical control, a bad protocol version, or inspection of raw
-response bytes cannot be expressed, because the client validates and
-constructs protocol units on the caller's behalf and raises before anything
-non-conformant reaches the wire.
+choice buys portability and a small dependency surface, but the edge it sets
+is narrower than it first appears. Most negative paths are reachable, because
+an error can usually be triggered with a *valid operation on bad data*:
+binding with wrong credentials (`invalidCredentials`), adding a duplicate
+entry (`entryAlreadyExists`), comparing a missing attribute
+(`noSuchAttribute`), or attaching an unknown-critical control (the client
+lets you build a control with any OID and criticality and attach it to a
+search, exercising `unavailableCriticalExtension`). Result codes, the
+`matchedDN` field, and referral fields are all readable on the response.
 
-Those requirements are not silently dropped. Each is recorded as
-`UNTESTABLE` with the reason ("requires a malformed PDU the client will not
-send", and similar), and reporters surface the `UNTESTABLE` count per RFC so
-the coverage boundary is visible in every report. The trade-off is deliberate:
-a portable, dependency-light tool that is honest about where its coverage
-stops, rather than one that over-claims.
+What the client genuinely cannot do is send a *structurally invalid*
+protocol unit: a malformed BER encoding, an unrecognized message structure,
+or some protocol-version edges. It validates and builds protocol units on the
+caller's behalf and raises before anything non-conformant reaches the wire.
+Only that narrow class — wire-format malformation, concentrated in RFC 4511
+§4.1 PDU handling and a few bind edges — is beyond reach. A further slice of
+assertions is untestable for *intrinsic* reasons no client can fix (server
+timing, internal state, unsolicited notifications, "every entry…"
+exhaustiveness); a raw sender would not help those either.
+
+Unreachable requirements are not silently dropped. Each is recorded as
+`UNTESTABLE` with the reason, and reporters surface the `UNTESTABLE` count
+per RFC so the boundary is visible in every report. The `Session` contract is
+the seam that keeps the option open: a raw-protocol `Session` could later be
+added to reach the wire-format class. Whether that earns its keep is a
+data-driven call, made at the end of Phase 5 once we can count exactly how
+many assertions land `UNTESTABLE` for wire-format reasons versus intrinsic
+ones.
 
 ## Profiles
 
@@ -127,19 +142,35 @@ transactions are optional and out of scope for Base). Left unmanaged, one
 assertion's leftover entry changes another's outcome, and two runs of the
 same suite disagree because the directory drifted between them.
 
-bauble's isolation model combines two guarantees:
+bauble distinguishes two kinds of target:
 
-- **Known DIT at run start.** The harness seeds a fixed base directory before
-  a run begins and can reset it between runs, so every run starts from the
-  same state. Read-only assertions search against this known base.
-- **Self-cleaning mutations.** Each mutating assertion creates the entry it
-  needs, asserts, and removes that entry in a finally block, so it does not
-  pollute sibling assertions within a run.
+- **Test target** — a disposable server the operator owns (typically a
+  containerized instance). The harness seeds it and can reset it freely.
+- **Server under test** — a real server whose data must not be touched
+  destructively. bauble treats it as read-only by default.
 
-A server under test may not be writable at all. The operator's capability
-statement carries a `writable` flag; when it is false, every mutating
-assertion `AUTO_PASS`es, because a read-only server is not non-conformant for
-failing to accept writes — it simply does not implement them.
+Isolation then rests on three guarantees:
+
+- **Known DIT at run start (test target only).** The harness seeds a fixed
+  base directory before a run and can reset it between runs, so every run
+  starts from identical state. Reset is authoritative — subtree wipe and
+  reseed, or a container restart for the disposable target — never
+  best-effort, because a leftover entry would make the next run drift and
+  false-fail.
+- **Self-cleaning mutations (always).** Each mutating assertion creates the
+  entry it needs, asserts, and removes it in a `finally` block, so it never
+  pollutes sibling assertions within a run — even against a server that
+  cannot be reset.
+- **Capability gating.** The capability statement carries `writable` and
+  `resettable` flags. When `writable` is false, mutating assertions
+  `AUTO_PASS`. Seed and reset run only against a target whose `resettable`
+  is true.
+
+Safety boundary: bauble never seeds or wipes a server it does not own.
+  Running mutating assertions against a live server under test requires an
+  explicit `--allow-mutation` opt-in; even then bauble does per-assertion
+  cleanup but performs no whole-DIT reset, so the conformance verdict for the
+  mutating surface against a live server is best-effort, not authoritative.
 
 ## Result statuses
 

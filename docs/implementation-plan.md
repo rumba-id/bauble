@@ -107,10 +107,16 @@ Deliverables:
 - `src/bauble/fixtures/` — a containerized OpenLDAP **test target** for local
   dev and CI: a known base seed LDIF, schema extensions, and a start/stop
   helper. This is the dev-time server; Phase 8 only wraps it in a CI workflow.
-- **Isolation model**: the harness seeds the known DIT at run start and can
-  reset it between runs; each mutating assertion cleans up the entries it
-  creates. Mutating assertions are gated on the `writable` capability and
-  `AUTO_PASS` when the server is read-only.
+- **Isolation model**: distinguish a disposable *test target* (operator-owned,
+  seedable and resettable) from a *server under test* (read-only by default).
+  The harness seeds a known DIT and resets it between runs only against a
+  target whose capability `resettable` is true; reset is authoritative
+  (subtree wipe + reseed, or container restart), never best-effort. Each
+  mutating assertion self-cleans in a `finally`. Mutating assertions are gated
+  on `writable` and `AUTO_PASS` when false. Running mutations against a live
+  server under test requires explicit `--allow-mutation`; bauble then
+  self-cleans per assertion but performs no whole-DIT reset, so that verdict
+  is best-effort.
 - `--dry-run` flag that exercises selection and ordering without traffic.
 
 Exit criteria: `bauble run` opens a real connection to the containerized
@@ -239,11 +245,17 @@ Build and land in this order so each module only imports what already exists:
 
 ## Constraints
 
-- **Client**: ldap3 only. No raw-BER sender. Negative-path assertions that
-  need malformed PDUs or raw byte inspection are `UNTESTABLE`, surfaced in
-  every report.
-- **Isolation**: known DIT at run start; mutating assertions self-clean;
-  read-only servers get `AUTO_PASS` on write assertions.
+- **Client**: ldap3 only for now. Most negative paths are reachable (trigger
+  the error with a valid op on bad data; controls/result codes/matchedDN are
+  accessible). Only wire-format malformation is `UNTESTABLE`, surfaced per
+  RFC. The `Session` contract is the seam for an optional raw layer; the
+  build/no-build call is deferred to end of Phase 5 with real
+  `UNTESTABLE`-due-to-wire counts.
+- **Isolation**: disposable test target (seed + authoritative reset,
+  `resettable=true`) vs. server under test (read-only by default).
+  Mutating assertions self-clean in `finally`; gated on `writable`
+  (`AUTO_PASS` when false). Mutations against a live SUT require
+  `--allow-mutation` and get best-effort verdicts (no whole-DIT reset).
 
 ## Out of scope (for now)
 
