@@ -42,13 +42,13 @@ def create_connection(config: ServerConfig) -> Connection:
     server = ldap3.Server(
         host=config.host,
         port=config.port,
-        use_tls=config.use_tls,
+        use_ssl=config.use_tls,
         tls=config.tls,
+        connect_timeout=config.connect_timeout,
     )
     conn = ldap3.Connection(
         server=server,
-        auto_decode=True,
-        connect_timeout=config.connect_timeout,
+        fast_decoder=True,
     )
     conn.open()
     return conn

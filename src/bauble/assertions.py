@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -18,7 +19,7 @@ class Assertion:
     """Human-readable description."""
     rfc: str
     """RFC reference, e.g. 'RFC 4511 §6.2'."""
-    check: Any
+    check: Callable[[Any], bool]
     """Callable that receives the server response and returns True/False."""
 
 
