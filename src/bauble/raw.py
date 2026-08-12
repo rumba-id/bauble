@@ -305,6 +305,43 @@ class RawConnection:
         response = self._send_and_receive(payload)
         return response if response else None
 
+    def raw_send(self, payload: bytes) -> Outcome:
+        """Send a raw LDAP PDU and parse as a generic LDAPResult."""
+        response = self._send_and_receive(payload)
+        outcome = _parse_ldap_result(response)
+        if outcome is None:
+            return Outcome(result_code=-1, message="no valid LDAPResult")
+        return outcome
+
+    def bind_then_send(self, payload: bytes, dn: str = "", password: str = "") -> Outcome:
+        """Bind (simple) then send a PDU on the same connection."""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(self._timeout)
+            sock.connect((self._host, self._port))
+            # Bind first.
+            bind_pdu = _build_bind_request(1, 3, dn, password)
+            sock.sendall(bind_pdu)
+            try:
+                bind_resp = sock.recv(4096)
+            except (TimeoutError, ConnectionError, OSError):
+                return Outcome(result_code=-1, message="bind failed: connection lost")
+            bind_outcome = _parse_bind_response(bind_resp)
+            if bind_outcome is None or bind_outcome.result_code != 0:
+                return Outcome(
+                    result_code=bind_outcome.result_code if bind_outcome else -1,
+                    message="bind failed",
+                )
+            # Send the operation PDU.
+            sock.sendall(payload)
+            try:
+                op_resp = sock.recv(4096)
+            except (TimeoutError, ConnectionError, OSError):
+                return Outcome(result_code=-1, message="operation failed: connection lost")
+            outcome = _parse_ldap_result(op_resp)
+            if outcome is None:
+                return Outcome(result_code=-1, message="no valid LDAPResult")
+            return outcome
+
     def modify_increment(
         self,
         dn: str,
