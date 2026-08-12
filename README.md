@@ -9,8 +9,8 @@
 </picture>
 
 A free, open-source, implementation-independent LDAP RFC conformance test suite,
-written in Python.
-
+Built to validate the [Rumba Identity Platform](https://rumba.id) and suitable
+for any modern LDAPv3 implementation.
 Validates any LDAPv3 server against the current RFC specifications.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
