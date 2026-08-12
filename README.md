@@ -1,6 +1,24 @@
-# bauble
+# bauble, the platform independent LDAP RFC conformance test suite
 
-An open-source, implementation-independent LDAP RFC conformance test suite.
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/rumba.id.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/rumba.id.svg">
+  <img alt="Rumba Identity Platform" src="docs/assets/rumba.id.svg" width="200">
+</picture>
+
+A free, open-source, implementation-independent LDAP RFC conformance test suite,
+written in Python.
+
+Validates any LDAPv3 server against the current RFC specifications.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.13+](https://img.shields.io/badge/Python-3.13+-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![RFC Coverage](https://img.shields.io/badge/RFCs-27-darkgreen.svg)](docs/assertion-coverage.md)
+</div>
+
+---
 
 ## Status
 
@@ -16,7 +34,7 @@ coverage](docs/assertion-coverage.md).
 
 ## Goal
 
-Point bauble at any LDAPv3 server and get a conformance report: which RFC
+Point `bauble` at any LDAPv3 server and get a conformance report: which RFC
 requirements it satisfies, which it violates, and which cannot be tested
 portably. MIT-licensed and server-independent.
 
@@ -118,11 +136,11 @@ Three tiers. A profile is a selection of assertions, not separate code:
   attributes, controls, extended operations, language features.
 - **Extended** — optional extensions such as read-entry controls.
 
-| Profile | MUST(A) | Verdict |
-|---------|---------|---------|
-| Interop | 55/55 | CONFORMANT |
-| Core | 24 PASS, 2 FAIL, 7 NOT_APPLICABLE, 4 UNTESTABLE | 2 gaps |
-| Extended | 2/2 | CONFORMANT |
+| Profile  | MUST(A)                                         | Verdict    |
+| -------- | ----------------------------------------------- | ---------- |
+| Interop  | 55/55                                           | CONFORMANT |
+| Core     | 24 PASS, 2 FAIL, 7 NOT_APPLICABLE, 4 UNTESTABLE | 2 gaps     |
+| Extended | 2/2                                             | CONFORMANT |
 
 The 2 Core gaps are RFC 4528 assertion control — OpenLDAP advertises
 the control in `supportedControl` but does not process it.
