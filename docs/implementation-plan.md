@@ -47,6 +47,11 @@ Phase 8.
 
 ## Phases
 
+> **Review status:** Phases 0–4 are approved and locked. They are implemented
+> first. Phases 5–8 are re-reviewed after Phase 4 lands, grounded in real
+> assertion/`UNTESTABLE` data. The raw-protocol-layer decision (end of Phase
+> 5) falls in the postponed batch.
+
 ### Phase 0 — Model, registry, and the session contract
 
 The current `src/bauble/` has procedural `base_profile.py` /
@@ -119,27 +124,38 @@ server every later phase depends on.
 
 Deliverables:
 
-- `src/bauble/harness.py` — connection lifecycle (open, bind, unbind) backed
-  by ldap3, implementing `Session`. Confirm ldap3 parameter usage
-  (`use_ssl`, `fast_decoder`, `connect_timeout` on `Server`).
-- `src/bauble/fixtures/` — a containerized OpenLDAP **test target** for local
-  dev and CI: a known base seed LDIF, schema extensions, and a start/stop
-  helper. This is the dev-time server; Phase 8 only wraps it in a CI workflow.
+- `src/bauble/harness.py` — ldap3-backed `Session` implementing the full
+  Phase 0 surface (open, bind, search, add, modify, delete, compare, unbind);
+  maps ldap3 responses into `Outcome` (`result_code`, `matched_dn`,
+  `referrals`, `message`). Supports plain, STARTTLS, and LDAPS. Confirms
+  ldap3 parameter usage (`use_ssl`, `fast_decoder`, `connect_timeout` on
+  `Server`).
+- `src/bauble/fixtures/` — a **podman** test target for local dev and CI: a
+  `Containerfile` building OpenLDAP from a distro base, the base seed LDIF,
+  schema extensions, generated TLS certs, and a start/stop helper that wraps
+  the `podman` CLI via `subprocess` (no testcontainers dependency). Fresh
+  container per run for authoritative isolation. The base seed is a bauble
+  convention (RFCs define no minimal DIT): `dc=bauble,dc=test` → `ou=people`
+  → `uid=alice` + `uid=bob` (inetOrgPerson, RFC 4519), read-fixture sized —
+  expanded only when an assertion needs more. Phase 8 only wraps this in a CI
+  workflow.
 - **Isolation model**: distinguish a disposable *test target* (operator-owned,
   seedable and resettable) from a *server under test* (read-only by default).
   The harness seeds a known DIT and resets it between runs only against a
-  target whose capability `resettable` is true; reset is authoritative
-  (subtree wipe + reseed, or container restart), never best-effort. Each
-  mutating assertion self-cleans in a `finally`. Mutating assertions are gated
-  on `writable` and `AUTO_PASS` when false. Running mutations against a live
-  server under test requires explicit `--allow-mutation`; bauble then
-  self-cleans per assertion but performs no whole-DIT reset, so that verdict
-  is best-effort.
+  target whose capability `resettable` is true; reset is authoritative — for
+  the disposable target, a fresh container per run (start → seed → run →
+  stop), with subtree-wipe + reseed as a fallback for a long-lived resettable
+  target; never best-effort. Each mutating assertion self-cleans in a
+  `finally`. Mutating assertions are gated on `writable` and `AUTO_PASS` when
+  false. Running mutations against a live server under test requires explicit
+  `--allow-mutation`; bauble then self-cleans per assertion but performs no
+  whole-DIT reset, so that verdict is best-effort.
 - `--dry-run` flag that exercises selection and ordering without traffic.
 
 Exit criteria: `uv run python -m bauble run` opens a real connection to the
-containerized OpenLDAP, binds, runs a no-op selection, and closes cleanly.
-Re-running yields identical results (isolation holds).
+containerized OpenLDAP, binds, runs a connectivity smoke (bind + a search
+round-trip + unbind), and closes cleanly. Re-running yields identical results
+(isolation holds).
 
 ### Phase 3 — Reporters
 
