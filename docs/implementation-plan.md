@@ -5,7 +5,8 @@ conformance test suite.
 
 This plan captures the agreed architecture and breaks it into reviewable
 phases. Each phase ends with a green test suite, a clean commit, and a
-working slice of the full path (`bauble run ... -> journal + summary`).
+working slice of the full path
+(`uv run python -m bauble run ... -> journal + summary`).
 
 ## Design principles
 
@@ -17,7 +18,8 @@ working slice of the full path (`bauble run ... -> journal + summary`).
    (`MUST`/`SHOULD`/`MAY`). Testability records whether a portable test
    exists. A `MUST` requirement can still be untestable.
 3. **Profiles and scenarios are selections over a flat registry**, never
-   duplicated test logic. A scenario is a manifest of assertion IDs.
+   duplicated test logic. A profile derives from each assertion's `profiles`
+   tag; a named scenario is a filter over the registry.
 4. **The RFC dependency tree is the prerequisite graph.** A failed
    prerequisite marks dependents `BLOCKED`, not `FAIL`.
 5. **Capability declaration drives auto-pass.** Operators declare which
@@ -35,6 +37,14 @@ working slice of the full path (`bauble run ... -> journal + summary`).
 See `docs/references.md` for the full RFC dependency tree and
 `docs/design-notes.md` for the rationale behind the conformance model.
 
+## Invocation
+
+Before Phase 8 the package has no `bauble` console script, so the dev
+invocation is `uv run python -m bauble run ...`. Phase 8 adds the
+`[project.scripts]` entry point, after which the canonical form is
+`uv run bauble run ...`. Exit criteria below use the pre-Phase-8 form until
+Phase 8.
+
 ## Phases
 
 ### Phase 0 — Model, registry, and the session contract
@@ -49,7 +59,8 @@ Deliverables:
 - `src/bauble/model.py` — `Severity`, `TestClass`, `Status`, `Profile`,
   `Category`, `Assertion`, `Result` dataclasses (frozen). `Assertion` carries
   `id`, `rfc` (number, used as `w`), `section`, `category`, `severity`,
-  `test_class`, `profiles`, `text`, `strategy`, `requires`.
+  `test_class`, `profiles`, `text`, `strategy`, `requires`, `mutates`,
+  `requires_features`.
 - `src/bauble/session.py` — a `Session` `Protocol` defining the exact surface
   an assertion may call (bind, search, add, modify, delete, compare, ...).
   Both the Phase 1 fake and the Phase 2 real harness implement it.
@@ -60,9 +71,9 @@ Deliverables:
 - Keep the old `base_profile.py`, `standard_profile.py`, `assertions.py`, and
   `runner.py` until Phase 1's new runner replaces the CLI path.
 
-Exit criteria: `uv run pytest` green, `ruff check`, `ruff format --check`,
-and `pyright` clean. A trivial stub suite registers one assertion through the
-decorator and the registry finds it.
+Exit criteria: `uv run pytest` green, `uv run ruff check`,
+`uv run ruff format --check`, and `uv run pyright` clean. A trivial stub
+suite registers one assertion through the decorator and the registry finds it.
 
 ### Phase 1 — Selection, capability, and runner core
 
@@ -71,24 +82,31 @@ an in-memory fake `Session`.
 
 Deliverables:
 
-- `src/bauble/scenarios.py` — `BASE`, `STANDARD`, `ADVANCED` profile ID sets,
-  plus named scenarios (`search`, `bind`, ...).
+- `src/bauble/scenarios.py` — named scenario filters (`search`, `bind`, ...).
+  Profiles are not hardcoded ID lists; a profile selection derives from each
+  assertion's `profiles` tag, so adding an assertion tagged BASE automatically
+  includes it in BASE.
 - `src/bauble/capability.py` — parse a TOML conformance statement, including a
   `writable` flag (default true) and optional-feature declarations.
 - `src/bauble/selector.py` — build a `Selector` from CLI args
   (`--profile`, `--rfc`, `--scenario`, `--assertion`, `--category`,
   `--exclude`, `--severity`, `--test-class`) and filter the registry.
+  Combine semantics: AND across dimensions, OR within a dimension.
 - `src/bauble/runner.py` — topological sort over prerequisites; emit
-  `BLOCKED`, `AUTO_PASS` (incl. for non-writable servers), `UNTESTABLE`,
-  `SKIP` correctly; collect results.
-- `src/bauble/_fake.py` — an in-memory fake `Session` for unit tests.
+  `BLOCKED`, `AUTO_PASS` (incl. for non-writable servers and unsupported
+  features), `UNTESTABLE`, `SKIP` correctly; collect results. Callable both
+  as a library (takes a `Session`) and via CLI.
+- `src/bauble/_fake.py` — an in-memory, scriptable fake `Session` for tests.
 - Remove the old `base_profile.py`, `standard_profile.py`, `assertions.py`,
   and the old `runner.py` now that the new runner drives the CLI.
 
 Exit criteria:
 
-- `bauble run --profile base` against the fake produces a result list with
-  correct statuses.
+- `uv run pytest` green, `uv run ruff check`, `uv run ruff format --check`,
+  and `uv run pyright` clean.
+- The runner, invoked as a library with a `FakeSession` and
+  `Selector(profile=BASE)`, produces a result list with correct statuses.
+  (The CLI is validated against a real server in Phase 2.)
 - A **golden "broken fake" test**: a fake that returns wrong result codes
   causes the suite to emit `FAIL`, and a deliberately-failed prerequisite
   causes its dependents to be reported `BLOCKED`. This proves the verdict
@@ -119,9 +137,9 @@ Deliverables:
   is best-effort.
 - `--dry-run` flag that exercises selection and ordering without traffic.
 
-Exit criteria: `bauble run` opens a real connection to the containerized
-OpenLDAP, binds, runs a no-op selection, and closes cleanly. Re-running yields
-identical results (isolation holds).
+Exit criteria: `uv run python -m bauble run` opens a real connection to the
+containerized OpenLDAP, binds, runs a no-op selection, and closes cleanly.
+Re-running yields identical results (isolation holds).
 
 ### Phase 3 — Reporters
 
@@ -137,9 +155,9 @@ Deliverables:
 - Reporters surface `UNTESTABLE` counts per RFC so the coverage boundary is
   visible.
 
-Exit criteria: `bauble run --reporter summary` prints a verdict line per
-profile and per RFC, plus an overall conformance verdict, against stub
-results.
+Exit criteria: `uv run python -m bauble run --reporter summary` prints a
+verdict line per profile and per RFC, plus an overall conformance verdict,
+against stub results.
 
 ### Phase 4 — First real suite: RFC 4511 (protocol) Bind
 
@@ -157,8 +175,8 @@ Deliverables:
 - Negative-path assertions that ldap3 cannot express are recorded as
   `UNTESTABLE` with the reason.
 
-Exit criteria: `bauble run --profile base --rfc 4511` against the
-containerized OpenLDAP returns real pass/fail/auto-pass verdicts.
+Exit criteria: `uv run python -m bauble run --profile base --rfc 4511` against
+the containerized OpenLDAP returns real pass/fail/auto-pass verdicts.
 
 ### Phase 5 — Core operations (RFC 4511 remainder), one PR per operation
 
@@ -173,6 +191,10 @@ own increment and lands as its own PR, in dependency order:
 - `search.py` (`§4.5`)
 - `abandon.py` (`§4.11`) — mostly `UNTESTABLE` (timing); record honestly.
 - `extended.py` (`§4.12`)
+
+At the end of Phase 5, count `UNTESTABLE`-due-to-wire-format assertions and
+decide whether the optional raw-protocol `Session` earns its keep (see
+Constraints).
 
 Exit criteria: the full Base profile protocol surface runs and reports.
 
@@ -205,6 +227,8 @@ Deliverables:
   others from the dependency tree.
 - Referral and continuation-reference tests, including the second-server
   continuation setup the Standard profile requires.
+- `supported_sasl_mechanisms` capability flag lands here with the auth
+  surface (deferred from Phase 1).
 
 Exit criteria: Advanced profile runs; Standard profile conformance matches
 its defined scope, including optional-feature auto-pass.
@@ -213,8 +237,11 @@ its defined scope, including optional-feature auto-pass.
 
 Deliverables:
 
-- `bauble` console-script entry point in `pyproject.toml`.
-- GitHub Actions workflow: `ruff`, `pyright`, `pytest`, and a real
+- `bauble` console-script entry point in `pyproject.toml`
+  (`[project.scripts]`). After this phase the canonical invocation is
+  `uv run bauble run ...`.
+- GitHub Actions workflow: `uv run ruff check`, `uv run ruff format --check`,
+  `uv run pyright`, `uv run pytest`, and a real
   conformance run against the containerized OpenLDAP from Phase 2.
 - README rewrite with quickstart, profile table, and capability-file
   reference.
