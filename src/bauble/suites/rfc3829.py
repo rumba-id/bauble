@@ -1,4 +1,8 @@
-"""RFC 3829 — Authorization Identity Request and Response Controls."""
+"""RFC 3829 — Authorization Identity Request and Response Controls.
+
+ldap3 type stubs are incomplete for Connection.bind/rebind and response
+controls, producing unavoidable pyright warnings on known-good code.
+"""  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
 
 from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Session
@@ -72,9 +76,11 @@ def authzid_response_on_bind(session: Session) -> Result:
 
     # Check for response control
     response_controls: list = getattr(conn.result, "controls", None) or []  # type: ignore[reportUnknownVariableType]
-    found = any(
-        getattr(c, "controlType", None) == _AUTHZID_RESPONSE_OID for c in response_controls
-    )  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
+    found = False
+    for c in response_controls:  # type: ignore[reportUnknownVariableType]
+        if getattr(c, "controlType", None) == _AUTHZID_RESPONSE_OID:  # type: ignore[reportUnknownArgumentType]
+            found = True
+            break
     if found:
         return Result("3829.4.1", Status.PASS)
     return Result(
