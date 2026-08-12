@@ -57,6 +57,23 @@ A `MUST` requirement with no portable test is recorded as `UNTESTABLE` with
 the reason, not silently omitted. The conformance report then states
 honestly what was actually verified.
 
+## Coverage boundary
+
+bauble drives the server under test through a high-level LDAP client. That
+choice buys portability and a small dependency surface, but it sets a hard
+edge on what can be tested: any requirement that needs a *malformed* request,
+an unknown-critical control, a bad protocol version, or inspection of raw
+response bytes cannot be expressed, because the client validates and
+constructs protocol units on the caller's behalf and raises before anything
+non-conformant reaches the wire.
+
+Those requirements are not silently dropped. Each is recorded as
+`UNTESTABLE` with the reason ("requires a malformed PDU the client will not
+send", and similar), and reporters surface the `UNTESTABLE` count per RFC so
+the coverage boundary is visible in every report. The trade-off is deliberate:
+a portable, dependency-light tool that is honest about where its coverage
+stops, rather than one that over-claims.
+
 ## Profiles
 
 Three profiles organize assertions into increasing capability tiers:
@@ -101,6 +118,28 @@ mirrors the RFC dependency tree. Tests run in dependency order, and when a
 prerequisite fails its dependents are marked `BLOCKED` rather than `FAIL`.
 A single early failure then produces one real failure plus a set of
 honestly-blocked dependents, not a cascade of misleading failures.
+
+## Test isolation
+
+Conformance assertions are destructive: add, modify, modify-DN, and delete
+mutate the directory, and LDAP has no baseline transactions (RFC 5805
+transactions are optional and out of scope for Base). Left unmanaged, one
+assertion's leftover entry changes another's outcome, and two runs of the
+same suite disagree because the directory drifted between them.
+
+bauble's isolation model combines two guarantees:
+
+- **Known DIT at run start.** The harness seeds a fixed base directory before
+  a run begins and can reset it between runs, so every run starts from the
+  same state. Read-only assertions search against this known base.
+- **Self-cleaning mutations.** Each mutating assertion creates the entry it
+  needs, asserts, and removes that entry in a finally block, so it does not
+  pollute sibling assertions within a run.
+
+A server under test may not be writable at all. The operator's capability
+statement carries a `writable` flag; when it is false, every mutating
+assertion `AUTO_PASS`es, because a read-only server is not non-conformant for
+failing to accept writes — it simply does not implement them.
 
 ## Result statuses
 
