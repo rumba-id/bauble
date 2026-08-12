@@ -27,6 +27,9 @@ class FakeSession:
     in :attr:`calls` so tests can assert on what was invoked.
     """
 
+    host: str = ""
+    port: int = 0
+
     def __init__(self, responder: Responder | None = None) -> None:
         self._responder: Responder = responder or _success
         self.calls: list[tuple[str, dict[str, object]]] = []

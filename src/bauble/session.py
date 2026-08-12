@@ -35,6 +35,7 @@ class Outcome:
     matched_dn: str = ""
     referrals: tuple[str, ...] = ()
     message: str = ""
+    server_sasl_creds: bytes | None = None
 
 
 @dataclass(frozen=True)
@@ -70,6 +71,9 @@ class Modification:
 @runtime_checkable
 class Session(Protocol):
     """The operations an assertion may invoke against the server under test."""
+
+    host: str
+    port: int
 
     def bind(self, dn: str | None, password: str | None) -> Outcome: ...
 

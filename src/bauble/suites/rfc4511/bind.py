@@ -1,15 +1,15 @@
 """RFC 4511 §4.2 — Bind Request and Bind Response.
 
-Eight assertions derived directly from the RFC. Four are testable via the
-high-level client (Class A); four are not portably reachable and are recorded
-as UNTESTABLE (Class B) with the reason. Credentials come from the Phase 2
-base seed (alice/alice-secret, bob/bob-secret).
+Eight assertions derived directly from the RFC. With the raw wire layer,
+all eight are testable: four via the high-level client, four via raw BER
+on a bare socket. Credentials come from the Phase 2 base seed
+(alice/alice-secret, bob/bob-secret).
 """
 
 from __future__ import annotations
 
-from bauble.model import Assertion, Category, Profile, Result, Severity, Status, TestClass
-from bauble.registry import default_registry
+from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.raw import RawConnection
 from bauble.session import Session
 from bauble.suites._base import assertion
 
@@ -21,7 +21,7 @@ _BASE = frozenset({Profile.BASE})
 
 
 # ---------------------------------------------------------------------------
-# Class A — testable via the high-level client
+# High-level client (ldap3) — Class A
 # ---------------------------------------------------------------------------
 
 
@@ -106,61 +106,94 @@ def rebind(session: Session) -> Result:
 
 
 # ---------------------------------------------------------------------------
-# Class B — not portably testable via the high-level client
+# Raw wire layer — Class A (previously UNTESTABLE via ldap3)
 # ---------------------------------------------------------------------------
 
-default_registry().register(
-    Assertion(
-        id="4511.4.2.5",
-        rfc=4511,
-        section="§4.2",
-        category=Category.PROTOCOL,
-        severity=Severity.MUST,
-        test_class=TestClass.B,
-        profiles=_BASE,
-        text="Successful simple-bind response carries no serverSaslCreds.",
-        strategy="serverSaslCreds is not exposed by the high-level client.",
-    )
-)
 
-default_registry().register(
-    Assertion(
-        id="4511.4.2.4",
-        rfc=4511,
-        section="§4.2",
-        category=Category.PROTOCOL,
-        severity=Severity.MUST,
-        test_class=TestClass.B,
-        profiles=_BASE,
-        text="Simple bind with non-empty name and empty password does not authenticate.",
-        strategy="The high-level client requires a password for named simple binds.",
-    )
+@assertion(
+    id="4511.4.2.4",
+    rfc=4511,
+    section="§4.2",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_BASE,
+    text="Simple bind with non-empty name and empty password does not authenticate.",
+    strategy="Raw BindRequest with a named DN and empty password; expect non-zero.",
 )
+def empty_password_rejected(session: Session) -> Result:
+    raw = RawConnection(session.host, session.port)
+    outcome = raw.bind(version=3, dn=_ALICE, password="")
+    if outcome.result_code != 0:
+        return Result("4511.4.2.4", Status.PASS)
+    return Result(
+        "4511.4.2.4",
+        Status.FAIL,
+        detail="expected non-success (server should not authenticate)",
+    )
 
-default_registry().register(
-    Assertion(
-        id="4511.4.2.7",
-        rfc=4511,
-        section="§4.2",
-        category=Category.PROTOCOL,
-        severity=Severity.MUST,
-        test_class=TestClass.B,
-        profiles=_BASE,
-        text="Bind with unrecognized protocol version returns protocolError.",
-        strategy="The high-level client sends protocol version 3 only.",
-    )
-)
 
-default_registry().register(
-    Assertion(
-        id="4511.4.2.8",
-        rfc=4511,
-        section="§4.2",
-        category=Category.PROTOCOL,
-        severity=Severity.MUST,
-        test_class=TestClass.B,
-        profiles=_BASE,
-        text="Malformed BindRequest PDU returns protocolError and disconnect.",
-        strategy="The high-level client validates and constructs PDUs; cannot send malformed.",
-    )
+@assertion(
+    id="4511.4.2.5",
+    rfc=4511,
+    section="§4.2",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_BASE,
+    text="Successful simple-bind response carries no serverSaslCreds.",
+    strategy="Raw simple-auth bind with valid creds; check serverSaslCreds is absent.",
+    requires=("4511.4.2.2",),
 )
+def no_server_sasl_creds(session: Session) -> Result:
+    raw = RawConnection(session.host, session.port)
+    outcome = raw.bind(version=3, dn=_ALICE, password=_ALICE_PW)
+    if outcome.result_code != 0:
+        return Result("4511.4.2.5", Status.BLOCKED, detail="bind failed")
+    if outcome.server_sasl_creds is None:
+        return Result("4511.4.2.5", Status.PASS)
+    return Result(
+        "4511.4.2.5",
+        Status.FAIL,
+        detail="serverSaslCreds present in simple-bind response",
+    )
+
+
+@assertion(
+    id="4511.4.2.7",
+    rfc=4511,
+    section="§4.2",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_BASE,
+    text="Bind with unrecognized protocol version returns protocolError.",
+    strategy="Raw BindRequest with version 99; expect result code 2.",
+)
+def bad_protocol_version(session: Session) -> Result:
+    raw = RawConnection(session.host, session.port)
+    outcome = raw.bind(version=99, dn="", password="")
+    if outcome.result_code == 2:
+        return Result("4511.4.2.7", Status.PASS)
+    return Result(
+        "4511.4.2.7", Status.FAIL, detail=f"expected 2 (protocolError), got {outcome.result_code}"
+    )
+
+
+@assertion(
+    id="4511.4.2.8",
+    rfc=4511,
+    section="§4.2",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_BASE,
+    text="Malformed BindRequest PDU returns protocolError and disconnect.",
+    strategy="Send garbage bytes; expect the server to disconnect (no response).",
+)
+def malformed_pdu_disconnects(session: Session) -> Result:
+    raw = RawConnection(session.host, session.port)
+    response = raw.send_malformed(b"\xff\xff\xff\xff")
+    if response is None:
+        return Result("4511.4.2.8", Status.PASS)
+    return Result("4511.4.2.8", Status.FAIL, detail="expected disconnect, got a response")

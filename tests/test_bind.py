@@ -37,8 +37,16 @@ def test_invalid_credentials_wrong_code() -> None:
     assert result.status is Status.FAIL
 
 
-def test_class_b_assertions_have_no_runner() -> None:
+def test_all_assertions_have_runners() -> None:
     registry = default_registry()
-    assert registry.runner("4511.4.2.5") is None
-    assert registry.runner("4511.4.2.7") is None
-    assert registry.runner("4511.4.2.8") is None
+    for aid in (
+        "4511.4.2.1",
+        "4511.4.2.2",
+        "4511.4.2.3",
+        "4511.4.2.4",
+        "4511.4.2.5",
+        "4511.4.2.6",
+        "4511.4.2.7",
+        "4511.4.2.8",
+    ):
+        assert registry.runner(aid) is not None, f"{aid} has no runner"

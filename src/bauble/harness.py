@@ -70,6 +70,8 @@ class LdapSession:
 
     def __init__(self, config: ServerConfig) -> None:
         self._config = config
+        self.host: str = config.host
+        self.port: int = config.port
         self._server: Any = ldap3.Server(
             host=config.host,
             port=config.port,
