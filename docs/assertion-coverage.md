@@ -1,8 +1,8 @@
 # Assertion Coverage
 
-Summary of implemented assertions per RFC. 51 testable, 2 UNTESTABLE.
+Summary of implemented assertions per RFC. v1.0.0 — 57 testable, 2 UNTESTABLE.
 
-## RFC 4511 — The Protocol (33 assertions)
+## RFC 4511 — The Protocol (39 assertions)
 
 | § | Operation | Assertions | Testable | UNTESTABLE |
 |---|---|---|---|---|
@@ -40,6 +40,6 @@ Summary of implemented assertions per RFC. 51 testable, 2 UNTESTABLE.
 
 ## Summary
 
-- **Total assertions:** 53
-- **Testable:** 51 (all PASS on OpenLDAP)
+- **Total assertions:** 59
+- **Testable:** 57 (all PASS on OpenLDAP)
 - **UNTESTABLE:** 2 (RFC 4511 §4.11 Abandon — timing-dependent, intrinsic)

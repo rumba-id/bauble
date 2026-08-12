@@ -4,13 +4,14 @@ An open-source, implementation-independent LDAP RFC conformance test suite.
 
 ## Status
 
-In design. The conformance model, profiles, and an eight-phase
-implementation plan are settled; Phases 0-4 are approved and implementation
-has not started. bauble does not test any server yet.
+v1.0.0 — the initial release. 59 assertions across 14 RFCs, 57 testable
+(all PASS on OpenLDAP), 2 UNTESTABLE (abandon — intrinsic timing). Base
+and Standard profiles both CONFORMANT. See [assertion coverage](docs/assertion-coverage.md).
 
 - [Implementation plan](docs/implementation-plan.md)
 - [Design notes](docs/design-notes.md)
 - [RFC reference tree](docs/references.md)
+- [Assertion coverage](docs/assertion-coverage.md)
 
 ## Goal
 
