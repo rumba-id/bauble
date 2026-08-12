@@ -115,9 +115,12 @@ class LdapSession:
             if item.get("type") != "searchResEntry":
                 continue
             raw_attrs: Any = item.get("attributes") or {}
-            attribute_map: dict[str, list[str | bytes]] = {
-                str(key): list(val) for key, val in raw_attrs.items()
-            }
+            attribute_map: dict[str, list[str | bytes]] = {}
+            for key, val in raw_attrs.items():
+                if isinstance(val, (list, tuple)):
+                    attribute_map[str(key)] = list(val)  # pyright: ignore[reportUnknownArgumentType]
+                else:
+                    attribute_map[str(key)] = [val]
             entries.append(Entry(dn=str(item.get("dn", "")), attributes=attribute_map))
         return outcome_from_result(self._connection.result), entries
 
