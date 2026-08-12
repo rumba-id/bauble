@@ -114,9 +114,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"{len(selected)} assertion(s) selected")
         return 0
     if args.target or args.fresh_target:
-        from bauble.fixtures.container import OpenLDAPTarget
+        if args.target_type == "389ds":
+            from bauble.fixtures.directory389 import Directory389Target
 
-        target = OpenLDAPTarget()
+            target: OpenLDAPTarget | Directory389Target = Directory389Target()
+        else:
+            from bauble.fixtures.container import OpenLDAPTarget
+
+            target = OpenLDAPTarget()
         if args.fresh_target:
             target.build()
             target.start()
@@ -198,6 +203,12 @@ def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
         "--target",
         action="store_true",
         help="reuse (or start) the podman OpenLDAP test target; stays running",
+    )
+    run_parser.add_argument(
+        "--target-type",
+        choices=["openldap", "389ds"],
+        default="openldap",
+        help="test target implementation (default: openldap)",
     )
     run_parser.add_argument(
         "--fresh-target",

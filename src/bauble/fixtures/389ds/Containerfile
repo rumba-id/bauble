@@ -1,0 +1,17 @@
+FROM docker.io/389ds/dirsrv:latest
+
+# 389 DS instance is created on first run by dscontainer from env vars.
+# We pin the Directory Manager password and create the suffix at runtime.
+ENV DS_DM_PASSWORD=bauble-admin \
+    DS_SUFFIX=dc=bauble,dc=test \
+    DS_HOSTNAME=localhost
+
+# Seed DIT. dscontainer creates the instance but no suffix; this script
+# waits for the instance, creates the backend, and adds the seed entries.
+COPY seed-389.ldif /seed-389.ldif
+COPY entrypoint-389.sh /entrypoint-389.sh
+RUN chmod +x /entrypoint-389.sh
+
+EXPOSE 3389 3636
+
+ENTRYPOINT ["/entrypoint-389.sh"]

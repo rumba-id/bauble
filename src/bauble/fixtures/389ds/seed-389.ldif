@@ -1,0 +1,29 @@
+dn: dc=bauble,dc=test
+objectClass: top
+objectClass: domain
+dc: bauble
+
+dn: ou=people,dc=bauble,dc=test
+objectClass: top
+objectClass: organizationalUnit
+ou: people
+
+dn: uid=alice,ou=people,dc=bauble,dc=test
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: alice
+cn: Alice
+sn: Example
+userPassword: alice-pw
+
+dn: uid=bob,ou=people,dc=bauble,dc=test
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: bob
+cn: Bob
+sn: Example
+userPassword: bob-pw

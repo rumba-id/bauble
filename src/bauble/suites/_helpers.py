@@ -1,6 +1,6 @@
 """Shared helpers for assertion runners."""
 
-from __future__ import annotations
+import os
 
 from bauble.session import Session
 
@@ -13,9 +13,9 @@ __all__ = [
     "test_entry_attrs",
 ]
 
-ADMIN_DN = "cn=admin,dc=bauble,dc=test"
-ADMIN_PW = "bauble-admin"
-TEST_BASE = "ou=people,dc=bauble,dc=test"
+ADMIN_DN = os.environ.get("BAUBLE_ADMIN_DN", "cn=admin,dc=bauble,dc=test")
+ADMIN_PW = os.environ.get("BAUBLE_ADMIN_PW", "bauble-admin")
+TEST_BASE = os.environ.get("BAUBLE_TEST_BASE", "ou=people,dc=bauble,dc=test")
 
 
 def bind_admin(session: Session) -> None:
