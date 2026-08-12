@@ -1,0 +1,24 @@
+dn: dc=bauble,dc=test
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+o: bauble
+dc: bauble
+
+dn: ou=people,dc=bauble,dc=test
+objectClass: organizationalUnit
+ou: people
+
+dn: uid=alice,ou=people,dc=bauble,dc=test
+objectClass: inetOrgPerson
+cn: Alice Anderson
+sn: Anderson
+uid: alice
+userPassword: alice-secret
+
+dn: uid=bob,ou=people,dc=bauble,dc=test
+objectClass: inetOrgPerson
+cn: Bob Brown
+sn: Brown
+uid: bob
+userPassword: bob-secret
