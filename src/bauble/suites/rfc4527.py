@@ -54,7 +54,6 @@ def _build_read_control(oid: str) -> bytes:
     return _ber_seq(_ber_octet(oid) + criticality + control_value)
 
 
-
 @assertion(
     id="4527.3.1.1",
     rfc=4527,

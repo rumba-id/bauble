@@ -15,7 +15,12 @@ from bauble.suites._helpers import (
 _STANDARD = frozenset({Profile.STANDARD})
 
 _ASSERTION_CONTROL_OID = "1.3.6.1.1.12"
-_ASSERTION_CONTROL_FEATURE = "supported_control:" + _ASSERTION_CONTROL_OID
+
+# Pre-built BER filter fragments.
+# present objectClass: [7] "objectClass" = 87 0b "objectClass"
+_TRUE_FILTER = b"\x87\x0b" + b"objectClass"
+# NOT of present objectClass: [2] TRUE_FILTER = always FALSE
+_FALSE_FILTER = b"\xa2\x0d" + _TRUE_FILTER  # a2 = NOT, length 0x0d
 
 
 def _ber_len(n: int) -> bytes:
@@ -44,18 +49,10 @@ def _ber_seq(c: bytes) -> bytes:
     return b"\x30" + _ber_len(len(c)) + c
 
 
-def _ber_equality_filter(attribute: str, value: str) -> bytes:
-    """BER-encode an equalityMatch filter: [3] SEQUENCE { attr, value }."""
-    inner = _ber_seq(_ber_octet(attribute) + _ber_octet(value))
-    return b"\xa3" + _ber_len(len(inner)) + inner
-
-
 def _build_assertion_control(filter_ber: bytes) -> bytes:
-    """Build a control sequence: SEQUENCE { oid, criticality?, value }."""
+    """Build a control sequence: SEQUENCE { oid, criticality, value }."""
     oid = _ber_octet(_ASSERTION_CONTROL_OID)
-    # criticality BOOLEAN = TRUE
-    criticality = b"\x01\x01\xff"
-    # controlValue: OCTET STRING wrapping the filter BER
+    criticality = b"\x01\x01\xff"  # TRUE
     value = b"\x04" + _ber_len(len(filter_ber)) + filter_ber
     return _ber_seq(oid + criticality + value)
 
@@ -68,32 +65,17 @@ def _build_modify_with_assertion(
     filter_ber: bytes,
     operation: int = 2,
 ) -> bytes:
-    """Build a ModifyRequest with Assertion Control.
-
-    operation: 0=add, 1=delete, 2=replace (default).
-    """
-    # modification: SEQUENCE { attr, SET OF value }
+    """Build a ModifyRequest with Assertion Control."""
     val_ber = b"".join(_ber_octet(v) for v in values)
     attr_set = b"\x31" + _ber_len(len(val_ber)) + val_ber
     mod = _ber_seq(_ber_octet(attr) + attr_set)
-
-    # change: SEQUENCE { operation ENUMERATED, modification }
     op_enum = b"\x0a\x01" + bytes([operation])
     change = _ber_seq(op_enum + mod)
-
-    # changes: SEQUENCE OF change
     changes = _ber_seq(change)
-
-    # object DN
     object_dn = _ber_octet(dn)
-
     modify_contents = object_dn + changes
     modify_request = b"\x66" + _ber_len(len(modify_contents)) + modify_contents
-
-    # controls: SEQUENCE OF control
     controls = _ber_seq(_build_assertion_control(filter_ber))
-
-    # LDAPMessage: SEQUENCE { messageID, protocolOp, controls [0] }
     controls_tagged = b"\xa0" + _ber_len(len(controls)) + controls
     return _ber_seq(_ber_int(message_id) + modify_request + controls_tagged)
 
@@ -107,7 +89,7 @@ def _build_modify_with_assertion(
     test_class=TestClass.A,
     profiles=_STANDARD,
     text="Operation with TRUE assertion filter proceeds normally.",
-    strategy="Modify with assertion (objectClass=*) on existing entry; expect success.",
+    strategy="Modify with TRUE assertion (present objectClass) on existing entry; expect success.",
     mutates=True,
 )
 def assertion_true_proceeds(session: Session) -> Result:
@@ -119,9 +101,8 @@ def assertion_true_proceeds(session: Session) -> Result:
 
     session.add(dn, test_entry_attrs("assert-true"))
     try:
-        true_filter = _ber_equality_filter("objectClass", "*")
         payload = _build_modify_with_assertion(
-            1, dn, "description", ["assertion-test"], true_filter
+            1, dn, "description", ["assertion-test"], _TRUE_FILTER
         )
         raw = RawConnection(session.host, session.port)
         outcome = raw.bind_then_send(payload, ADMIN_DN, ADMIN_PW)
@@ -145,7 +126,7 @@ def assertion_true_proceeds(session: Session) -> Result:
     test_class=TestClass.A,
     profiles=_STANDARD,
     text="Operation with FALSE assertion filter returns assertionFailed (122).",
-    strategy="Modify with assertion (objectClass=doesNotExist); expect 122.",
+    strategy="Modify with FALSE assertion (NOT present objectClass); expect 122.",
     mutates=True,
 )
 def assertion_false_returns_122(session: Session) -> Result:
@@ -157,20 +138,18 @@ def assertion_false_returns_122(session: Session) -> Result:
 
     session.add(dn, test_entry_attrs("assert-false"))
     try:
-        false_filter = _ber_equality_filter("objectClass", "doesNotExist")
         payload = _build_modify_with_assertion(
-            1, dn, "description", ["should-not-happen"], false_filter
+            1, dn, "description", ["should-not-happen"], _FALSE_FILTER
         )
         raw = RawConnection(session.host, session.port)
         outcome = raw.bind_then_send(payload, ADMIN_DN, ADMIN_PW)
-        # assertionFailed = 122
-        if outcome.result_code != 122:
-            return Result(
-                "4528.3.2",
-                Status.AUTO_PASS,
-                detail=f"expected assertionFailed (122), got {outcome.result_code}",
-            )
-        return Result("4528.3.2", Status.PASS)
+        if outcome.result_code == 122:
+            return Result("4528.3.2", Status.PASS)
+        return Result(
+            "4528.3.2",
+            Status.FAIL,
+            detail=f"expected assertionFailed (122), got {outcome.result_code}",
+        )
     finally:
         cleanup(session, dn)
 
@@ -196,23 +175,21 @@ def assertion_delete_true(session: Session) -> Result:
 
     session.add(dn, test_entry_attrs("assert-del"))
     try:
-        true_filter = _ber_equality_filter("objectClass", "*")
-        # Build DeleteRequest: [APPLICATION 10] OCTET STRING (DN)
-        dn_ber = _ber_octet(dn)
-        del_request = b"\x4a" + _ber_len(len(dn_ber)) + dn_ber
+        # DeleteRequest: [APPLICATION 10] LDAPDN — the DN bytes directly,
+        # NOT wrapped in OCTET STRING (implicit tagging replaces the tag).
+        dn_bytes = dn.encode()
+        del_request = b"\x4a" + _ber_len(len(dn_bytes)) + dn_bytes
 
-        # controls
-        controls = _ber_seq(_build_assertion_control(true_filter))
+        controls = _ber_seq(_build_assertion_control(_TRUE_FILTER))
         controls_tagged = b"\xa0" + _ber_len(len(controls)) + controls
 
         payload = _ber_seq(_ber_int(1) + del_request + controls_tagged)
         raw = RawConnection(session.host, session.port)
         outcome = raw.bind_then_send(payload, ADMIN_DN, ADMIN_PW)
-        # DeleteResponse is [APPLICATION 11] (0x6b)
         if outcome.result_code != 0:
             return Result(
                 "4528.3.3",
-                Status.AUTO_PASS,
+                Status.FAIL,
                 detail=f"delete with TRUE assertion failed: {outcome.result_code}",
             )
         return Result("4528.3.3", Status.PASS)
@@ -228,27 +205,26 @@ def assertion_delete_true(session: Session) -> Result:
     severity=Severity.MUST,
     test_class=TestClass.A,
     profiles=_STANDARD,
-    text="Assertion with Search: FALSE assertion on baseObject returns assertionFailed.",
-    strategy="Search with FALSE assertion on baseObject; expect 122, no entries.",
+    text="Search with FALSE assertion on baseObject returns assertionFailed.",
+    strategy="Search with FALSE assertion on baseObject; expect 122.",
 )
 def assertion_search_false(session: Session) -> Result:
     from bauble.raw import RawConnection
 
     dn = f"uid=alice,{TEST_BASE}"
 
-    false_filter_assertion = _ber_equality_filter("objectClass", "doesNotExist")
-    controls = _ber_seq(_build_assertion_control(false_filter_assertion))
+    controls = _ber_seq(_build_assertion_control(_FALSE_FILTER))
     controls_tagged = b"\xa0" + _ber_len(len(controls)) + controls
 
-    # Build minimal SearchRequest (base scope, no limits, typesOnly=FALSE)
+    # Build SearchRequest (base scope, no limits, typesOnly=FALSE)
     base = _ber_octet(dn)
-    scope = b"\x0a\x01\x00"  # ENUMERATED baseObject(0)
-    deref = b"\x0a\x01\x00"  # ENUMERATED neverDerefAliases(0)
+    scope = b"\x0a\x01\x00"
+    deref = b"\x0a\x01\x00"
     size_limit = _ber_int(0)
     time_limit = _ber_int(0)
-    types_only = b"\x01\x01\x00"  # BOOLEAN FALSE
-    present_filter = b"\x87\x00"  # present filter
-    attrs = _ber_seq(b"")  # empty SEQUENCE = request all user attrs
+    types_only = b"\x01\x01\x00"
+    present_filter = _TRUE_FILTER  # the search filter, not the assertion
+    attrs = _ber_seq(b"")
 
     search_contents = (
         base + scope + deref + size_limit + time_limit + types_only + present_filter + attrs
@@ -258,11 +234,10 @@ def assertion_search_false(session: Session) -> Result:
 
     raw = RawConnection(session.host, session.port)
     outcome = raw.bind_then_send(payload, ADMIN_DN, ADMIN_PW)
-    # assertionFailed = 122; but OpenLDAP may not handle this correctly
     if outcome.result_code == 122:
         return Result("4528.3.4", Status.PASS)
     return Result(
         "4528.3.4",
-        Status.AUTO_PASS,
+        Status.FAIL,
         detail=f"expected assertionFailed (122), got {outcome.result_code}",
     )
