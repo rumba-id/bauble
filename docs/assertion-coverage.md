@@ -61,7 +61,7 @@ Summary of implemented assertions per RFC. v1.1.0 — 97 assertions, 90 class A,
 | Status | Count | Detail |
 |--------|-------|--------|
 | PASS | 24 | Server conforms |
-| AUTO_PASS | 7 | Feature not supported (vendor attrs, modify-increment, authzId) |
+| NOT_APPLICABLE | 7 | Feature not supported (vendor attrs, modify-increment, authzId) |
 | FAIL | 2 | RFC 4528 assertion control — advertised but not processed |
 | UNTESTABLE | 4 | Class B (SHOULD requirements, no portable test) |
 
@@ -71,5 +71,5 @@ Summary of implemented assertions per RFC. v1.1.0 — 97 assertions, 90 class A,
 - **Class A (MUST/SHOULD/MAY, testable):** 90
 - **Class B (MUST/SHOULD, untestable portably):** 7
 - **RFCs covered:** 27
-- **OpenLDAP Base profile:** 55/55 CONFORMANT
-- **OpenLDAP Standard profile:** 2 known gaps (assertion control)
+- **OpenLDAP Interop profile:** 55/55 CONFORMANT
+- **OpenLDAP Core profile:** 2 known gaps (assertion control)
