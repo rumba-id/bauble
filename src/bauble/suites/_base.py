@@ -1,0 +1,57 @@
+"""Decorator and helpers for declaring assertions in suite modules."""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+
+from bauble.model import (
+    Assertion,
+    Category,
+    Profile,
+    Runner,
+    Severity,
+    TestClass,
+)
+from bauble.registry import default_registry
+
+__all__ = ["assertion"]
+
+
+def assertion(
+    *,
+    id: str,
+    rfc: int,
+    section: str,
+    category: Category,
+    severity: Severity,
+    test_class: TestClass,
+    profiles: frozenset[Profile],
+    text: str,
+    strategy: str = "",
+    requires: tuple[str, ...] = (),
+    mutates: bool = False,
+    requires_features: tuple[str, ...] = (),
+) -> Callable[[Runner], Runner]:
+    """Register an assertion and its runner in the default registry."""
+
+    def decorator(runner: Runner) -> Runner:
+        default_registry().register(
+            Assertion(
+                id=id,
+                rfc=rfc,
+                section=section,
+                category=category,
+                severity=severity,
+                test_class=test_class,
+                profiles=profiles,
+                text=text,
+                strategy=strategy,
+                requires=requires,
+                mutates=mutates,
+                requires_features=requires_features,
+            ),
+            runner=runner,
+        )
+        return runner
+
+    return decorator
