@@ -71,5 +71,23 @@ class FakeSession:
     def compare(self, dn: str, attribute: str, value: str) -> Outcome:
         return self._respond("compare", dn=dn, attribute=attribute, value=value)
 
+    def modify_dn(
+        self,
+        dn: str,
+        new_rdn: str,
+        delete_old_rdn: bool = True,
+        new_superior: str | None = None,
+    ) -> Outcome:
+        return self._respond(
+            "modify_dn",
+            dn=dn,
+            new_rdn=new_rdn,
+            delete_old_rdn=delete_old_rdn,
+            new_superior=new_superior,
+        )
+
+    def extended(self, request_name: str, request_value: bytes | None = None) -> Outcome:
+        return self._respond("extended", request_name=request_name, request_value=request_value)
+
     def unbind(self) -> None:
         self._respond("unbind")

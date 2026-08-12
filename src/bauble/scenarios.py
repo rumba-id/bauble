@@ -30,7 +30,17 @@ def _section_is(assertion: Assertion, rfc: int, prefix: str) -> bool:
 
 
 SCENARIOS: dict[str, Scenario] = {
+    "add": Scenario("add", "RFC 4511 §4.7 Add", lambda a: _section_is(a, 4511, "§4.7")),
     "bind": Scenario("bind", "RFC 4511 §4.2 Bind", lambda a: _section_is(a, 4511, "§4.2")),
+    "compare": Scenario(
+        "compare", "RFC 4511 §4.10 Compare", lambda a: _section_is(a, 4511, "§4.10")
+    ),
+    "delete": Scenario("delete", "RFC 4511 §4.8 Delete", lambda a: _section_is(a, 4511, "§4.8")),
+    "extended": Scenario(
+        "extended", "RFC 4511 §4.12 Extended", lambda a: _section_is(a, 4511, "§4.12")
+    ),
+    "moddn": Scenario("moddn", "RFC 4511 §4.9 ModifyDN", lambda a: _section_is(a, 4511, "§4.9")),
+    "modify": Scenario("modify", "RFC 4511 §4.6 Modify", lambda a: _section_is(a, 4511, "§4.6")),
     "search": Scenario("search", "RFC 4511 §4.5 Search", lambda a: _section_is(a, 4511, "§4.5")),
     "self-check": Scenario("self-check", "bauble wiring self-checks", lambda a: a.rfc == 0),
 }

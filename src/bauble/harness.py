@@ -147,6 +147,24 @@ class LdapSession:
         self._connection.compare(dn, attribute, value)
         return outcome_from_result(self._connection.result)
 
+    def modify_dn(
+        self,
+        dn: str,
+        new_rdn: str,
+        delete_old_rdn: bool = True,
+        new_superior: str | None = None,
+    ) -> Outcome:
+        self._ensure_open()
+        self._connection.modify_dn(
+            dn, new_rdn, delete_old_dn=delete_old_rdn, new_superior=new_superior
+        )
+        return outcome_from_result(self._connection.result)
+
+    def extended(self, request_name: str, request_value: bytes | None = None) -> Outcome:
+        self._ensure_open()
+        self._connection.extended(request_name, request_value)
+        return outcome_from_result(self._connection.result)
+
     def unbind(self) -> None:
         if self._opened:
             self._connection.unbind()

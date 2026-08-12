@@ -94,4 +94,14 @@ class Session(Protocol):
 
     def compare(self, dn: str, attribute: str, value: str) -> Outcome: ...
 
+    def modify_dn(
+        self,
+        dn: str,
+        new_rdn: str,
+        delete_old_rdn: bool = True,
+        new_superior: str | None = None,
+    ) -> Outcome: ...
+
+    def extended(self, request_name: str, request_value: bytes | None = None) -> Outcome: ...
+
     def unbind(self) -> None: ...
