@@ -212,7 +212,7 @@ class SummaryReporter:
         out.write("Per RFC:\n")
         for rfc in _rfcs_in(records):
             rfc_records = [r for r in records if r.rfc == rfc]
-            verdicts = [profile_verdict(records, p) for p in _profiles_in(rfc_records)]
+            verdicts = [profile_verdict(rfc_records, p) for p in _profiles_in(rfc_records)]
             worst = "CONFORMANT" if all(v.conformant for v in verdicts) else "NON-CONFORMANT"
             totals = "+".join(f"{v.must_a_ok}/{v.must_a_total}" for v in verdicts) or "0/0"
             out.write(f"  RFC {rfc:<6} must(A) {totals:<10} {worst}\n")

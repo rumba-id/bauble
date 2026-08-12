@@ -63,3 +63,10 @@ def test_discovery_registers_bind_assertions() -> None:
     assert "4511.4.2.1" in registry
     assert "4511.4.2.8" in registry
     assert len(registry.by_rfc(4511)) == 31
+    assert len(registry.by_rfc(4512)) == 4
+    assert len(registry.by_rfc(4514)) == 2
+    assert len(registry.by_rfc(4515)) == 3
+    assert len(registry.by_rfc(4516)) == 1
+    assert len(registry.by_rfc(4517)) == 2
+    assert len(registry.by_rfc(4518)) == 1
+    assert len(registry.by_rfc(4519)) == 3

@@ -50,6 +50,18 @@ RFC 4511 (The Protocol) — 31 assertions across 9 operations:
 
 Of 31 assertions: 29 testable (29/29 PASS on OpenLDAP), 2 UNTESTABLE (intrinsic).
 
+### Schema and representation (16 assertions across 7 RFCs)
+
+- **RFC 4512** (4) — root DSE, subschema objectClasses/attributeTypes, entries have objectClass
+- **RFC 4514** (2) — DN parsing, case preservation
+- **RFC 4515** (3) — AND/OR/NOT filter evaluation
+- **RFC 4516** (1) — supportedLDAPVersion advertised
+- **RFC 4517** (2) — ldapSyntaxes + matchingRules advertised
+- **RFC 4518** (1) — case-insensitive matching
+- **RFC 4519** (3) — inetOrgPerson/OU/dc advertised in subschema
+
+Schema assertions: 16/16 testable (all PASS on OpenLDAP).
+
 ## Profiles
 
 Three tiers. A profile is a selection of assertions, not separate code:

@@ -42,6 +42,9 @@ SCENARIOS: dict[str, Scenario] = {
     "moddn": Scenario("moddn", "RFC 4511 §4.9 ModifyDN", lambda a: _section_is(a, 4511, "§4.9")),
     "modify": Scenario("modify", "RFC 4511 §4.6 Modify", lambda a: _section_is(a, 4511, "§4.6")),
     "search": Scenario("search", "RFC 4511 §4.5 Search", lambda a: _section_is(a, 4511, "§4.5")),
+    "schema": Scenario(
+        "schema", "RFC 4512-4519 (schema and representation)", lambda a: 4512 <= a.rfc <= 4519
+    ),
     "self-check": Scenario("self-check", "bauble wiring self-checks", lambda a: a.rfc == 0),
 }
 
