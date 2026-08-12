@@ -16,7 +16,12 @@ import socket
 
 from bauble.session import Outcome
 
-__all__ = ["RawConnection"]
+__all__ = [
+    "RawConnection",
+    "paged_results_control_value",
+    "password_modify_request_value",
+    "sort_control_value",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -137,6 +142,41 @@ def _parse_bind_response(data: bytes) -> Outcome | None:
         message=message,
         server_sasl_creds=server_sasl_creds,
     )
+
+
+def paged_results_control_value(page_size: int, cookie: bytes | None = None) -> bytes:
+    """BER-encoded value for the Simple Paged Results control (RFC 2696).
+
+    SEQUENCE { size INTEGER, cookie OCTET STRING }
+    """
+    cookie = cookie or b""
+    inner = _encode_integer(page_size) + _encode_octet_string(cookie)
+    return _encode_sequence(inner)
+
+
+def sort_control_value(attributes: list[str]) -> bytes:
+    """BER-encoded value for the Server-Side Sorting control (RFC 2891).
+
+    SEQUENCE OF SEQUENCE { attributeType OCTET STRING }
+    """
+    inner = b"".join(_encode_sequence(_encode_octet_string(attr)) for attr in attributes)
+    return _encode_sequence(inner)
+
+
+def password_modify_request_value(new_password: str, user_dn: str = "") -> bytes:
+    """BER-encoded Password Modify request value (RFC 3062).
+
+    SEQUENCE { userIdentity [0] "...", newPasswd [2] "..." }
+    If ``user_dn`` is empty the server applies to the bound identity;
+    oldPasswd is omitted so the server does not verify it.
+    """
+    parts = b""
+    if user_dn:
+        dn_bytes = user_dn.encode()
+        parts += b"\x80" + _encode_length(len(dn_bytes)) + dn_bytes
+    payload = new_password.encode()
+    parts += b"\x82" + _encode_length(len(payload)) + payload
+    return _encode_sequence(parts)
 
 
 # ---------------------------------------------------------------------------
