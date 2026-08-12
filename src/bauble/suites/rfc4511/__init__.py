@@ -1,5 +1,5 @@
-"""RFC 4511 — Lightweight Directory Access Protocol: The Protocol.
+"""RFC 4511 — Lightweight Directory Access Protocol: The Protocol."""
 
-Suite modules for individual operations (bind, search, add, ...) are imported
-here so discovery registers them. Populated from Phase 4 onward.
-"""
+from . import bind  # registers §4.2 assertions via decorator side effects
+
+del bind  # side-effect import; name not needed in the package namespace
