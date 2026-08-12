@@ -89,5 +89,8 @@ class FakeSession:
     def extended(self, request_name: str, request_value: bytes | None = None) -> Outcome:
         return self._respond("extended", request_name=request_name, request_value=request_value)
 
+    def start_tls(self) -> Outcome:
+        return self._respond("start_tls")
+
     def unbind(self) -> None:
         self._respond("unbind")

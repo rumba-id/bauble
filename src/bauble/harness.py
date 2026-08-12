@@ -88,6 +88,14 @@ class LdapSession:
                 self._connection.start_tls()
             self._opened = True
 
+    def start_tls(self) -> Outcome:
+        """Perform a StartTLS operation and upgrade the connection."""
+        self._ensure_open()
+        result = self._connection.start_tls()
+        if result:
+            return Outcome(result_code=0)
+        return Outcome(result_code=-1, message="StartTLS failed")
+
     def bind(self, dn: str | None, password: str | None) -> Outcome:
         self._ensure_open()
         self._connection.rebind(user=dn, password=password)
