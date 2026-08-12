@@ -124,12 +124,14 @@ def language_range_matches_prefix(session: Session) -> Result:
                 detail="language range not supported",
             )
         attrs = entries[0].attributes
-        if "description;lang-en" in attrs and "description;lang-en-US" in attrs:
+        # Attribute names are case-insensitive; ldap3 normalizes to lowercase.
+        attr_keys = {k.lower() for k in attrs}
+        if "description;lang-en" in attr_keys and "description;lang-en-us" in attr_keys:
             return Result("3866.3.1.1", Status.PASS)
         return Result(
             "3866.3.1.1",
-            Status.AUTO_PASS,
-            detail="range match did not return both variants",
+            Status.FAIL,
+            detail=f"range match failed; got keys: {sorted(attr_keys)}",
         )
     finally:
         cleanup(session, dn)
