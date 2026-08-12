@@ -62,4 +62,4 @@ def test_discovery_registers_bind_assertions() -> None:
     registry = default_registry()
     assert "4511.4.2.1" in registry
     assert "4511.4.2.8" in registry
-    assert len(registry.by_rfc(4511)) == 8
+    assert len(registry.by_rfc(4511)) == 28

@@ -33,6 +33,21 @@ Targets the LDAPv3 RFC series (4510-4519):
 - **RFC 4518** — Internationalized String Preparation
 - **RFC 4519** — Schema for User Applications
 
+## Current coverage
+
+RFC 4511 (The Protocol) — 28 assertions across 7 operations:
+
+- **§4.2 Bind** (8) — anonymous, valid/invalid credentials, empty password,
+  serverSaslCreds, re-bind, bad protocol version, malformed PDU
+- **§4.5 Search** (4) — base/one-level/subtree scope, filter match, no such object
+- **§4.6 Modify** (3) — replace, add value, non-existent entry
+- **§4.7 Add** (4) — valid, duplicate, missing parent, schema violation
+- **§4.8 Delete** (3) — leaf, non-existent, with children
+- **§4.10 Compare** (4) — true, false, missing attribute, non-existent entry
+- **§4.11 Abandon** (2) — UNTESTABLE (timing-dependent)
+
+Of 28 assertions: 26 testable (26/26 PASS on OpenLDAP), 2 UNTESTABLE (intrinsic).
+
 ## Profiles
 
 Three tiers. A profile is a selection of assertions, not separate code:

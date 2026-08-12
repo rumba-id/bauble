@@ -1,5 +1,5 @@
 """RFC 4511 — Lightweight Directory Access Protocol: The Protocol."""
 
-from . import bind  # registers §4.2 assertions via decorator side effects
+from . import abandon, add, bind, compare, delete, modify, search
 
-del bind  # side-effect import; name not needed in the package namespace
+del abandon, add, bind, compare, delete, modify, search
