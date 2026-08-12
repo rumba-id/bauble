@@ -2,90 +2,84 @@
 
 An open-source, implementation-independent LDAP RFC conformance test suite.
 
-## Overview
+## Status
 
-Bauble is a Python-based test suite that verifies LDAP server compliance with the core LDAPv3 RFCs. It is modeled on the principles of the VSLDAP test suite from The Open Group, but is fully open-source and server-independent.
+In design. The conformance model, profiles, and an eight-phase
+implementation plan are settled; Phases 0-4 are approved and implementation
+has not started. bauble does not test any server yet.
 
-## Author
+- [Implementation plan](docs/implementation-plan.md)
+- [Design notes](docs/design-notes.md)
+- [RFC reference tree](docs/references.md)
 
-Daniel S. Reichenbach
+## Goal
+
+Point bauble at any LDAPv3 server and get a conformance report: which RFC
+requirements it satisfies, which it violates, and which cannot be tested
+portably. MIT-licensed and server-independent.
+
 ## Scope
 
-The suite targets the following RFCs:
+Targets the LDAPv3 RFC series (4510-4519):
 
-- **RFC 4510** — LDAP: The Protocol Specification (umbrella)
-- **RFC 4511** — LDAP: The Protocol
-- **RFC 4512** — LDAP: Attribute Syntax Definitions
-- **RFC 4514** — LDAP: UTF-8 String Representation of Distinguished Names
-- **RFC 4515** — LDAP: String Representation of LDAP Search Filters
-- **RFC 4516** — LDAP: The LDAP URL Format
+- **RFC 4510** — Technical Specification Road Map
+- **RFC 4511** — The Protocol
+- **RFC 4512** — Directory Information Models
+- **RFC 4513** — Authentication Methods and Security Mechanisms
+- **RFC 4514** — String Representation of Distinguished Names
+- **RFC 4515** — String Representation of Search Filters
+- **RFC 4516** — Uniform Resource Locator
+- **RFC 4517** — Syntaxes and Matching Rules
+- **RFC 4518** — Internationalized String Preparation
+- **RFC 4519** — Schema for User Applications
 
 ## Profiles
 
-The test suite is organized into two profiles, mirroring the LDAP Certified Product Standard:
+Three tiers. A profile is a selection of assertions, not separate code:
 
-### Base Profile
+- **Base** — simple bind; search, add, delete, modify, modify DN; over TCP
+  and TLS.
+- **Standard** — root DSE, alias dereferencing, operational attributes,
+  controls, extended operations, referrals, continuation references.
+- **Advanced** — optional surfaces such as SASL controls and
+  extensibleObject.
 
-Covers the essential, mandatory LDAP features:
+Base is a prerequisite for Standard.
 
-- Simple bind
-- Search, add, delete, modify, modify DN operations
-- Operation over TCP and SSL/TLS
-- Core protocol operations from RFC 4511
+## Model
 
-### Standard Profile
+Every test is an assertion tied to one RFC requirement. Severity (RFC 2119
+`MUST`/`SHOULD`/`MAY`) and testability are tracked independently: a `MUST`
+with no portable test is reported `UNTESTABLE`, not silently dropped. See the
+[design notes](docs/design-notes.md). LDAP access uses
+[ldap3](https://github.com/cannatag/ldap3).
 
-Builds upon the Base Profile and tests advanced features:
+## Usage (planned)
 
-- Root DSE
-- Alias dereferencing
-- Operational attributes
-- Controls and extended operations
-- Referrals and continuation references
-- Common object classes and attribute types
-
-## Usage
+Not implemented yet. Intended invocation once the CLI lands:
 
 ```bash
-# Install dependencies
-uv sync
-
-# Run all tests against a target server
-uv run pytest --server ldap://localhost:389
-
-# Run only Base profile tests
-uv run pytest --profile base
-
-# Run only Standard profile tests
-uv run pytest --profile standard
+uv run bauble run --profile base --server ldaps://host --capability bauble.toml
 ```
 
-## Architecture
+Before Phase 8 the form is `uv run python -m bauble run ...`.
 
-```
-src/bauble/
-  ├── __init__.py
-  ├── client.py          # LDAP connection management
-  ├── assertions.py      # RFC-based test assertions
-  ├── base_profile.py    # Base profile test cases
-  ├── standard_profile.py # Standard profile test cases
-  └── runner.py          # Test harness and CLI
+## Development
 
-tests/
-  ├── conftest.py
-  ├── test_base_profile.py
-  └── test_standard_profile.py
+Python 3.13+ and [uv](https://docs.astral.sh/uv/).
+
+```bash
+uv sync                       # install dependencies
+uv run pytest                 # tests
+uv run ruff check             # lint
+uv run ruff format --check    # format check
+uv run pyright                # type check
 ```
 
-## Reference Materials
+## Author
 
-This project is based on:
-
-- **VSLDAP Test Assertions** — The Open Group's public test assertion documentation
-- **RFC 4510–4519** — The LDAPv3 protocol suite
-- **ldap3** — Python LDAP client library (LGPL v3)
-- **sldap3** — Python LDAP server library (LGPL v3)
+[Daniel S. Reichenbach](https://github.com/danielsreichenbach)
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE).
