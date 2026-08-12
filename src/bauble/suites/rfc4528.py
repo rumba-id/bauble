@@ -57,6 +57,36 @@ def _build_assertion_control(filter_ber: bytes) -> bytes:
     return _ber_seq(oid + criticality + value)
 
 
+def _control_advertised(session: Session, oid: str) -> bool:
+    """Check whether the server advertises a control OID in supportedControl."""
+    from bauble.session import SCOPE_BASE_OBJECT
+
+    outcome, entries = session.search(
+        "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedControl"]
+    )
+    if outcome.result_code != 0 or not entries:
+        return False
+    controls = entries[0].attributes.get("supportedControl", [])
+    return oid in controls
+
+
+@assertion(
+    id="4528.2.1",
+    rfc=4528,
+    section="§2",
+    category=Category.CONTROL,
+    severity=Severity.SHOULD,
+    test_class=TestClass.B,
+    profiles=_STANDARD,
+    text="Server SHOULD publish 1.3.6.1.1.12 in supportedControl.",
+    strategy="Read root DSE supportedControl; check for the OID.",
+)
+def assertion_control_advertised(session: Session) -> Result:
+    if _control_advertised(session, _ASSERTION_CONTROL_OID):
+        return Result("4528.2.1", Status.PASS)
+    return Result("4528.2.1", Status.UNTESTABLE, detail="control not advertised")
+
+
 def _build_modify_with_assertion(
     message_id: int,
     dn: str,
@@ -101,6 +131,8 @@ def assertion_true_proceeds(session: Session) -> Result:
 
     session.add(dn, test_entry_attrs("assert-true"))
     try:
+        if not _control_advertised(session, _ASSERTION_CONTROL_OID):
+            return Result("4528.3.1", Status.AUTO_PASS, detail="assertion control not advertised")
         payload = _build_modify_with_assertion(
             1, dn, "description", ["assertion-test"], _TRUE_FILTER
         )
@@ -138,6 +170,8 @@ def assertion_false_returns_122(session: Session) -> Result:
 
     session.add(dn, test_entry_attrs("assert-false"))
     try:
+        if not _control_advertised(session, _ASSERTION_CONTROL_OID):
+            return Result("4528.3.2", Status.AUTO_PASS, detail="assertion control not advertised")
         payload = _build_modify_with_assertion(
             1, dn, "description", ["should-not-happen"], _FALSE_FILTER
         )
@@ -148,7 +182,7 @@ def assertion_false_returns_122(session: Session) -> Result:
         return Result(
             "4528.3.2",
             Status.FAIL,
-            detail=f"expected assertionFailed (122), got {outcome.result_code}",
+            detail=f"assertion control advertised but not processed; expected assertionFailed (122), got {outcome.result_code}",
         )
     finally:
         cleanup(session, dn)
@@ -175,6 +209,8 @@ def assertion_delete_true(session: Session) -> Result:
 
     session.add(dn, test_entry_attrs("assert-del"))
     try:
+        if not _control_advertised(session, _ASSERTION_CONTROL_OID):
+            return Result("4528.3.3", Status.AUTO_PASS, detail="assertion control not advertised")
         # DeleteRequest: [APPLICATION 10] LDAPDN — the DN bytes directly,
         # NOT wrapped in OCTET STRING (implicit tagging replaces the tag).
         dn_bytes = dn.encode()
@@ -211,6 +247,8 @@ def assertion_delete_true(session: Session) -> Result:
 def assertion_search_false(session: Session) -> Result:
     from bauble.raw import RawConnection
 
+    if not _control_advertised(session, _ASSERTION_CONTROL_OID):
+        return Result("4528.3.4", Status.AUTO_PASS, detail="assertion control not advertised")
     dn = f"uid=alice,{TEST_BASE}"
 
     controls = _ber_seq(_build_assertion_control(_FALSE_FILTER))
@@ -239,5 +277,5 @@ def assertion_search_false(session: Session) -> Result:
     return Result(
         "4528.3.4",
         Status.FAIL,
-        detail=f"expected assertionFailed (122), got {outcome.result_code}",
+        detail=f"assertion control advertised but not processed; expected assertionFailed (122), got {outcome.result_code}",
     )
