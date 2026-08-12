@@ -73,6 +73,12 @@ Three tiers. A profile is a selection of assertions, not separate code:
 - **Advanced** — optional surfaces such as SASL controls and
   extensibleObject.
 
+| Profile | Assertions | Conformance |
+|---|---|
+| Base | 45/45 | CONFORMANT |
+| Standard | 4/4 | CONFORMANT |
+| Advanced | — | pending |
+
 Base is a prerequisite for Standard.
 
 ## Model
@@ -83,15 +89,45 @@ with no portable test is reported `UNTESTABLE`, not silently dropped. See the
 [design notes](docs/design-notes.md). LDAP access uses
 [ldap3](https://github.com/cannatag/ldap3).
 
-## Usage (planned)
+## Usage
 
-Not implemented yet. Intended invocation once the CLI lands:
+Start the podman OpenLDAP test target once, then run any selection:
 
 ```bash
-uv run bauble run --profile base --server ldaps://host --capability bauble.toml
+# start the test target (stays running for reuse)
+uv run bauble run --target
+
+# run the Base profile and get a conformance summary
+uv run bauble run --profile base --target --reporter summary
+
+# run a single RFC
+uv run bauble run --rfc 4511 --target --reporter text
+
+# run against an external server
+uv run bauble run --profile base --server ldap://host:389 --reporter journal
+
+# write output to a file
+uv run bauble run --profile base --target --reporter journal --out run.jsonl
 ```
 
-Before Phase 8 the form is `uv run python -m bauble run ...`.
+Use `--fresh-target` to force a fresh container (opt-in, slower).
+
+### Capability file
+
+Optional features the server supports are declared in a TOML file:
+
+```toml
+[server]
+writable = true
+
+[features]
+alt_server = false
+naming_context = true
+supported_extension = []
+supported_control = []
+```
+
+Pass it with `--capability bauble.toml`. Unsupported features auto-pass.
 
 ## Development
 

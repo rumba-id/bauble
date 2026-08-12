@@ -21,6 +21,9 @@ dev = [
 Homepage = "https://github.com/rumba-id/bauble"
 Repository = "https://github.com/rumba-id/bauble"
 
+[project.scripts]
+bauble = "bauble.runner:main"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
