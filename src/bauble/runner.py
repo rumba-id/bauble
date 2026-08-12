@@ -2,8 +2,8 @@
 
 Library entry :func:`run` takes a :class:`~bauble.session.Session` and is used
 by tests with :class:`~bauble._fake.FakeSession`. The CLI (:func:`main`)
-supports ``--dry-run`` in Phase 1; live server runs are wired in Phase 2 when
-the harness lands.
+supports ``--dry-run`` plus live runs against ``--server <uri>`` or the podman
+test target via ``--target`` (Phase 2). Reporters are layered on in Phase 3.
 """
 
 from __future__ import annotations
@@ -12,8 +12,10 @@ import argparse
 import sys
 from collections.abc import Sequence
 from typing import cast
+from urllib.parse import urlparse
 
 from bauble.capability import Capability, load_capability
+from bauble.harness import LdapSession, ServerConfig
 from bauble.model import Assertion, Category, Profile, Result, Severity, Status, TestClass
 from bauble.registry import Registry, default_registry
 from bauble.selector import Selector
@@ -92,7 +94,7 @@ def _topo_sort(assertions: list[Assertion]) -> list[Assertion]:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """CLI entry point: ``bauble run [--profile ...] [--dry-run] ...``."""
+    """CLI entry point: ``bauble run [--profile ...] [--dry-run|--server ...|--target]``."""
     args = _parse(argv)
     if args.command != "run":
         return 2
@@ -109,12 +111,54 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"{a.id}  [{a.test_class.value}/{a.severity.value}]  {a.text}")
         print(f"{len(selected)} assertion(s) selected")
         return 0
-    _ = capability  # used once live runs land in Phase 2
-    print(
-        "live server runs require the Phase 2 harness (not yet implemented)",
-        file=sys.stderr,
-    )
+    if args.target:
+        from bauble.fixtures.container import OpenLDAPTarget
+
+        target = OpenLDAPTarget()
+        target.build()
+        target.start()
+        try:
+            session = LdapSession(target.server_config(use_start_tls=args.starttls))
+            try:
+                results = run(selector, registry, capability, session)
+            finally:
+                session.unbind()
+        finally:
+            target.stop()
+        _print_results(results)
+        return 0
+    if args.server:
+        session = LdapSession(_server_config_from_uri(args.server, args.starttls))
+        try:
+            results = run(selector, registry, capability, session)
+        finally:
+            session.unbind()
+        _print_results(results)
+        return 0
+    print("specify --server <uri> or --target for a live run", file=sys.stderr)
     return 2
+
+
+def _print_results(results: list[Result]) -> None:
+    for result in results:
+        detail = f" ({result.detail})" if result.detail else ""
+        print(f"{result.assertion_id}: {result.status.value}{detail}")
+    counts: dict[str, int] = {}
+    for result in results:
+        counts[result.status.value] = counts.get(result.status.value, 0) + 1
+    summary = ", ".join(f"{k}={v}" for k, v in sorted(counts.items())) or "none"
+    print(f"summary: {summary}")
+
+
+def _server_config_from_uri(uri: str, starttls: bool) -> ServerConfig:
+    parsed = urlparse(uri)
+    scheme = (parsed.scheme or "ldap").lower()
+    return ServerConfig(
+        host=parsed.hostname or "127.0.0.1",
+        port=parsed.port or (636 if scheme == "ldaps" else 389),
+        use_ssl=scheme == "ldaps",
+        use_start_tls=starttls,
+    )
 
 
 def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
@@ -137,7 +181,13 @@ def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
     run_parser.add_argument("--capability", help="path to a capability TOML file")
     run_parser.add_argument("--allow-mutation", action="store_true")
     run_parser.add_argument("--dry-run", action="store_true")
-    run_parser.add_argument("--server", help="LDAP server URI (wired in Phase 2)")
+    run_parser.add_argument("--server", help="LDAP server URI (e.g. ldap://host:389)")
+    run_parser.add_argument(
+        "--target", action="store_true", help="start the podman OpenLDAP test target"
+    )
+    run_parser.add_argument(
+        "--starttls", action="store_true", help="issue StartTLS after connecting"
+    )
     return parser.parse_args(argv)
 
 
