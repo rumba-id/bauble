@@ -28,9 +28,11 @@ class OpenLDAPTarget:
         name: str = "bauble-openldap",
         host_port: int = _DEFAULT_HOST_PORT,
         image: str = "bauble-openldap",
+        ldaps_port: int = 6360,
     ) -> None:
         self.name = name
         self.host_port = host_port
+        self.ldaps_port = ldaps_port
         self.image = image
 
     def build(self) -> None:
@@ -82,7 +84,8 @@ class OpenLDAPTarget:
                 self.name,
                 "-p",
                 f"{self.host_port}:389",
-                self.image,
+                "-p",
+                f"{self.ldaps_port}:636",
             ],
             check=True,
             capture_output=True,

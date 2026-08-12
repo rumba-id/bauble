@@ -3,17 +3,26 @@ FROM debian:12-slim
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends slapd ldap-utils ca-certificates \
+ && apt-get install -y --no-install-recommends slapd ldap-utils ca-certificates openssl \
  && rm -rf /var/lib/apt/lists/*
 
 COPY slapd.conf /etc/ldap/slapd.conf
 COPY seed.ldif /seed.ldif
 
+# Generate a self-signed TLS certificate for StartTLS / LDAPS testing.
+RUN mkdir -p /etc/ldap/tls \
+ && openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+    -keyout /etc/ldap/tls/bauble.key \
+    -out /etc/ldap/tls/bauble.crt \
+    -subj "/C=DE/O=Bauble Test/CN=localhost" \
+ && chown -R openldap:openldap /etc/ldap/tls \
+ && chmod 600 /etc/ldap/tls/bauble.key
+
 RUN mkdir -p /var/lib/bauble-ldap \
  && slapadd -f /etc/ldap/slapd.conf -l /seed.ldif \
  && chown -R openldap:openldap /var/lib/bauble-ldap
 
-EXPOSE 389
+EXPOSE 389 636
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
