@@ -3,7 +3,8 @@
 Library entry :func:`run` takes a :class:`~bauble.session.Session` and is used
 by tests with :class:`~bauble._fake.FakeSession`. The CLI (:func:`main`)
 supports ``--dry-run`` plus live runs against ``--server <uri>`` or the podman
-test target via ``--target`` (Phase 2). Reporters are layered on in Phase 3.
+test target via ``--target`` (Phase 2); results route through a chosen
+reporter (Phase 3).
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from bauble.capability import Capability, load_capability
 from bauble.harness import LdapSession, ServerConfig
 from bauble.model import Assertion, Category, Profile, Result, Severity, Status, TestClass
 from bauble.registry import Registry, default_registry
+from bauble.reporter import get_reporter, to_records
 from bauble.selector import Selector
 from bauble.session import Session
 
@@ -111,21 +113,23 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"{a.id}  [{a.test_class.value}/{a.severity.value}]  {a.text}")
         print(f"{len(selected)} assertion(s) selected")
         return 0
-    if args.target:
+    if args.target or args.fresh_target:
         from bauble.fixtures.container import OpenLDAPTarget
 
         target = OpenLDAPTarget()
-        target.build()
-        target.start()
+        if args.fresh_target:
+            target.build()
+            target.start()
+        else:
+            target.ensure_running()
+        session = LdapSession(target.server_config(use_start_tls=args.starttls))
         try:
-            session = LdapSession(target.server_config(use_start_tls=args.starttls))
-            try:
-                results = run(selector, registry, capability, session)
-            finally:
-                session.unbind()
+            results = run(selector, registry, capability, session)
         finally:
-            target.stop()
-        _print_results(results)
+            session.unbind()
+        # Container left running for reuse; self-cleaning assertions keep the
+        # DIT at base seed.  Use --fresh-target for a forced reset.
+        _render(results, registry, args.reporter, args.out)
         return 0
     if args.server:
         session = LdapSession(_server_config_from_uri(args.server, args.starttls))
@@ -133,21 +137,29 @@ def main(argv: Sequence[str] | None = None) -> int:
             results = run(selector, registry, capability, session)
         finally:
             session.unbind()
-        _print_results(results)
+        _render(results, registry, args.reporter, args.out)
         return 0
     print("specify --server <uri> or --target for a live run", file=sys.stderr)
     return 2
 
 
-def _print_results(results: list[Result]) -> None:
-    for result in results:
-        detail = f" ({result.detail})" if result.detail else ""
-        print(f"{result.assertion_id}: {result.status.value}{detail}")
-    counts: dict[str, int] = {}
-    for result in results:
-        counts[result.status.value] = counts.get(result.status.value, 0) + 1
-    summary = ", ".join(f"{k}={v}" for k, v in sorted(counts.items())) or "none"
-    print(f"summary: {summary}")
+def _render(
+    results: list[Result],
+    registry: Registry,
+    reporter_name: str,
+    out_path: str | None,
+) -> None:
+    """Route results through the chosen reporter to a file or stdout."""
+    records = to_records(results, registry)
+    reporter = get_reporter(reporter_name)
+    if out_path:
+        try:
+            with open(out_path, "w", encoding="utf-8") as handle:
+                reporter.render(records, handle)
+        except OSError as exc:
+            print(f"cannot write {out_path}: {exc}", file=sys.stderr)
+    else:
+        reporter.render(records, sys.stdout)
 
 
 def _server_config_from_uri(uri: str, starttls: bool) -> ServerConfig:
@@ -183,11 +195,25 @@ def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
     run_parser.add_argument("--dry-run", action="store_true")
     run_parser.add_argument("--server", help="LDAP server URI (e.g. ldap://host:389)")
     run_parser.add_argument(
-        "--target", action="store_true", help="start the podman OpenLDAP test target"
+        "--target",
+        action="store_true",
+        help="reuse (or start) the podman OpenLDAP test target; stays running",
+    )
+    run_parser.add_argument(
+        "--fresh-target",
+        action="store_true",
+        help="force a fresh container reset before running",
     )
     run_parser.add_argument(
         "--starttls", action="store_true", help="issue StartTLS after connecting"
     )
+    run_parser.add_argument(
+        "--reporter",
+        choices=["text", "journal", "summary", "junit"],
+        default="text",
+        help="output format (default: text)",
+    )
+    run_parser.add_argument("--out", help="write output to a file (default: stdout)")
     return parser.parse_args(argv)
 
 
