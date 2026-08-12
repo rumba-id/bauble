@@ -95,3 +95,24 @@ def search_no_such_object(session: Session) -> Result:
         Status.PASS if outcome.result_code == 32 else Status.FAIL,
         detail=None if outcome.result_code == 32 else f"expected 32, got {outcome.result_code}",
     )
+
+
+@assertion(
+    id="4511.4.5.5",
+    rfc=4511,
+    section="§4.5",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_BASE,
+    text="The matchedDN field is set when a search base does not exist (32).",
+    strategy="Search a non-existent base; expect 32 with matchedDN.",
+)
+def search_matched_dn(session: Session) -> Result:
+    outcome, _ = session.search("ou=nonexistent,dc=bauble,dc=test", SCOPE_BASE_OBJECT, "(objectClass=*)")
+    ok = outcome.result_code == 32 and len(outcome.matched_dn) > 0
+    return Result(
+        "4511.4.5.5",
+        Status.PASS if ok else Status.FAIL,
+        detail=None if ok else f"code={outcome.result_code} matchedDN={outcome.matched_dn}",
+    )

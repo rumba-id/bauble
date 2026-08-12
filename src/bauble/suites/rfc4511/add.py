@@ -113,3 +113,28 @@ def add_schema_violation(session: Session) -> Result:
     )
     cleanup(session, dn)
     return result
+
+
+@assertion(
+    id="4511.4.7.5",
+    rfc=4511,
+    section="§4.7",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_BASE,
+    text="The matchedDN field is set when an add fails with noSuchObject (32).",
+    strategy="Add under a non-existent parent; expect matchedDN contains the grandparent.",
+)
+def add_matched_dn(session: Session) -> Result:
+    bind_admin(session)
+    outcome = session.add(
+        "uid=orphan,ou=nonexistent,dc=bauble,dc=test",
+        test_entry_attrs("orphan"),
+    )
+    ok = outcome.result_code == 32 and "dc=bauble,dc=test" in outcome.matched_dn.lower()
+    return Result(
+        "4511.4.7.5",
+        Status.PASS if ok else Status.FAIL,
+        detail=None if ok else f"code={outcome.result_code} matchedDN={outcome.matched_dn}",
+    )

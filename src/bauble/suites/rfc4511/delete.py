@@ -85,3 +85,24 @@ def delete_with_children(session: Session) -> Result:
         Status.PASS if outcome.result_code == 66 else Status.FAIL,
         detail=None if outcome.result_code == 66 else f"expected 66, got {outcome.result_code}",
     )
+
+
+@assertion(
+    id="4511.4.8.4",
+    rfc=4511,
+    section="§4.8",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_BASE,
+    text="The matchedDN field is set when a delete fails with noSuchObject (32).",
+    strategy="Delete a non-existent DN; expect 32 with matchedDN containing the parent.",
+)
+def delete_matched_dn(session: Session) -> Result:
+    outcome = session.delete("uid=nobody,ou=people,dc=bauble,dc=test")
+    ok = outcome.result_code == 32 and "ou=people" in outcome.matched_dn.lower()
+    return Result(
+        "4511.4.8.4",
+        Status.PASS if ok else Status.FAIL,
+        detail=None if ok else f"code={outcome.result_code} matchedDN={outcome.matched_dn}",
+    )
