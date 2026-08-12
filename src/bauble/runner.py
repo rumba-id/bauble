@@ -1,102 +1,163 @@
-"""Test harness and CLI entry point."""
+"""The execution engine and CLI: select, order, run, report verdicts.
+
+Library entry :func:`run` takes a :class:`~bauble.session.Session` and is used
+by tests with :class:`~bauble._fake.FakeSession`. The CLI (:func:`main`)
+supports ``--dry-run`` in Phase 1; live server runs are wired in Phase 2 when
+the harness lands.
+"""
 
 from __future__ import annotations
 
 import argparse
 import sys
+from collections.abc import Sequence
+from typing import cast
 
-from .assertions import AssertionResult
-from .base_profile import run_base_profile
-from .client import ServerConfig, create_connection
-from .standard_profile import run_standard_profile
+from bauble.capability import Capability, load_capability
+from bauble.model import Assertion, Category, Profile, Result, Severity, Status, TestClass
+from bauble.registry import Registry, default_registry
+from bauble.selector import Selector
+from bauble.session import Session
 
-__all__ = ["main"]
+__all__ = ["main", "run"]
 
 
-def main(argv: list[str] | None = None) -> int:
-    """CLI entry point for the conformance test suite."""
-    parser = argparse.ArgumentParser(description="LDAP RFC conformance test suite")
-    parser.add_argument(
-        "--server",
-        required=True,
-        help="LDAP server URI (e.g. ldap://localhost:389)",
-    )
-    parser.add_argument(
-        "--base-dn",
-        required=True,
-        help="Base DN for tests",
-    )
-    parser.add_argument(
-        "--bind-dn",
-        help="Bind DN for authentication",
-    )
-    parser.add_argument(
-        "--bind-password",
-        help="Bind password for authentication",
-    )
-    parser.add_argument(
-        "--profile",
-        choices=["base", "standard", "all"],
-        default="all",
-        help="Which profile to run",
-    )
-    parser.add_argument(
-        "--tls",
-        action="store_true",
-        help="Use TLS for connection",
-    )
+def run(
+    selector: Selector,
+    registry: Registry,
+    capability: Capability,
+    session: Session,
+) -> list[Result]:
+    """Run the selected assertions in dependency order, returning Results."""
+    selected = [a for a in registry.all() if selector.matches(a)]
+    ordered = _topo_sort(selected)
+    results: dict[str, Result] = {}
+    out: list[Result] = []
+    for assertion in ordered:
+        result = _decide(assertion, registry, capability, selector, session, results)
+        results[assertion.id] = result
+        out.append(result)
+    return out
 
-    args = parser.parse_args(argv)
 
-    # Parse server URI
-    server_config = _parse_uri(args.server, args.tls)
-
-    # Create connection
-    try:
-        conn = create_connection(server_config)
-    except (ConnectionError, OSError) as exc:
-        print(f"Failed to connect to {args.server}: {exc}", file=sys.stderr)
-        return 1
-
-    results: list[AssertionResult] = []
-
-    if args.profile in ("base", "all"):
-        print("Running Base Profile...")
-        results.extend(
-            run_base_profile(
-                conn, args.base_dn, (args.bind_dn, args.bind_password) if args.bind_dn else None
+def _decide(
+    assertion: Assertion,
+    registry: Registry,
+    capability: Capability,
+    selector: Selector,
+    session: Session,
+    results: dict[str, Result],
+) -> Result:
+    for req in assertion.requires:
+        prior = results.get(req)
+        if prior is None or prior.status not in (Status.PASS, Status.AUTO_PASS):
+            return Result(assertion.id, Status.BLOCKED, detail=f"prerequisite {req} not satisfied")
+    runner = registry.runner(assertion.id)
+    if assertion.test_class in (TestClass.B, TestClass.D) or runner is None:
+        return Result(assertion.id, Status.UNTESTABLE, detail="no portable test")
+    if assertion.mutates and not capability.writable and not selector.allow_mutation:
+        return Result(assertion.id, Status.AUTO_PASS, detail="server not writable")
+    for feature in assertion.requires_features:
+        if not capability.supports(feature):
+            return Result(
+                assertion.id, Status.AUTO_PASS, detail=f"feature {feature} not supported"
             )
-        )
-
-    if args.profile in ("standard", "all"):
-        print("Running Standard Profile...")
-        results.extend(run_standard_profile(conn, args.base_dn))
-
-    # Print summary
-    passed = sum(1 for r in results if r.passed)
-    failed = len(results) - passed
-
-    print(f"\nResults: {passed} passed, {failed} failed out of {len(results)} assertions")
-
-    for result in results:
-        status = "PASS" if result.passed else "FAIL"
-        print(f"  [{status}] {result.assertion.id}: {result.assertion.description}")
-        if result.error:
-            print(f"         Error: {result.error}")
-
-    return 0 if failed == 0 else 1
+    try:
+        return runner(session)
+    except Exception as exc:  # noqa: BLE001  a buggy runner must not abort the suite
+        return Result(assertion.id, Status.FAIL, detail=f"runner raised: {exc!r}")
 
 
-def _parse_uri(uri: str, use_tls: bool) -> ServerConfig:
-    """Parse an LDAP URI into a ServerConfig."""
-    from urllib.parse import urlparse
+def _topo_sort(assertions: list[Assertion]) -> list[Assertion]:
+    by_id = {a.id: a for a in assertions}
+    done: set[str] = set()
+    in_progress: set[str] = set()
+    out: list[Assertion] = []
 
-    parsed = urlparse(uri)
-    host = parsed.hostname or "localhost"
-    port = parsed.port or (636 if use_tls else 389)
+    def visit(node: Assertion) -> None:
+        if node.id in done or node.id in in_progress:
+            return
+        in_progress.add(node.id)
+        for req in node.requires:
+            dep = by_id.get(req)
+            if dep is not None:
+                visit(dep)
+        in_progress.discard(node.id)
+        done.add(node.id)
+        out.append(node)
 
-    return ServerConfig(
-        host=host,
-        port=port,
-        use_tls=use_tls or parsed.scheme == "ldaps",
+    for assertion in assertions:
+        visit(assertion)
+    return out
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """CLI entry point: ``bauble run [--profile ...] [--dry-run] ...``."""
+    args = _parse(argv)
+    if args.command != "run":
+        return 2
+    selector = _selector_from_args(args)
+    capability = load_capability(args.capability) if args.capability else Capability()
+    # Importing the suites package registers assertions; discover() is idempotent.
+    from bauble.suites import discover
+
+    discover()
+    registry = default_registry()
+    if args.dry_run:
+        selected = [a for a in registry.all() if selector.matches(a)]
+        for a in selected:
+            print(f"{a.id}  [{a.test_class.value}/{a.severity.value}]  {a.text}")
+        print(f"{len(selected)} assertion(s) selected")
+        return 0
+    _ = capability  # used once live runs land in Phase 2
+    print(
+        "live server runs require the Phase 2 harness (not yet implemented)",
+        file=sys.stderr,
+    )
+    return 2
+
+
+def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(prog="bauble", description="LDAP RFC conformance test suite")
+    sub = parser.add_subparsers(dest="command", required=True)
+    run_parser = sub.add_parser("run", help="run a selection of assertions")
+    run_parser.add_argument("--profile", action="append", choices=[e.value for e in Profile])
+    run_parser.add_argument("--rfc", action="append", type=int)
+    run_parser.add_argument("--scenario", action="append")
+    run_parser.add_argument("--assertion", action="append", dest="assertions")
+    run_parser.add_argument("--category", action="append", choices=[e.value for e in Category])
+    run_parser.add_argument("--exclude", action="append")
+    run_parser.add_argument("--severity", action="append", choices=[e.value for e in Severity])
+    run_parser.add_argument(
+        "--test-class",
+        action="append",
+        dest="test_classes",
+        choices=[e.value for e in TestClass],
+    )
+    run_parser.add_argument("--capability", help="path to a capability TOML file")
+    run_parser.add_argument("--allow-mutation", action="store_true")
+    run_parser.add_argument("--dry-run", action="store_true")
+    run_parser.add_argument("--server", help="LDAP server URI (wired in Phase 2)")
+    return parser.parse_args(argv)
+
+
+def _selector_from_args(args: argparse.Namespace) -> Selector:
+    profile = cast(list[str] | None, args.profile)
+    rfcs = cast(list[int] | None, args.rfc)
+    scenario = cast(list[str] | None, args.scenario)
+    assertions = cast(list[str] | None, args.assertions)
+    category = cast(list[str] | None, args.category)
+    severity = cast(list[str] | None, args.severity)
+    test_classes = cast(list[str] | None, args.test_classes)
+    exclude = cast(list[str] | None, args.exclude)
+    return Selector(
+        profiles=frozenset(Profile(p) for p in (profile or [])),
+        rfcs=frozenset(rfcs or []),
+        scenarios=frozenset(scenario or []),
+        assertions=frozenset(assertions or []),
+        categories=frozenset(Category(c) for c in (category or [])),
+        severities=frozenset(Severity(s) for s in (severity or [])),
+        test_classes=frozenset(TestClass(t) for t in (test_classes or [])),
+        exclude=frozenset(exclude or []),
+        allow_mutation=bool(cast(bool, args.allow_mutation)),
     )
