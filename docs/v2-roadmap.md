@@ -122,6 +122,11 @@ make the seed a portable input rather than a harness-only convention.
    tests, `--target-type opendj|lldap`). OpenDJ is the enterprise Java
    endpoint; LLDAP is the minimal read-mostly interface. Both surfaced
    new findings recorded in docs/server-findings.md.
+2. **Seed-DIT portability** — the operator guide
+   (docs/operator-guide.md) covers loading the seed into a non-fixture
+   server, the capability statement as the declared lever, and the
+   per-server adjustments (admin DN, anonymous-read policy, schema
+   gaps, subschema discovery).
 2. **Seed-DIT portability** — the base seed is a bauble convention; real
    servers differ (ACL policy, subschema location, schema). Document how an
    operator loads the seed and adjusts for these; the capability file is the
