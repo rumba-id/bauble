@@ -443,7 +443,7 @@ covered_by = ["4511.4.10.4"]
 id = "4511:4.11:1"
 section = "4.11"
 severity = "must"
-test_class = "B"
+test_class = "A"
 text = "Abandon of an in-progress operation ceases it and returns no response."
 covered_by = ["4511.4.11.1"]
 
@@ -451,7 +451,7 @@ covered_by = ["4511.4.11.1"]
 id = "4511:4.11:2"
 section = "4.11"
 severity = "must"
-test_class = "B"
+test_class = "A"
 text = "Abandon of an unknown messageID is silently discarded."
 covered_by = ["4511.4.11.2"]
 

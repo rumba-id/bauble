@@ -27,6 +27,7 @@ that the investigation resolved as a suite bug instead.
 | Does not implement the authzId controls | 2.16.840.1.113730.3.4.16/.15 absent from supportedControl; a bind carrying the request control gets no response control. | `3829.4.1` NOT_APPLICABLE |
 | Does not advertise the server-side sort control OIDs | 1.2.840.113556.1.4.473/.474 absent from supportedControl, though the sort operation itself works. | `2891.2.2` NOT_APPLICABLE |
 | Critical matched-values control on a non-search operation is processed, not rejected | RFC 4511 §4.1.11: not appropriate for the operation + critical -> unavailableCriticalExtension; OpenLDAP returns compareTrue (6). | `3876.2.2` FAIL |
+| Abandon with a large unknown messageID disconnects instead of discarding | RFC 4511 §4.11: servers MUST discard unknown messageIDs, and abandon has no response; OpenLDAP sends a Notice of Disconnection (protocolError) for messageIDs above its internal bound (~2^15) and closes the session. Small unknown IDs are discarded correctly. | `4511.4.11.2` FAIL |
 | Requires a non-empty AttributeSelection in Pre/Post-Read controls | An empty selection yields strongAuthRequired rather than a response control (probed against `ldapmodify -e preread`). | `4527.3.1.1`/`4527.3.2.1` behavior note |
 
 ## OpenDJ
@@ -60,6 +61,7 @@ interface's actual limits.
 | Empty AND/OR filters not evaluated | RFC 4526 SHALL allow; LLDAP denies the search (50). | `4526.2.1`, `4526.2.2` FAIL |
 | Critical control on a compare closes the connection | RFC 4511 §4.1.11: unavailableCriticalExtension; LLDAP terminates instead of responding. | `3876.2.2`, `3876.2.3` FAIL |
 | `@objectclass` raw searches denied | The @person attribute selection is not honored (50). | `4529.3.1`, `4529.3.2` FAIL |
+| Extensible-match filters not supported | RFC 4511 §4.5.1.7 defines the extensibleMatch filter choice; LLDAP's filter parser does not implement it, so (uid:caseExactMatch:=alice) matches nothing. | `4517.4.6` FAIL |
 | Password Modify ignores oldPasswd | RFC 3062: an incorrect oldPasswd must fail and leave the password unchanged; LLDAP changes it anyway. | `3062.3.3` FAIL |
 | Password Modify succeeds anonymously | RFC 3062: SHALL NOT be used anonymously; LLDAP accepts it. | `3062.3.4` FAIL |
 

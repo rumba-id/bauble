@@ -154,6 +154,19 @@ pre-2.0 review praised) so wire-level assertions stop depending on what ldap3
 can express. If not, record the decision with the count, as the pre-2.0
 review recommended. No raw layer is built on speculation.
 
+**Decision (recorded): no full raw `Session`.** The wire-UNTESTABLE count
+was 3 of 6 class-B assertions (the abandon pair and caseExactMatch). All
+three were implementable with the existing raw layer plus a minimal
+`RawSession` (a persistent socket for bind + abandon + follow-up — a dozen
+lines, not the full `Session` protocol): `4511.4.11.1` (abandon in-progress,
+now passes on all four targets), `4511.4.11.2` (abandon unknown messageID,
+passes everywhere except OpenLDAP's large-messageID disconnect — a genuine
+finding), `4517.4.6` (caseExactMatch via an extensible-match filter, passes
+except LLDAP's missing extensible-match support — a genuine finding). The
+remaining three untestable (messageID uniqueness, BER BOOLEAN encoding,
+controls-field position) are client-side statements — not wire limitations,
+and no raw `Session` could test them.
+
 ---
 
 ## Non-goals
