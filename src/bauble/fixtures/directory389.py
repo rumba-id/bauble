@@ -31,6 +31,10 @@ def _podman(args: list[str], *, check: bool = True) -> subprocess.CompletedProce
     return result
 
 
+def _capability_path(name: str) -> Path:
+    return Path(__file__).parent / name
+
+
 class Directory389Target:
     """A disposable, containerized 389 DS seeded with the bauble base DIT."""
 
@@ -43,6 +47,7 @@ class Directory389Target:
         self.name = name
         self.host_port = host_port
         self.image = image
+        self.capability_path = _capability_path("capability-389ds.toml")
 
     def build(self) -> None:
         """Build the image (idempotent: podman caches layers)."""

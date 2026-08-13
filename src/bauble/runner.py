@@ -72,6 +72,23 @@ def _decide(
         return Result(assertion.id, Status.FAIL, detail=f"runner raised: {exc!r}")
 
 
+def _resolve_capability(args: argparse.Namespace) -> Capability:
+    """The operator's capability statement, or the fixture target's default."""
+    if args.capability:
+        return load_capability(args.capability)
+    if args.target or args.fresh_target:
+        if args.target_type == "389ds":
+            from bauble.fixtures.directory389 import Directory389Target
+
+            target = Directory389Target()
+        else:
+            from bauble.fixtures.container import OpenLDAPTarget
+
+            target = OpenLDAPTarget()
+        return load_capability(target.capability_path)
+    return Capability()
+
+
 def _topo_sort(assertions: list[Assertion]) -> list[Assertion]:
     by_id = {a.id: a for a in assertions}
     done: set[str] = set()
@@ -115,7 +132,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command != "run":
         return 2
     selector = _selector_from_args(args)
-    capability = load_capability(args.capability) if args.capability else Capability()
+    capability = _resolve_capability(args)
     # Importing the suites package registers assertions; discover() is idempotent.
     from bauble.suites import discover
 

@@ -34,6 +34,10 @@ def _podman(args: list[str], *, check: bool = True) -> subprocess.CompletedProce
     return result
 
 
+def _capability_path(name: str) -> Path:
+    return Path(__file__).parent / name
+
+
 class OpenLDAPTarget:
     """A disposable, containerized OpenLDAP seeded with the bauble base DIT."""
 
@@ -48,6 +52,7 @@ class OpenLDAPTarget:
         self.host_port = host_port
         self.ldaps_port = ldaps_port
         self.image = image
+        self.capability_path = _capability_path("capability-openldap.toml")
 
     def build(self) -> None:
         """Build the image (idempotent: podman caches layers)."""

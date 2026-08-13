@@ -25,6 +25,8 @@ class Capability:
     naming_context: bool = False
     supported_extension: frozenset[str] = frozenset()
     supported_control: frozenset[str] = frozenset()
+    supported_features: frozenset[str] = frozenset()
+    supported_sasl_mechanisms: frozenset[str] = frozenset()
     extended_operation: str | None = None
 
     def supports(self, feature: str) -> bool:
@@ -32,8 +34,11 @@ class Capability:
 
         Names: ``writable``, ``resettable``, ``alt_server``,
         ``naming_context``, ``extended_operation`` (any), or OID-scoped
-        ``supported_extension:<oid>`` / ``supported_control:<oid>``. Unknown
-        feature names are treated as unsupported.
+        ``supported_extension:<oid>`` / ``supported_control:<oid>`` /
+        ``supported_features:<oid>``, or mechanism-scoped
+        ``supported_sasl_mechanisms:<mech>``. A bare OID is treated as a
+        feature OID (``requires_features`` on assertions passes bare OIDs).
+        Unknown feature names are treated as unsupported.
         """
         match feature:
             case "writable":
@@ -51,7 +56,18 @@ class Capability:
                     return feature.split(":", 1)[1] in self.supported_extension
                 if feature.startswith("supported_control:"):
                     return feature.split(":", 1)[1] in self.supported_control
+                if feature.startswith("supported_features:"):
+                    return feature.split(":", 1)[1] in self.supported_features
+                if feature.startswith("supported_sasl_mechanisms:"):
+                    return feature.split(":", 1)[1] in self.supported_sasl_mechanisms
+                if _is_oid(feature):
+                    return feature in self.supported_features
                 return False
+
+
+def _is_oid(value: str) -> bool:
+    """True when the string looks like an OID (digits and dots)."""
+    return bool(value) and all(part.isdigit() for part in value.split("."))
 
 
 def load_capability(path: str | Path) -> Capability:
@@ -78,6 +94,8 @@ def _from_mapping(data: dict[str, object]) -> Capability:
         naming_context=bool(features.get("naming_context", False)),
         supported_extension=frozenset(_str_list(features.get("supported_extension"))),
         supported_control=frozenset(_str_list(features.get("supported_control"))),
+        supported_features=frozenset(_str_list(features.get("supported_features"))),
+        supported_sasl_mechanisms=frozenset(_str_list(features.get("supported_sasl_mechanisms"))),
         extended_operation=extended if isinstance(extended, str) else None,
     )
 

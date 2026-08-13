@@ -32,3 +32,30 @@ def test_load_capability(tmp_path: Path) -> None:
     assert cap.supports("supported_extension:1.2.3")
     assert cap.extended_operation == "1.2.3"
     assert cap.supports("extended_operation")
+
+
+def test_supports_features_and_sasl() -> None:
+    cap = Capability(
+        supported_features=frozenset({"1.3.6.1.1.14"}),
+        supported_sasl_mechanisms=frozenset({"EXTERNAL", "PLAIN"}),
+    )
+    assert cap.supports("supported_features:1.3.6.1.1.14")
+    assert not cap.supports("supported_features:9.9.9")
+    assert cap.supports("supported_sasl_mechanisms:EXTERNAL")
+    assert not cap.supports("supported_sasl_mechanisms:GSSAPI")
+    # A bare OID is treated as a feature OID (the requires_features form).
+    assert cap.supports("1.3.6.1.1.14")
+    assert not cap.supports("9.9.9")
+
+
+def test_load_features_and_sasl(tmp_path: Path) -> None:
+    toml = tmp_path / "cap.toml"
+    toml.write_text(
+        "[server]\nwritable = true\n"
+        "[features]\n"
+        'supported_features = ["1.3.6.1.1.14"]\n'
+        'supported_sasl_mechanisms = ["EXTERNAL"]\n'
+    )
+    cap = load_capability(toml)
+    assert cap.supports("supported_features:1.3.6.1.1.14")
+    assert cap.supports("supported_sasl_mechanisms:EXTERNAL")
