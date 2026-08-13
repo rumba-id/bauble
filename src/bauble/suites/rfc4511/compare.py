@@ -21,6 +21,9 @@ _ALICE = "uid=alice,ou=people,dc=bauble,dc=test"
     profiles=_INTEROP,
     text="Compare a matching value returns compareTrue (6).",
     strategy="Compare uid=alice attribute uid with value alice; expect 6.",
+    preconditions="Admin bound; seed entry uid=alice exists.",
+    stimulus="CompareRequest on uid=alice asserting uid=alice.",
+    expected_observables="CompareResponse resultCode compareTrue (6).",
 )
 def compare_true(session: Session) -> Result:
     bind_admin(session)
@@ -42,6 +45,9 @@ def compare_true(session: Session) -> Result:
     profiles=_INTEROP,
     text="Compare a non-matching value returns compareFalse (5).",
     strategy="Compare uid=alice attribute uid with value bob; expect 5.",
+    preconditions="Admin bound; seed entry uid=alice exists.",
+    stimulus="CompareRequest on uid=alice asserting uid=bob.",
+    expected_observables="CompareResponse resultCode compareFalse (5).",
 )
 def compare_false(session: Session) -> Result:
     outcome = session.compare(_ALICE, "uid", "bob")
@@ -62,6 +68,9 @@ def compare_false(session: Session) -> Result:
     profiles=_INTEROP,
     text="Compare with a missing attribute returns noSuchAttribute (16).",
     strategy="Compare uid=alice on a non-existent attribute; expect 16.",
+    preconditions="Admin bound; seed entry uid=alice exists without a mail attribute.",
+    stimulus="CompareRequest on uid=alice asserting a non-existent attribute (mail).",
+    expected_observables="CompareResponse resultCode noSuchAttribute (16).",
 )
 def compare_missing_attribute(session: Session) -> Result:
     outcome = session.compare(_ALICE, "mail", "x")
@@ -82,6 +91,9 @@ def compare_missing_attribute(session: Session) -> Result:
     profiles=_INTEROP,
     text="Compare a non-existent entry returns noSuchObject (32).",
     strategy="Compare on a DN that does not exist; expect 32.",
+    preconditions="Admin bound.",
+    stimulus="CompareRequest on a non-existent DN.",
+    expected_observables="CompareResponse resultCode noSuchObject (32).",
 )
 def compare_no_such_object(session: Session) -> Result:
     outcome = session.compare("uid=nobody,ou=people,dc=bauble,dc=test", "uid", "x")

@@ -34,9 +34,11 @@ def _ber_seq(c: bytes) -> bytes:
     return b"\x30" + _ber_len(len(c)) + c
 
 
-def _search_raw(session: Session, base: str, scope: int, attributes: list[str]) -> int:
-    """Send a raw SearchRequest and return the resultCode."""
-    from bauble.raw import RawConnection
+def _search_raw(
+    session: Session, base: str, scope: int, attributes: list[str]
+) -> tuple[int, list[dict[str, list[bytes]]]]:
+    """Send a raw SearchRequest; return (resultCode, parsed entry attributes)."""
+    from bauble.raw import RawConnection, parse_search_response
 
     base_ber = _ber_octet(base)
     scope_ber = b"\x0a\x01" + bytes([scope])
@@ -44,7 +46,7 @@ def _search_raw(session: Session, base: str, scope: int, attributes: list[str]) 
     size_limit = _ber_int(0)
     time_limit = _ber_int(0)
     types_only = b"\x01\x01\x00"
-    present_filter = b"\x87\x00"  # (objectClass=*) via raw present filter
+    present_filter = b"\x87\x0bobjectClass"  # (objectClass=*) present filter
     attrs_ber = _ber_seq(b"".join(_ber_octet(a) for a in attributes))
 
     search_contents = (
@@ -61,8 +63,7 @@ def _search_raw(session: Session, base: str, scope: int, attributes: list[str]) 
     payload = _ber_seq(_ber_int(1) + search_request)
 
     raw = RawConnection(session.host, session.port)
-    outcome = raw.raw_send(payload)
-    return outcome.result_code
+    return parse_search_response(raw.bind_then_send_raw(payload))
 
 
 @assertion(
@@ -75,17 +76,32 @@ def _search_raw(session: Session, base: str, scope: int, attributes: list[str]) 
     profiles=_CORE,
     text="'@person' in attribute list returns all attributes of the person object class.",
     strategy="Send raw SearchRequest with @person attribute; expect success (0).",
+    preconditions="Target server is reachable; seed entry uid=alice exists.",
+    stimulus="Raw SearchRequest for uid=alice requesting the @person attribute list.",
+    expected_observables="SearchResultDone resultCode success (0).",
     layer=Layer.WIRE,
     oid="1.3.6.1.4.1.4203.1.5.2",
 )
 def at_objectclass_returns_attrs(session: Session) -> Result:
-    result_code = _search_raw(session, f"uid=alice,{TEST_BASE}", SCOPE_BASE_OBJECT, ["@person"])
-    if result_code == 0:
+    result_code, entries = _search_raw(
+        session, f"uid=alice,{TEST_BASE}", SCOPE_BASE_OBJECT, ["@person"]
+    )
+    if result_code != 0:
+        return Result(
+            "4529.3.1",
+            Status.FAIL,
+            detail=f"@person search failed: resultCode={result_code}",
+        )
+    # '@person' must request all MUST/MAY/SUP attributes of the person object
+    # class (cn, sn at minimum).
+    returned = {k.lower() for e in entries for k in e}
+    missing = [a for a in ("cn", "sn") if a not in returned]
+    if not missing:
         return Result("4529.3.1", Status.PASS)
     return Result(
         "4529.3.1",
         Status.FAIL,
-        detail=f"@person search failed: resultCode={result_code}",
+        detail=f"@person returned no {', '.join(missing)}; got {sorted(returned)}",
     )
 
 
@@ -99,11 +115,14 @@ def at_objectclass_returns_attrs(session: Session) -> Result:
     profiles=_CORE,
     text="Unrecognized object class OID is treated as unrecognized attribute description.",
     strategy="Send raw SearchRequest with @1.2.3.4.5.9999; expect no error.",
+    preconditions="Target server is reachable; seed entry uid=alice exists.",
+    stimulus="Raw SearchRequest for uid=alice requesting an unknown @OID attribute list.",
+    expected_observables="SearchResultDone resultCode success (0); no error.",
     layer=Layer.WIRE,
     oid="1.3.6.1.4.1.4203.1.5.2",
 )
 def unknown_objectclass_treated_as_unknown_attr(session: Session) -> Result:
-    result_code = _search_raw(
+    result_code, _ = _search_raw(
         session, f"uid=alice,{TEST_BASE}", SCOPE_BASE_OBJECT, ["@1.2.3.4.5.9999"]
     )
     if result_code == 0:

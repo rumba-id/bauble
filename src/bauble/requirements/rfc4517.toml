@@ -56,3 +56,4 @@ severity = "must"
 test_class = "A"
 text = "distinguishedNameMatch compares DN values per RFC 4514."
 covered_by = ["5020.2.4"]
+note = "Accepted cross-RFC coverage: 5020.2.4 (entryDN search, RFC 5020) exercises distinguishedNameMatch because entryDN's equality rule is distinguishedNameMatch."

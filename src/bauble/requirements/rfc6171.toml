@@ -16,6 +16,7 @@ severity = "must"
 test_class = "B"
 text = "The Don't Use Copy control's criticality MUST be TRUE; controlValue is absent."
 covered_by = []
+note = "Client-side control-construction requirement (criticality MUST be TRUE)."
 
 [[requirement]]
 id = "6171:3:3"
@@ -24,3 +25,4 @@ severity = "must"
 test_class = "B"
 text = "An operation with the Don't Use Copy control MUST be performed on original (master) information."
 covered_by = []
+note = "Master-vs-copy provenance is not observable on a single instance."

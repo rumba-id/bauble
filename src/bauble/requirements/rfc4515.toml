@@ -110,3 +110,4 @@ severity = "must"
 test_class = "B"
 text = "Implementations MUST escape octets >0x7F not part of valid UTF-8 when generating a filter string."
 covered_by = []
+note = "Client-side filter-string generation requirement."

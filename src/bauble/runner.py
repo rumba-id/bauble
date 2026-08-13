@@ -105,6 +105,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         discover()
         sys.stdout.write(coverage_text(default_registry()))
         return 0
+    if args.command == "audit":
+        from bauble.audit import audit_text
+        from bauble.suites import discover
+
+        discover()
+        sys.stdout.write(audit_text(default_registry()))
+        return 0
     if args.command != "run":
         return 2
     selector = _selector_from_args(args)
@@ -233,6 +240,7 @@ def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
     )
     run_parser.add_argument("--out", help="write output to a file (default: stdout)")
     sub.add_parser("coverage", help="print coverage facts from the assertion registry")
+    sub.add_parser("audit", help="print the assertion-fidelity audit")
     return parser.parse_args(argv)
 
 

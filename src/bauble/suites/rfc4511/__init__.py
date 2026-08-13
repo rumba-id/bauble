@@ -10,7 +10,6 @@ from . import (
     extended,
     moddn,
     modify,
-    protection,
     search,
     unbind,
 )
@@ -25,7 +24,6 @@ del (
     extended,
     moddn,
     modify,
-    protection,
     search,
     unbind,
 )

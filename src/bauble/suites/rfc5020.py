@@ -18,6 +18,9 @@ _CORE = frozenset({Profile.CORE})
     profiles=_CORE,
     text="entryDN is present on entries when '+' (all operational attributes) is requested.",
     strategy="Search with '+' and verify entryDN is present on each entry.",
+    preconditions="Seed entries exist.",
+    stimulus="Search requesting '+' (all operational attributes).",
+    expected_observables="Every returned entry carries an entryDN.",
 )
 def entry_dn_present(session: Session) -> Result:
     outcome, entries = session.search(TEST_BASE, SCOPE_WHOLE_SUBTREE, "(objectClass=*)", ["+"])
@@ -41,6 +44,9 @@ def entry_dn_present(session: Session) -> Result:
     profiles=_CORE,
     text="entryDN value equals the entry's actual DN.",
     strategy="Read entryDN for a known entry and compare to its DN.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Base-scope search of uid=alice requesting '+' and '*'.",
+    expected_observables="entryDN equals the entry's actual DN.",
 )
 def entry_dn_equals_dn(session: Session) -> Result:
     dn = f"uid=alice,{TEST_BASE}"
@@ -70,6 +76,9 @@ def entry_dn_equals_dn(session: Session) -> Result:
     profiles=_CORE,
     text="entryDN is SINGLE-VALUE and NO-USER-MODIFICATION.",
     strategy="Check entryDN has exactly 1 value. Attempt to modify it — must be rejected.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="Add a test entry, read its entryDN, then attempt to modify entryDN.",
+    expected_observables="entryDN has exactly one value; the modification is rejected; entry removed in cleanup.",
     mutates=True,
 )
 def entry_dn_single_value_read_only(session: Session) -> Result:
@@ -116,6 +125,9 @@ def entry_dn_single_value_read_only(session: Session) -> Result:
     profiles=_CORE,
     text="entryDN supports distinguishedNameMatch equality in search filters.",
     strategy="Search using (entryDN=<dn>) and verify the correct entry is returned.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Base-scope search with the filter (entryDN=<dn>).",
+    expected_observables="The correct entry is returned.",
 )
 def entry_dn_searchable(session: Session) -> Result:
     dn = f"uid=alice,{TEST_BASE}"

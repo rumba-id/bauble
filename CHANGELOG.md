@@ -3,6 +3,45 @@
 All notable changes to bauble. Entries describe what changed; they do not
 restate coverage totals. Run `bauble coverage` for current figures.
 
+## v2.1.0 — 2026-08-13
+
+Assertion-fidelity audit. Every testable assertion now carries the auditable
+chain — preconditions, stimulus, expected_observables — and the new
+`bauble audit` command reads that chain per requirement: cross-RFC links,
+per-requirement audit status, and a rollup.
+
+The requirement corpus was expanded to cover RFC 4511's operation sections,
+whose assertions previously had no corpus requirements behind them.
+
+The fidelity audit caught and fixed real defects:
+
+- Two assertions were vacuously passing: their raw searches used a malformed
+  present filter that matched no entries, so they passed on the result code
+  alone. The raw layer gained SearchResultEntry parsing, and the
+  matched-values (RFC 3876) and `@objectclass` (RFC 4529) assertions now
+  verify actual returned content.
+- The Pre/Post-Read assertions now verify the response control is present
+  instead of only that the update applied.
+- Password Modify now proves the password actually changed, not just that the
+  operation returned success.
+- Who-Am-I verifies the returned authorization identity and the empty
+  anonymous case.
+- Vendor-info assertions now enforce NO-USER-MODIFICATION.
+- An assertion filed under RFC 4511 was moved to RFC 4512, where the
+  normative statements (objectClass protection, operational-attribute
+  read-only) actually live.
+- The unrecognized-extended-request check was tightened to the protocolError
+  result code the standard requires.
+
+The audit surfaced a genuine server finding: 389 DS does not implement RFC
+4529 `@objectclass` expansion. `docs/v2.1-fidelity-review.md` records the
+method, the fixes, and the PARTIAL candidates that seed the v2.2 coverage
+work.
+
+The requirements model gained a `note` field; accepted cross-RFC links and
+intrinsic untestability reasons are now documented in the corpus and shown by
+the audit.
+
 ## v2.0.0 — 2026-08-13
 
 Three-layer conformance architecture. Each assertion is classified by the

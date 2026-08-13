@@ -24,6 +24,7 @@ severity = "should"
 test_class = "B"
 text = "Servers SHOULD publish 1.3.6.1.1.13.1 and 1.3.6.1.1.13.2 in supportedControl."
 covered_by = []
+note = "SHOULD-level advertisement; absence is not a conformance failure."
 
 [[requirement]]
 id = "4527:3:4"
@@ -32,3 +33,4 @@ severity = "must"
 test_class = "B"
 text = "Read-entry control processing and the update MUST be performed as one atomic action."
 covered_by = []
+note = "Atomicity is server-internal; not observable as a result code."

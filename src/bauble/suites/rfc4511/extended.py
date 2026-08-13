@@ -19,13 +19,16 @@ _INTEROP = frozenset({Profile.INTEROP})
     profiles=_INTEROP,
     text="An unrecognized extended request returns an error (does not succeed).",
     strategy="Send an extended request with a bogus OID; expect a non-zero result code.",
+    preconditions="Session is open.",
+    stimulus="ExtendedRequest with an unrecognized requestName OID.",
+    expected_observables="ExtendedResponse resultCode non-zero (not success).",
 )
 def unrecognized_extended(session: Session) -> Result:
     outcome = session.extended("1.2.3.4.5.6-bogus")
-    if outcome.result_code != 0:
+    if outcome.result_code == 2:
         return Result("4511.4.12.1", Status.PASS)
     return Result(
         "4511.4.12.1",
         Status.FAIL,
-        detail=f"expected non-zero (unsupported OID), got {outcome.result_code}",
+        detail=f"expected protocolError (2), got {outcome.result_code}",
     )

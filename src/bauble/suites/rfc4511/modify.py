@@ -21,6 +21,9 @@ _INTEROP = frozenset({Profile.INTEROP})
     mutates=True,
     text="Modify (replace) an attribute succeeds.",
     strategy="Add a test entry, replace its cn; expect 0; clean up.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="Add a test entry, then ModifyRequest replacing its cn value.",
+    expected_observables="ModifyResponse resultCode success (0); entry removed in cleanup.",
 )
 def modify_replace(session: Session) -> Result:
     bind_admin(session)
@@ -46,6 +49,9 @@ def modify_replace(session: Session) -> Result:
     mutates=True,
     text="Modify (add value) to an attribute succeeds.",
     strategy="Add a test entry, add a description value; expect 0; clean up.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="Add a test entry, then ModifyRequest adding a description value.",
+    expected_observables="ModifyResponse resultCode success (0); entry removed in cleanup.",
 )
 def modify_add_value(session: Session) -> Result:
     bind_admin(session)
@@ -70,6 +76,9 @@ def modify_add_value(session: Session) -> Result:
     profiles=_INTEROP,
     text="Modify a non-existent entry returns noSuchObject (32).",
     strategy="Modify a DN that does not exist; expect 32.",
+    preconditions="Admin bound.",
+    stimulus="ModifyRequest targeting a non-existent DN.",
+    expected_observables="ModifyResponse resultCode noSuchObject (32).",
 )
 def modify_nonexistent_entry(session: Session) -> Result:
     bind_admin(session)

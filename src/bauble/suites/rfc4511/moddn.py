@@ -21,6 +21,9 @@ _INTEROP = frozenset({Profile.INTEROP})
     mutates=True,
     text="ModifyDN (rename RDN) succeeds.",
     strategy="Add a test entry, rename it; expect 0; clean up.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="Add a test entry, then ModifyDNRequest renaming its RDN.",
+    expected_observables="ModifyDNResponse resultCode success (0); renamed entry removed in cleanup.",
 )
 def rename(session: Session) -> Result:
     bind_admin(session)
@@ -47,6 +50,9 @@ def rename(session: Session) -> Result:
     mutates=True,
     text="ModifyDN to an existing DN returns entryAlreadyExists (68).",
     strategy="Create two entries; rename one to the other's DN; expect 68; clean up.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="Create two entries, then ModifyDNRequest renaming one to the other's DN.",
+    expected_observables="ModifyDNResponse resultCode entryAlreadyExists (68); entries removed in cleanup.",
 )
 def rename_to_existing(session: Session) -> Result:
     bind_admin(session)
@@ -75,6 +81,9 @@ def rename_to_existing(session: Session) -> Result:
     mutates=True,
     text="ModifyDN with newSuperior moves an entry to a new parent.",
     strategy="Move an entry from ou=people to dc=bauble,dc=test; expect 0.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="Add a test entry, then ModifyDNRequest moving it under dc=bauble,dc=test via newSuperior.",
+    expected_observables="ModifyDNResponse resultCode success (0); moved entry removed in cleanup.",
 )
 def rename_with_new_superior(session: Session) -> Result:
     bind_admin(session)

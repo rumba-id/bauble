@@ -20,6 +20,9 @@ _ROOT = "dc=bauble,dc=test"
     profiles=_INTEROP,
     text="An AND filter returns entries matching both criteria.",
     strategy="Search with (&(uid=alice)(sn=Anderson)); expect 1 entry.",
+    preconditions="Seed entries uid=alice and uid=bob exist.",
+    stimulus="Subtree search with the AND filter (&(uid=alice)(objectClass=person)).",
+    expected_observables="Exactly 1 entry (uid=alice) returned.",
 )
 def and_filter(session: Session) -> Result:
     outcome, entries = session.search(
@@ -46,6 +49,9 @@ def and_filter(session: Session) -> Result:
     profiles=_INTEROP,
     text="An OR filter returns entries matching either criterion.",
     strategy="Search with (|(uid=alice)(uid=bob)); expect 2 entries.",
+    preconditions="Seed entries uid=alice and uid=bob exist.",
+    stimulus="Subtree search with the OR filter (|(uid=alice)(uid=bob)).",
+    expected_observables="Exactly 2 entries returned.",
 )
 def or_filter(session: Session) -> Result:
     outcome, entries = session.search(
@@ -72,6 +78,9 @@ def or_filter(session: Session) -> Result:
     profiles=_INTEROP,
     text="A NOT filter excludes matching entries.",
     strategy="Search with (!(uid=alice)); expect alice is NOT in results.",
+    preconditions="Seed entries uid=alice and uid=bob exist.",
+    stimulus="Subtree search with the NOT filter (!(uid=alice)).",
+    expected_observables="uid=alice is absent from the results.",
 )
 def not_filter(session: Session) -> Result:
     outcome, entries = session.search(
@@ -97,6 +106,9 @@ def not_filter(session: Session) -> Result:
     profiles=_INTEROP,
     text="An equality filter matches the exact attribute value.",
     strategy="Search with (uid=alice); expect exactly alice.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Subtree search with the equality filter (uid=alice).",
+    expected_observables="Exactly 1 entry (uid=alice) returned.",
 )
 def equality_filter(session: Session) -> Result:
     outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(uid=alice)")
@@ -115,6 +127,9 @@ def equality_filter(session: Session) -> Result:
     profiles=_INTEROP,
     text="A substring filter with initial component matches leading substrings.",
     strategy="Search with (cn=Alice*); expect Alice Anderson.",
+    preconditions="Seed entry uid=alice exists with a cn starting with 'Alice'.",
+    stimulus="Subtree search with the substring-initial filter (cn=Alice*).",
+    expected_observables="uid=alice is returned.",
 )
 def substring_initial(session: Session) -> Result:
     outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(cn=Alice*)")
@@ -136,6 +151,9 @@ def substring_initial(session: Session) -> Result:
     profiles=_INTEROP,
     text="A substring filter with any component matches interior substrings.",
     strategy="Search with (cn=*Anderson*); expect Alice Anderson.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Subtree search with the substring-any filter (uid=*lic*).",
+    expected_observables="uid=alice is returned (interior substring matches).",
 )
 def substring_any(session: Session) -> Result:
     outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(uid=*lic*)")
@@ -154,6 +172,9 @@ def substring_any(session: Session) -> Result:
     profiles=_INTEROP,
     text="A present filter matches entries where the attribute exists.",
     strategy="Search with (cn=*); expect entries with cn present.",
+    preconditions="Seed entries with a cn attribute exist.",
+    stimulus="Subtree search with the present filter (cn=*).",
+    expected_observables="At least 2 entries returned.",
 )
 def present_filter(session: Session) -> Result:
     outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(cn=*)")
@@ -174,6 +195,9 @@ def present_filter(session: Session) -> Result:
     profiles=_INTEROP,
     text="An extensible match with an explicit matching rule applies that rule.",
     strategy="Search (cn:caseIgnoreMatch:=alice anderson); expect alice.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Subtree search with the extensible-match filter (uid:caseIgnoreMatch:=alice).",
+    expected_observables="uid=alice is returned.",
 )
 def extensible_match(session: Session) -> Result:
     outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(uid:caseIgnoreMatch:=alice)")
@@ -192,6 +216,9 @@ def extensible_match(session: Session) -> Result:
     profiles=_INTEROP,
     text="A substring filter with a final component matches trailing substrings.",
     strategy="Search with (uid=*lice); expect alice.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Subtree search with the substring-final filter (uid=*lice).",
+    expected_observables="uid=alice is returned (trailing substring matches).",
 )
 def substring_final(session: Session) -> Result:
     outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(uid=*lice)")
@@ -210,6 +237,9 @@ def substring_final(session: Session) -> Result:
     profiles=_INTEROP,
     text="A greaterOrEqual filter matches entries with values not less than the assertion.",
     strategy="Search with (createTimestamp>=20000101000000Z); expect at least one entry.",
+    preconditions="Seed entries have a createTimestamp after 2000.",
+    stimulus="Subtree search with the greaterOrEqual filter (createTimestamp>=20000101000000Z).",
+    expected_observables="At least 1 entry returned.",
 )
 def greater_or_equal_filter(session: Session) -> Result:
     outcome, entries = session.search(
@@ -232,6 +262,9 @@ def greater_or_equal_filter(session: Session) -> Result:
     profiles=_INTEROP,
     text="A lessOrEqual filter matches entries with values not greater than the assertion.",
     strategy="Search with (createTimestamp<=29991231235959Z); expect at least one entry.",
+    preconditions="Seed entries have a createTimestamp before 2999.",
+    stimulus="Subtree search with the lessOrEqual filter (createTimestamp<=29991231235959Z).",
+    expected_observables="At least 1 entry returned.",
 )
 def less_or_equal_filter(session: Session) -> Result:
     outcome, entries = session.search(
@@ -252,6 +285,9 @@ def less_or_equal_filter(session: Session) -> Result:
     profiles=_INTEROP,
     text="An approxMatch filter matches entries per the server's approximate matching rule.",
     strategy="Search with (cn~=alice); expect alice under OpenLDAP's phonetic approx.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Subtree search with the approxMatch filter (cn~=alice).",
+    expected_observables="uid=alice is returned under the server's approximate matching rule.",
 )
 def approx_match_filter(session: Session) -> Result:
     outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(cn~=alice)")

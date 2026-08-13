@@ -26,6 +26,9 @@ _ALICE = f"uid=alice,{TEST_BASE}"
     layer=Layer.SEMANTIC,
     text="Requesting '+' returns all operational attributes.",
     strategy="Search an entry requesting ['+']; at least one operational attribute must be present.",
+    preconditions="Admin bound; seed entry uid=alice exists.",
+    stimulus="Search uid=alice requesting only '+' (operational attributes).",
+    expected_observables="At least one operational attribute present in the result.",
 )
 def plus_returns_operational(session: Session) -> Result:
     bind_admin(session)
@@ -53,6 +56,9 @@ def plus_returns_operational(session: Session) -> Result:
     layer=Layer.SEMANTIC,
     text="Requesting '*' and '+' together returns both user and operational attributes.",
     strategy="Search an entry requesting ['*', '+']; a user attribute (cn) and an operational attribute must both be present.",
+    preconditions="Admin bound; seed entry uid=alice exists.",
+    stimulus="Search uid=alice requesting both '*' and '+'.",
+    expected_observables="Both a user attribute (cn) and an operational attribute present in the result.",
 )
 def star_plus_returns_both(session: Session) -> Result:
     outcome, entries = session.search(_ALICE, SCOPE_BASE_OBJECT, "(objectClass=*)", ["*", "+"])
