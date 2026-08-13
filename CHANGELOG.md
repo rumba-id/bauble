@@ -3,6 +3,42 @@
 All notable changes to bauble. Entries describe what changed; they do not
 restate coverage totals. Run `bauble coverage` for current figures.
 
+## v2.2.0 — 2026-08-13
+
+Coverage & capability. Coverage is now three-state: a requirement can be
+split into independently-testable obligations, and `bauble coverage`
+reports COVERED / PARTIALLY_COVERED / UNCOVERED per RFC with a
+per-obligation detail section. The first obligations come from the v2.1
+fidelity review's PARTIAL candidates — a requirement whose easy half is
+tested can no longer read as fully covered.
+
+The eight SHOULD-advertise requirements gained capability-layer
+assertions (PASS when advertised, NOT_APPLICABLE otherwise).
+
+The capability model gained `supported_features` and
+`supported_sasl_mechanisms`; the completion fixed a real gating bug —
+the RFC 4525 increment assertions passed bare OIDs that the capability
+never matched, so they had been permanently NOT_APPLICABLE since v2.0.0
+and never ran live. They now run and pass. Both fixtures ship capability
+statements declared from live probes, and `bauble run --target` applies
+the fixture's own admin credentials automatically.
+
+The 389 DS finding investigation resolved each suspected deviation:
+genuine ones are asserted and documented in `docs/server-findings.md`
+(empty-filter rejection, auth-choice protocolError, language
+range-on-add acceptance, no `@objectclass` expansion); three suspected
+deviations (entryDN case sensitivity, caseIgnore seed assumption,
+integerMatch ordering) were suite bugs and are fixed.
+
+Two new test targets land — the two ends of the conformance spectrum:
+OpenDJ (Java, enterprise) and LLDAP (Rust, minimal read-mostly LDAP
+interface), both podman fixtures with `--target-type`, capability
+statements, and live tests. The suite now spans four implementations;
+each surfaced its own findings.
+
+`docs/operator-guide.md` covers loading the seed into a non-fixture
+server and declaring capability.
+
 ## v2.1.0 — 2026-08-13
 
 Assertion-fidelity audit. Every testable assertion now carries the auditable

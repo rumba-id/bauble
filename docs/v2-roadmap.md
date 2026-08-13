@@ -24,9 +24,9 @@ delivers a prerequisite for the next.
 | Release | Theme | Delivers |
 |---|---|---|
 | 2.1 | Fidelity & auditability | assertion-requirement fidelity audit; auditable assertion metadata; intrinsic-gap reasons | **shipped in v2.1.0** |
-| 2.2 | Coverage & capability | PARTIALLY_COVERED ontology; advertise-check coverage growth; capability model completion |
+| 2.2 | Coverage & capability | PARTIALLY_COVERED ontology; advertise-check coverage growth; capability model completion | **shipped in v2.2.0** |
 | 2.3 | Continuous verification | full-suite CI against both targets |
-| 2.4 | Broad applicability | third test target; seed-DIT portability |
+| 2.4 | Broad applicability | third test target; seed-DIT portability | third target + portability shipped in v2.2.0's cycle |
 | 2.5 | Wire completeness (conditional) | raw `Session` if the wire-UNTESTABLE count justifies it |
 
 ---
@@ -92,10 +92,11 @@ Done when: `bauble coverage` reports the three coverage states; the advertise
 assertions land and pass on both targets; SASL/feature applicability is
 capability-gated.
 
-Status: all three items done. Coverage reports the three states; the
-PARTIALLY_COVERED obligations (11 requirements) are rendered by
+**Shipped in v2.2.0.** All three items done. Coverage reports the three
+states; the PARTIALLY_COVERED obligations are rendered by
 `bauble coverage`; genuine per-server deviations are asserted and recorded
-in `docs/server-findings.md`.
+in `docs/server-findings.md`. The v2.4 target work (OpenDJ + LLDAP
+fixtures, operator guide) landed in the same cycle.
 
 ## v2.3 — Continuous verification
 
