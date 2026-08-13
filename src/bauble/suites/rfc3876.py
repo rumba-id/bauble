@@ -53,6 +53,9 @@ def _ber_seq(c: bytes) -> bytes:
     profiles=_CORE,
     text="Server SHOULD publish 1.2.826.0.1.3344810.2.3 in supportedControl.",
     strategy="Read root DSE supportedControl and check for the OID.",
+    preconditions="Root DSE is readable.",
+    stimulus="Search the root DSE for the supportedControl attribute.",
+    expected_observables="Matched-values control OID present, or UNTESTABLE if not advertised.",
     layer=Layer.CAPABILITY,
     oid="1.2.826.0.1.3344810.2.3",
 )
@@ -78,6 +81,9 @@ def matched_values_advertised(session: Session) -> Result:
     profiles=_CORE,
     text="Search with valuesReturnFilter returns only matching values.",
     strategy="Search with attributes=description, valuesReturnFilter=(description=*). Verify.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="Add an entry with several description values, then SearchRequest with a valuesReturnFilter control.",
+    expected_observables="Only the description values matching the filter are returned; entry removed in cleanup.",
     mutates=True,
     oid="1.2.826.0.1.3344810.2.3",
 )
@@ -183,6 +189,9 @@ _ALICE = "uid=alice,ou=people,dc=bauble,dc=test"
     layer=Layer.WIRE,
     text="A critical valuesReturnFilter control on a non-Search operation returns unavailableCriticalExtension.",
     strategy="Attach a critical matched-values control to a Compare; expect result code 12.",
+    preconditions="Admin credentials available; seed entry uid=alice exists.",
+    stimulus="CompareRequest on uid=alice carrying a critical matched-values control.",
+    expected_observables="CompareResponse resultCode unavailableCriticalExtension (12), or the deviation the server reports.",
     oid="1.2.826.0.1.3344810.2.3",
 )
 def matched_values_critical_on_compare(session: Session) -> Result:
@@ -210,6 +219,9 @@ def matched_values_critical_on_compare(session: Session) -> Result:
     layer=Layer.WIRE,
     text="A non-critical valuesReturnFilter control on a non-Search operation is ignored.",
     strategy="Attach a non-critical matched-values control to a Compare; expect the compare to proceed.",
+    preconditions="Admin credentials available; seed entry uid=alice exists.",
+    stimulus="CompareRequest on uid=alice carrying a non-critical matched-values control.",
+    expected_observables="CompareResponse proceeds normally (compareTrue/compareFalse); the control is ignored.",
     oid="1.2.826.0.1.3344810.2.3",
 )
 def matched_values_noncritical_on_compare(session: Session) -> Result:

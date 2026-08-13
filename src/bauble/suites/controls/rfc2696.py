@@ -22,6 +22,9 @@ _PAGED_OID = "1.2.840.113556.1.4.319"
     profiles=_CORE,
     text="A search with the paged-results control (size=2) is accepted.",
     strategy="Search the base DIT with paged-results control, page size 2; expect code 0.",
+    preconditions="Seed base dc=bauble,dc=test has entries to page over.",
+    stimulus="SearchRequest over the base with a paged-results control (size=2).",
+    expected_observables="SearchResultDone resultCode success (0).",
     oid="1.2.840.113556.1.4.319",
 )
 def paged_results_accepted(session: Session) -> Result:
@@ -52,6 +55,9 @@ def paged_results_accepted(session: Session) -> Result:
     profiles=_CORE,
     text="The paged-results cookie is non-empty while pages remain and empty when exhausted.",
     strategy="Page ou=people (size=1); expect a non-empty cookie then an empty one.",
+    preconditions="Seed ou=people has at least 2 entries; admin credentials available.",
+    stimulus="Paged SearchRequest over ou=people (size=1), iterating with the returned cookie.",
+    expected_observables="The first page returns a non-empty cookie; the final page returns an empty cookie.",
     oid="1.2.840.113556.1.4.319",
 )
 def paged_results_cookie_exhausts(session: Session) -> Result:

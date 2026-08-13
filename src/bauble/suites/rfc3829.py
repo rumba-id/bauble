@@ -25,6 +25,9 @@ _AUTHZID_RESPONSE_OID = "2.16.840.1.113730.3.4.15"
     profiles=_CORE,
     text="Server SHOULD publish 2.16.840.1.113730.3.4.16/15 in supportedControl.",
     strategy="Read root DSE supportedControl and check for both OIDs.",
+    preconditions="Root DSE is readable.",
+    stimulus="Search the root DSE for the supportedControl attribute.",
+    expected_observables="Both authzId control OIDs present, or UNTESTABLE if not advertised.",
     layer=Layer.CAPABILITY,
     oid="2.16.840.1.113730.3.4.16",
 )
@@ -50,6 +53,9 @@ def authzid_controls_advertised(session: Session) -> Result:
     profiles=_CORE,
     text="Successful bind with AuthzId Request control returns response control with authzId.",
     strategy="Bind as admin with request control; verify response control contains authzId.",
+    preconditions="Admin credentials available.",
+    stimulus="Bind with the Authorization Identity Request control.",
+    expected_observables="BindResponse success with the Authorization Identity Response control carrying the authzId.",
     mutates=True,
     oid="2.16.840.1.113730.3.4.16",
 )
@@ -103,6 +109,9 @@ def authzid_response_on_bind(session: Session) -> Result:
     profiles=_CORE,
     text="The Authorization Identity Response control is included only when the bind resultCode is success.",
     strategy="Bind with wrong credentials and the request control; verify no response control is returned.",
+    preconditions="Admin credentials available.",
+    stimulus="Bind with wrong credentials plus the Authorization Identity Request control.",
+    expected_observables="Bind fails (non-zero) with no Authorization Identity Response control.",
     oid="2.16.840.1.113730.3.4.16",
 )
 def authzid_no_response_on_failed_bind(session: Session) -> Result:

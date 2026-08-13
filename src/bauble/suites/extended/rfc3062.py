@@ -24,6 +24,9 @@ _BOB_DN = "uid=bob,ou=people,dc=bauble,dc=test"
     profiles=_CORE,
     text="The Password Modify extended operation is accepted for a valid user.",
     strategy="Send Password Modify as admin for bob with a new password; expect 0; restore.",
+    preconditions="Admin bound; seed entry uid=bob exists.",
+    stimulus="Password Modify extended request for bob with a new password.",
+    expected_observables="ExtendedResponse success (0); password restored in cleanup; confidentialityRequired (13) reports NOT_APPLICABLE.",
     oid="1.3.6.1.4.1.4203.1.11.1",
 )
 def password_modify_accepted(session: Session) -> Result:
@@ -54,6 +57,9 @@ def password_modify_accepted(session: Session) -> Result:
     profiles=_CORE,
     text="An incorrect oldPasswd leaves the password unchanged with a non-success result.",
     strategy="Bind as bob, Password Modify with a wrong oldPasswd; expect non-zero.",
+    preconditions="Bound as uid=bob with the correct password.",
+    stimulus="Password Modify extended request for bob with an incorrect oldPasswd.",
+    expected_observables="ExtendedResponse resultCode non-zero; the password is unchanged.",
     oid="1.3.6.1.4.1.4203.1.11.1",
 )
 def password_modify_wrong_old_passwd(session: Session) -> Result:
@@ -81,6 +87,9 @@ def password_modify_wrong_old_passwd(session: Session) -> Result:
     profiles=_CORE,
     text="The Password Modify operation SHALL NOT be used anonymously.",
     strategy="Bind anonymous, then Password Modify for bob; expect non-zero.",
+    preconditions="Session is anonymous.",
+    stimulus="Password Modify extended request while the session is anonymous.",
+    expected_observables="ExtendedResponse resultCode non-zero (operation rejected).",
     oid="1.3.6.1.4.1.4203.1.11.1",
 )
 def password_modify_anonymous_rejected(session: Session) -> Result:

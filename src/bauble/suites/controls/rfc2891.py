@@ -22,6 +22,9 @@ _SORT_OID = "1.2.840.113556.1.4.473"
     profiles=_CORE,
     text="A search with the server-side sorting control returns sorted results.",
     strategy="Search people with sort control on uid; expect alice before bob.",
+    preconditions="Seed ou=people contains the uid=alice and uid=bob entries.",
+    stimulus="SearchRequest over ou=people with a server-side sort control on uid.",
+    expected_observables="SearchResultDone success (0); entries returned ordered by uid.",
     oid="1.2.840.113556.1.4.473",
 )
 def sort_control_returns_sorted(session: Session) -> Result:
@@ -86,6 +89,9 @@ def _ber_seq(c: bytes) -> bytes:
     layer=Layer.WIRE,
     text="An unrecognized attribute in the sort key yields noSuchAttribute in the sortResult.",
     strategy="Sort a search by an unknown attribute; parse the sort-response control; expect 16.",
+    preconditions="Admin credentials available.",
+    stimulus="SearchRequest with a sort control on an unrecognized attribute.",
+    expected_observables="Sort-response control with sortResult noSuchAttribute (16), or the deviation the server reports.",
     oid="1.2.840.113556.1.4.473",
 )
 def sort_unknown_attribute(session: Session) -> Result:
