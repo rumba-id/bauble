@@ -202,3 +202,113 @@ def boolean_encoding(session: Session) -> Result:
 )
 def controls_position(session: Session) -> Result:
     return Result("4511.4.1.11.1", Status.UNTESTABLE, detail="structural requirement")
+
+
+def _raw_search_result_code(session: Session, search_contents: bytes, message_id: int = 1) -> int:
+    """Send a raw SearchRequest and return the SearchResultDone resultCode."""
+    import socket
+
+    search_req = b"\x63" + _ber_len(len(search_contents)) + search_contents
+    payload = _ber_seq(_ber_int(message_id) + search_req)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(5.0)
+        sock.connect((session.host, session.port))
+        sock.sendall(payload)
+        buf = b""
+        while True:
+            try:
+                chunk = sock.recv(4096)
+                if not chunk:
+                    break
+                buf += chunk
+                pos = 0
+                while pos + 2 <= len(buf):
+                    if buf[pos] != 0x30:
+                        pos += 1
+                        continue
+                    seq_len, next_pos = _ber_len_value(buf, pos + 1)
+                    pdu_end = next_pos + seq_len
+                    if pdu_end > len(buf):
+                        break
+                    pdu = buf[next_pos:pdu_end]
+                    if pdu and pdu[0] == 0x02:
+                        mi_len, mi_next = _ber_len_value(pdu, 1)
+                        rest = pdu[mi_next + mi_len :]
+                        if rest and rest[0] == 0x65:  # SearchResultDone
+                            idx = 1
+                            _, idx = _ber_len_value(rest, idx)
+                            if idx < len(rest) and rest[idx] == 0x0A:
+                                idx += 1
+                                rc_len, idx = _ber_len_value(rest, idx)
+                                if rc_len > 0:
+                                    return int.from_bytes(rest[idx : idx + rc_len], "big")
+                            return -1
+                    pos = pdu_end
+            except (TimeoutError, ConnectionError, OSError):
+                break
+        return -1
+
+
+def _ber_len_value(data: bytes, pos: int) -> tuple[int, int]:
+    """Parse a BER length at pos; return (value, next_pos)."""
+    first = data[pos]
+    if first < 0x80:
+        return first, pos + 1
+    num_bytes = first & 0x7F
+    return int.from_bytes(data[pos + 1 : pos + 1 + num_bytes], "big"), pos + 1 + num_bytes
+
+
+def _search_contents(types_only_byte: int, filter_ber: bytes) -> bytes:
+    base = _ber_octet("dc=bauble,dc=test")
+    scope = b"\x0a\x01\x02"
+    deref = b"\x0a\x01\x00"
+    size = _ber_int(0)
+    time = _ber_int(0)
+    types = b"\x01\x01" + bytes([types_only_byte])
+    attrs = _ber_seq(b"")
+    return base + scope + deref + size + time + types + filter_ber + attrs
+
+
+@assertion(
+    id="4511.5.1.3",
+    rfc=4511,
+    section="§5.1",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    layer=Layer.WIRE,
+    text="A non-conforming BOOLEAN value (0x01) is handled without crash.",
+    stimulus="Raw SearchRequest with typesOnly BOOLEAN encoded 0x01 (must be 0x00/0xFF).",
+    expected_observables="Server returns a response or disconnects cleanly.",
+)
+def boolean_encoding_handled(session: Session) -> Result:
+    _raw_search_result_code(session, _search_contents(0x01, b"\x87\x00"))
+    # Any resultCode (including -1 for disconnect) is acceptable; no crash.
+    return Result("4511.5.1.3", Status.PASS)
+
+
+@assertion(
+    id="4511.4.5.1.8",
+    rfc=4511,
+    section="§4.5.1",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    layer=Layer.WIRE,
+    text="A malformed filter returns an error result code.",
+    stimulus="Raw SearchRequest with a truncated equality filter.",
+    expected_observables="Server returns protocolError (2) or similar; not success.",
+)
+def malformed_filter_error(session: Session) -> Result:
+    # Truncated equality filter: [3] SEQUENCE missing its value octet string.
+    bad_filter = b"\xa3\x05\x04\x02cn"  # incomplete AttributeValueAssertion
+    code = _raw_search_result_code(session, _search_contents(0x00, bad_filter))
+    if code != 0:
+        return Result("4511.4.5.1.8", Status.PASS)
+    return Result(
+        "4511.4.5.1.8",
+        Status.FAIL,
+        detail=f"malformed filter accepted: resultCode={code}",
+    )

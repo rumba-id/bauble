@@ -78,3 +78,26 @@ def dn_attribute_name_case_insensitive(session: Session) -> Result:
         Status.FAIL,
         detail=f"uppercase DN attrs failed: {outcome.result_code}",
     )
+
+
+@assertion(
+    id="4514.2.4",
+    rfc=4514,
+    section="§2",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="DN attribute values match per the attribute's matching rule (caseIgnore for uid).",
+    strategy="Search uid=ALICE (uppercase value); expect the uid=alice entry.",
+)
+def dn_value_matching_rule(session: Session) -> Result:
+    dn = "uid=ALICE,ou=people,dc=bauble,dc=test"
+    outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)")
+    if outcome.result_code == 0 and len(entries) == 1:
+        return Result("4514.2.4", Status.PASS)
+    return Result(
+        "4514.2.4",
+        Status.FAIL,
+        detail=f"uppercase uid value failed: {outcome.result_code}",
+    )
