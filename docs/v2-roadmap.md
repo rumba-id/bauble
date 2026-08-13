@@ -5,7 +5,7 @@ architecture — assertion-as-atomic-unit, prerequisite graph (`BLOCKED`), the
 `Session` protocol seam, isolation semantics, profiles-as-selections, and
 self-validation via the golden fake — and named cross-implementation
 validation as the next milestone. The second (post-2.0) validated v2.0.0 —
-the 128-requirement corpus making coverage measurable, the three-layer
+the requirements corpus making coverage measurable, the three-layer
 Wire/Semantic/Capability model, multi-implementation, and the corpus catching
 our own 4516 → 4512 misattribution — and shifted the danger:
 
@@ -23,7 +23,7 @@ delivers a prerequisite for the next.
 
 | Release | Theme | Delivers |
 |---|---|---|
-| 2.1 | Fidelity & auditability | assertion-requirement fidelity audit; auditable assertion metadata; intrinsic-gap reasons |
+| 2.1 | Fidelity & auditability | assertion-requirement fidelity audit; auditable assertion metadata; intrinsic-gap reasons | **shipped in v2.1.0** |
 | 2.2 | Coverage & capability | PARTIALLY_COVERED ontology; advertise-check coverage growth; capability model completion |
 | 2.3 | Continuous verification | full-suite CI against both targets |
 | 2.4 | Broad applicability | third test target; seed-DIT portability |
@@ -36,7 +36,7 @@ delivers a prerequisite for the next.
 The prerequisite for everything after: assertions must provably cover the
 requirements they claim to cover, and that chain must be readable.
 
-1. **Assertion-fidelity audit.** For each of the 128 requirements, verify its
+1. **Assertion-fidelity audit.** For each requirement, verify its
    `covered_by` assertion(s) exercise the full normative statement. Same pass
    that caught 4516 → 4512; expect more of those classes (wrong-RFC
    attribution, misinterpreted requirement, non-normative assumption,
@@ -44,15 +44,21 @@ requirements they claim to cover, and that chain must be readable.
    under-covered requirements as the `PARTIALLY_COVERED` candidates for 2.2.
 2. **Auditable assertion metadata.** Populate `preconditions`,
    `stimulus`, and `expected_observables` on the audited assertions. Today
-   only 7/144 have `preconditions` and 13/144 have `stimulus` /
-   `expected_observables` (133/144 have `strategy`); the reviewers' chain is
+   only a small minority carry them; the reviewers' chain is
    not yet readable from the data model.
-3. **Intrinsic-gap reasons.** The ~10 class-B requirements that are genuinely
+3. **Intrinsic-gap reasons.** The class-B requirements that are genuinely
    untestable (atomicity, uniqueness, client-side) get their reason recorded
    on the requirement, so `bauble coverage` shows *why* they are uncovered.
 
 Done when: an audit report is committed; every mis-cover is fixed or
 explicitly accepted; the audited assertions carry the full chain metadata.
+
+**Shipped in v2.1.0.** The audit command, the corpus expansion to the RFC
+4511 operation sections, the chain metadata on every testable assertion, the
+intrinsic-gap notes, and the fidelity review (which caught and fixed two
+vacuous assertions and moved the RFC 4511→4512 misattribution) are all in.
+Findings and the PARTIAL candidates for 2.2 live in
+`docs/v2.1-fidelity-review.md`.
 
 ## v2.2 — Coverage & capability
 
@@ -65,8 +71,7 @@ model so new assertions gate correctly.
    Sequenced after 2.1 so the obligation split is grounded in the audit.
 2. **Coverage growth.** Eight SHOULD-advertise requirements are testable via
    the existing advertise-check pattern (2696, 2891, 3062, 3866, 4512, 4527,
-   4529, 4532) — 108 → ~116 covered. Then investigate the 389 DS-specific
-   findings (RFC 4526 empty filters, unknown-auth-choice `protocolError`,
+   4529, 4532). Then investigate the 389 DS-specific
    unimplemented entryDN, matching-rule and language-range behavior) and
    decide per finding whether to document or assert.
 3. **Capability model completion.** The capability file currently gates
