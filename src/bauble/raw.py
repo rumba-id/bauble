@@ -79,6 +79,24 @@ def _parse_length(data: bytes, pos: int) -> tuple[int, int]:
     return value, pos + 1 + num_bytes
 
 
+def parse_message_id(data: bytes) -> int | None:
+    """Extract the messageID (INTEGER) from a raw LDAPMessage, or None.
+
+    RFC 4511 §4.1.1.1: LDAPMessage ::= SEQUENCE { messageID, protocolOp, ... }.
+    """
+    if len(data) < 2 or data[0] != 0x30:
+        return None
+    pos = 1
+    _, pos = _parse_length(data, pos)
+    if pos >= len(data) or data[pos] != 0x02:
+        return None
+    pos += 1
+    int_len, pos = _parse_length(data, pos)
+    if pos + int_len > len(data):
+        return None
+    return int.from_bytes(data[pos : pos + int_len], "big")
+
+
 def _parse_bind_response(data: bytes) -> Outcome | None:
     """Parse a BindResponse ([APPLICATION 1]) from a raw LDAP message.
 
