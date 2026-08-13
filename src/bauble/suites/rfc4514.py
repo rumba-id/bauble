@@ -55,3 +55,26 @@ def dn_case_preservation(session: Session) -> Result:
     if "uid=alice" in dn and "ou=people" in dn:
         return Result("4514.2.2", Status.PASS)
     return Result("4514.2.2", Status.FAIL, detail="DN does not contain expected components")
+
+
+@assertion(
+    id="4514.2.3",
+    rfc=4514,
+    section="§2",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="DN attribute types are case-insensitive (UID=alice matches uid=alice).",
+    strategy="Search with UID=alice,ou=people,dc=bauble,dc=test; expect the entry.",
+)
+def dn_attribute_name_case_insensitive(session: Session) -> Result:
+    dn = "UID=alice,OU=People,DC=bauble,DC=test"
+    outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)")
+    if outcome.result_code == 0 and len(entries) == 1:
+        return Result("4514.2.3", Status.PASS)
+    return Result(
+        "4514.2.3",
+        Status.FAIL,
+        detail=f"uppercase DN attrs failed: {outcome.result_code}",
+    )
