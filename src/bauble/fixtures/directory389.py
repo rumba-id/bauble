@@ -17,6 +17,20 @@ _DEFAULT_HOST_PORT = 3390
 _DEFAULT_SECURE_PORT = 3637
 
 
+def _podman(args: list[str], *, check: bool = True) -> subprocess.CompletedProcess[bytes]:
+    """Run a podman command; on failure raise with podman's stderr included.
+
+    Mirrors ``bauble.fixtures.container._podman`` so both targets surface
+    podman's diagnostics instead of an opaque exit code.
+    """
+    result = subprocess.run(args, capture_output=True, check=False)
+    if check and result.returncode != 0:
+        stderr = result.stderr.decode("utf-8", errors="replace").strip()
+        cmd = " ".join(args[1:])
+        raise RuntimeError(f"podman {cmd} failed ({result.returncode}): {stderr}")
+    return result
+
+
 class Directory389Target:
     """A disposable, containerized 389 DS seeded with the bauble base DIT."""
 
@@ -32,7 +46,7 @@ class Directory389Target:
 
     def build(self) -> None:
         """Build the image (idempotent: podman caches layers)."""
-        subprocess.run(
+        _podman(
             [
                 "podman",
                 "build",
@@ -41,9 +55,7 @@ class Directory389Target:
                 "-f",
                 str(_FIXTURES / "Containerfile"),
                 str(_FIXTURES),
-            ],
-            check=True,
-            capture_output=True,
+            ]
         )
 
     def is_running(self) -> bool:
@@ -65,7 +77,7 @@ class Directory389Target:
     def start(self) -> None:
         """Start a fresh container and wait until the DS answers."""
         self.stop()
-        subprocess.run(
+        _podman(
             [
                 "podman",
                 "run",
@@ -77,9 +89,7 @@ class Directory389Target:
                 "-p",
                 f"{_DEFAULT_SECURE_PORT}:3636",
                 self.image,
-            ],
-            check=True,
-            capture_output=True,
+            ]
         )
         self._wait_ready()
 

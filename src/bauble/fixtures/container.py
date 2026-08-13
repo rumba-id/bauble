@@ -20,6 +20,20 @@ _ADMIN_PW = "bauble-admin"
 _DEFAULT_HOST_PORT = 3890
 
 
+def _podman(args: list[str], *, check: bool = True) -> subprocess.CompletedProcess[bytes]:
+    """Run a podman command; on failure raise with podman's stderr included.
+
+    The callers previously used ``check=True, capture_output=True``, which
+    swallowed podman's diagnostics and left CI with only an opaque exit code.
+    """
+    result = subprocess.run(args, capture_output=True, check=False)
+    if check and result.returncode != 0:
+        stderr = result.stderr.decode("utf-8", errors="replace").strip()
+        cmd = " ".join(args[1:])
+        raise RuntimeError(f"podman {cmd} failed ({result.returncode}): {stderr}")
+    return result
+
+
 class OpenLDAPTarget:
     """A disposable, containerized OpenLDAP seeded with the bauble base DIT."""
 
@@ -37,7 +51,7 @@ class OpenLDAPTarget:
 
     def build(self) -> None:
         """Build the image (idempotent: podman caches layers)."""
-        subprocess.run(
+        _podman(
             [
                 "podman",
                 "build",
@@ -46,9 +60,7 @@ class OpenLDAPTarget:
                 "-f",
                 str(_FIXTURES / "Containerfile"),
                 str(_FIXTURES),
-            ],
-            check=True,
-            capture_output=True,
+            ]
         )
 
     def is_running(self) -> bool:
@@ -75,7 +87,7 @@ class OpenLDAPTarget:
     def start(self) -> None:
         """Start a fresh container and wait until slapd answers."""
         self.stop()
-        subprocess.run(
+        _podman(
             [
                 "podman",
                 "run",
@@ -86,9 +98,8 @@ class OpenLDAPTarget:
                 f"{self.host_port}:389",
                 "-p",
                 f"{self.ldaps_port}:636",
-            ],
-            check=True,
-            capture_output=True,
+                self.image,
+            ]
         )
         self._wait_ready()
 
