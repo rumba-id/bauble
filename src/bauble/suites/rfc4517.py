@@ -128,3 +128,26 @@ def integer_match(session: Session) -> Result:
         return Result("4517.4.4", Status.FAIL, detail="integerMatch >= failed")
     finally:
         cleanup(session, dn)
+
+
+@assertion(
+    id="4517.4.5",
+    rfc=4517,
+    section="§4.2",
+    category=Category.SCHEMA,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="generalizedTimeMatch compares timestamps chronologically.",
+    strategy="Search (modifyTimestamp>=20200101000000Z); expect recently-added entries.",
+)
+def generalized_time_match(session: Session) -> Result:
+    outcome, entries = session.search(
+        "dc=bauble,dc=test",
+        SCOPE_WHOLE_SUBTREE,
+        "(modifyTimestamp>=20200101000000Z)",
+        ["modifyTimestamp"],
+    )
+    if outcome.result_code == 0 and len(entries) >= 2:
+        return Result("4517.4.5", Status.PASS)
+    return Result("4517.4.5", Status.FAIL, detail="generalizedTimeMatch failed")

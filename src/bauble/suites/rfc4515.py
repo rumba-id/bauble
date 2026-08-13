@@ -162,3 +162,23 @@ def present_filter(session: Session) -> Result:
     return Result(
         "4515.3.7", Status.FAIL, detail=f"present filter expected >=2, got {len(entries)}"
     )
+
+
+@assertion(
+    id="4515.3.8",
+    rfc=4515,
+    section="§3",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="An extensible match with an explicit matching rule applies that rule.",
+    strategy="Search (cn:caseIgnoreMatch:=alice anderson); expect alice.",
+)
+def extensible_match(session: Session) -> Result:
+    outcome, entries = session.search(
+        _ROOT, SCOPE_WHOLE_SUBTREE, "(cn:caseIgnoreMatch:=alice anderson)"
+    )
+    if outcome.result_code == 0 and any(e.dn.startswith("uid=alice") for e in entries):
+        return Result("4515.3.8", Status.PASS)
+    return Result("4515.3.8", Status.FAIL, detail="extensible match failed")

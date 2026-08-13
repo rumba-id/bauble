@@ -144,3 +144,75 @@ def must_attribute_enforced(session: Session) -> Result:
         return Result("4512.4.5", Status.PASS)
     cleanup(session, dn)
     return Result("4512.4.5", Status.FAIL, detail="missing sn accepted")
+
+
+@assertion(
+    id="4512.4.6",
+    rfc=4512,
+    section="§2.3",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="Attribute values are validated against their syntax.",
+    strategy="Add posixAccount with non-numeric uidNumber; expect invalidAttributeSyntax (21).",
+    mutates=True,
+)
+def attribute_syntax_validated(session: Session) -> Result:
+    from bauble.suites._helpers import ADMIN_DN, ADMIN_PW, TEST_BASE, bind_admin, cleanup
+
+    bind_admin(session)
+    dn = f"uid=syntaxtest,{TEST_BASE}"
+    cleanup(session, dn)
+    from bauble.raw import RawConnection
+
+    attrs: dict[str, list[str | bytes]] = {
+        "objectClass": ["inetOrgPerson", "posixAccount"],
+        "cn": ["Syntax"],
+        "sn": ["Test"],
+        "uid": ["syntaxtest"],
+        "uidNumber": ["not-a-number"],  # invalid integer syntax
+        "gidNumber": ["100"],
+        "homeDirectory": ["/home/syntaxtest"],
+    }
+
+    # Build a raw AddRequest to bypass ldap3 client-side syntax validation.
+    def _len(n: int) -> bytes:
+        if n < 0x80:
+            return bytes([n])
+        if n < 0x100:
+            return bytes([0x81, n])
+        return bytes([0x82, (n >> 8) & 0xFF, n & 0xFF])
+
+    def _int(v: int) -> bytes:
+        if v == 0:
+            return b"\x02\x01\x00"
+        p = v.to_bytes((v.bit_length() + 8) // 8, "big")
+        if v > 0 and p[0] & 0x80:
+            p = b"\x00" + p
+        return b"\x02" + _len(len(p)) + p
+
+    def _oct(s: str) -> bytes:
+        b = s.encode()
+        return b"\x04" + _len(len(b)) + b
+
+    def _seq(c: bytes) -> bytes:
+        return b"\x30" + _len(len(c)) + c
+
+    attrs_ber = b""
+    for key, vals in attrs.items():
+        val_ber = b"".join(_oct(str(v)) for v in vals)
+        attr_set = b"\x31" + _len(len(val_ber)) + val_ber
+        attrs_ber += _seq(_oct(key) + attr_set)
+    attr_list = _seq(attrs_ber)
+    object_dn = _oct(dn)
+    add_contents = object_dn + attr_list
+    add_request = b"\x68" + _len(len(add_contents)) + add_contents
+    payload = _seq(_int(1) + add_request)
+
+    raw = RawConnection(session.host, session.port)
+    outcome = raw.bind_then_send(payload, ADMIN_DN, ADMIN_PW)
+    if outcome.result_code != 0:
+        return Result("4512.4.6", Status.PASS)
+    cleanup(session, dn)
+    return Result("4512.4.6", Status.FAIL, detail="invalid uidNumber syntax accepted")

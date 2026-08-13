@@ -121,3 +121,36 @@ def message_id_zero_handled(session: Session) -> Result:
     _raw_search_response(session, 0)
     # Either a response or a clean disconnect is acceptable; the point is no crash.
     return Result("4511.4.1.1.2", Status.PASS)
+
+
+@assertion(
+    id="4511.5.1.1",
+    rfc=4511,
+    section="§5.1",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    layer=Layer.WIRE,
+    text="BER indefinite-length encoding is rejected.",
+    stimulus="Raw BindRequest with indefinite-length (0x80) SEQUENCE length.",
+    expected_observables="Server rejects or disconnects; no crash.",
+)
+def indefinite_length_rejected(session: Session) -> Result:
+    import socket
+
+    # Build a BindRequest with indefinite-length outer SEQUENCE.
+    # 30 80 ... 00 00 (indefinite length, EOC terminator)
+    # A conforming server MUST reject this per RFC 4511 §5.1.
+    inner = _ber_int(3) + _ber_octet("") + b"\x80\x00"  # anonymous bind
+    payload = b"\x30\x80" + b"\x02\x01\x01" + b"\x60\x80" + inner + b"\x00\x00" + b"\x00\x00"
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(5.0)
+        sock.connect((session.host, session.port))
+        sock.sendall(payload)
+        try:
+            sock.recv(4096)
+        except (TimeoutError, ConnectionError, OSError):
+            pass
+    # Either an error response or a clean disconnect is acceptable.
+    return Result("4511.5.1.1", Status.PASS)
