@@ -25,9 +25,9 @@ delivers a prerequisite for the next.
 |---|---|---|
 | 2.1 | Fidelity & auditability | assertion-requirement fidelity audit; auditable assertion metadata; intrinsic-gap reasons | **shipped in v2.1.0** |
 | 2.2 | Coverage & capability | PARTIALLY_COVERED ontology; advertise-check coverage growth; capability model completion | **shipped in v2.2.0** |
-| 2.3 | Continuous verification | full-suite CI against both targets |
+| 2.3 | Continuous verification | full-suite CI against all targets; verdict-regression gate; journal artifacts | **shipped in v2.3.0** |
 | 2.4 | Broad applicability | third test target; seed-DIT portability | third target + portability shipped in v2.2.0's cycle |
-| 2.5 | Wire completeness (conditional) | raw `Session` if the wire-UNTESTABLE count justifies it |
+| 2.5 | Wire completeness (conditional) | raw `Session` if the wire-UNTESTABLE count justifies it | **decision recorded in v2.3.0: no raw Session; count was small and the existing layer sufficed** |
 
 ---
 
@@ -110,8 +110,17 @@ target.
 2. Emit and archive the journals/summaries as build artifacts so every commit
    has an auditable conformance report attached.
 
-Done when: CI is green only if both targets' full reports match the expected
+Done when: CI is green only if all targets' full reports match the expected
 verdict set.
+
+**Shipped in v2.3.0.** The four live CI jobs (one per target) run the smoke test
+plus the verdict-regression gate: the full core profile's assertion ->
+status set must equal `ci/golden/<target>.txt`. Journals are uploaded as
+build artifacts per target. Goldens regenerate intentionally with
+`BAUBLE_UPDATE_GOLDEN=1`; drift detection caught and fixed a real bug on
+the way in (RFC 4528's assertion control used the double-SEQUENCE wire
+form OpenLDAP does not honor, so FALSE assertions silently succeeded on
+OpenLDAP and OpenDJ).
 
 ## v2.4 — Broad applicability
 
@@ -145,6 +154,19 @@ pre-2.0 review praised) so wire-level assertions stop depending on what ldap3
 can express. If not, record the decision with the count, as the pre-2.0
 review recommended. No raw layer is built on speculation.
 
+**Shipped in v2.3.0. Decision (recorded): no full raw `Session`.** The wire-UNTESTABLE count
+was 3 of 6 class-B assertions (the abandon pair and caseExactMatch). All
+three were implementable with the existing raw layer plus a minimal
+`RawSession` (a persistent socket for bind + abandon + follow-up — a dozen
+lines, not the full `Session` protocol): `4511.4.11.1` (abandon in-progress,
+now passes on all four targets), `4511.4.11.2` (abandon unknown messageID,
+passes everywhere except OpenLDAP's large-messageID disconnect — a genuine
+finding), `4517.4.6` (caseExactMatch via an extensible-match filter, passes
+except LLDAP's missing extensible-match support — a genuine finding). The
+remaining three untestable (messageID uniqueness, BER BOOLEAN encoding,
+controls-field position) are client-side statements — not wire limitations,
+and no raw `Session` could test them.
+
 ---
 
 ## Non-goals
@@ -160,5 +182,8 @@ review recommended. No raw layer is built on speculation.
 A reviewer can pick any assertion and trace *RFC statement → assertion →
 preconditions → stimulus → observable → oracle → verdict*; `bauble coverage`
 reports covered/partially-covered/uncovered against an audited corpus; CI
-attaches a full conformance report for at least three implementations to
-every green commit.
+attaches a full conformance report for four implementations to every green
+commit.
+
+**Met with v2.3.0.** The remaining untestable requirements are client-side
+statements with recorded reasons; the wire-UNTESTABLE count is zero.

@@ -132,9 +132,16 @@ def entry_dn_single_value_read_only(session: Session) -> Result:
     expected_observables="The correct entry is returned.",
 )
 def entry_dn_searchable(session: Session) -> Result:
+    from ldap3.core.exceptions import LDAPAttributeError
+
     bind_admin(session)
     dn = f"uid=alice,{TEST_BASE}"
-    outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, f"(entryDN={dn})", ["*"])
+    try:
+        outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, f"(entryDN={dn})", ["*"])
+    except LDAPAttributeError:
+        # The server's schema does not define entryDN, so the filter cannot
+        # be evaluated (RFC 5020 requires the attribute).
+        return Result("5020.2.4", Status.FAIL, detail="entryDN not in schema")
     if outcome.result_code != 0:
         return Result("5020.2.4", Status.FAIL, detail=f"search failed: {outcome.result_code}")
     if len(entries) != 1 or entries[0].dn.lower() != dn.lower():

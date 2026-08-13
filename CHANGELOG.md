@@ -3,6 +3,43 @@
 All notable changes to bauble. Entries describe what changed; they do not
 restate coverage totals. Run `bauble coverage` for current figures.
 
+## v2.3.0 — 2026-08-13
+
+Continuous verification. The full core profile's verdict set is now a
+committed contract per target (`ci/golden/<target>.txt`), and CI runs it
+against all four implementations — OpenLDAP, 389 DS, OpenDJ, LLDAP. A
+live run whose assertion-to-status mapping drifts from the golden fails
+the job, so a new FAIL, a lost PASS, or a classification change requires
+an intentional, reviewed golden update. Conformance journals are uploaded
+as per-target build artifacts; every green commit on main carries an
+auditable report.
+
+Standing the gate up surfaced and fixed real suite defects:
+
+- The RFC 4528 assertion control used the double-SEQUENCE controls wire
+  form OpenLDAP does not honor (the same bug class as the v2.1 4527
+  fix), so FALSE assertions silently returned success on OpenLDAP and
+  OpenDJ. The single-SEQUENCE form fixed it; the assertions now pass on
+  all servers.
+- The 3045 NO-USER-MODIFICATION check modified the root DSE through
+  ldap3, which refuses empty DNs client-side; it now uses the raw layer
+  and passes on 389 DS and OpenDJ.
+- Two advertise checks (4528.2.1, 6171.3.1) were class B with real
+  runners that could never run; promoted to class A. Per-target
+  UNTESTABLE dropped 5 -> 3.
+- 5020.2.4 / 4512.3.2 crashed on ldap3's client-side schema check for
+  servers without entryDN / creatorsName; now clean FAIL / NOT_APPLICABLE.
+
+The wire-completeness conditional (v2.5) was evaluated: the three
+wire-testable class-B assertions (the abandon pair and caseExactMatch)
+were implemented with a minimal raw session — no full raw `Session` is
+justified. New findings recorded: OpenLDAP disconnects on abandons whose
+unknown messageID exceeds an internal bound (~2^15) instead of silently
+discarding them (RFC 4511 §4.11); LLDAP's filter parser lacks
+extensible-match filters. The remaining three untestable requirements
+(messageID uniqueness, BER BOOLEAN encoding, controls-field position) are
+client-side statements with recorded reasons.
+
 ## v2.2.0 — 2026-08-13
 
 Coverage & capability. Coverage is now three-state: a requirement can be

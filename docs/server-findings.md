@@ -26,6 +26,8 @@ that the investigation resolved as a suite bug instead.
 |---|---|---|
 | Does not implement the authzId controls | 2.16.840.1.113730.3.4.16/.15 absent from supportedControl; a bind carrying the request control gets no response control. | `3829.4.1` NOT_APPLICABLE |
 | Does not advertise the server-side sort control OIDs | 1.2.840.113556.1.4.473/.474 absent from supportedControl, though the sort operation itself works. | `2891.2.2` NOT_APPLICABLE |
+| Critical matched-values control on a non-search operation is processed, not rejected | RFC 4511 §4.1.11: not appropriate for the operation + critical -> unavailableCriticalExtension; OpenLDAP returns compareTrue (6). | `3876.2.2` FAIL |
+| Abandon with a large unknown messageID disconnects instead of discarding | RFC 4511 §4.11: servers MUST discard unknown messageIDs, and abandon has no response; OpenLDAP sends a Notice of Disconnection (protocolError) for messageIDs above its internal bound (~2^15) and closes the session. Small unknown IDs are discarded correctly. | `4511.4.11.2` FAIL |
 | Requires a non-empty AttributeSelection in Pre/Post-Read controls | An empty selection yields strongAuthRequired rather than a response control (probed against `ldapmodify -e preread`). | `4527.3.1.1`/`4527.3.2.1` behavior note |
 
 ## OpenDJ
@@ -37,7 +39,6 @@ that the investigation resolved as a suite bug instead.
 | Critical matched-values control on a non-search operation is processed, not rejected | RFC 4511 §4.1.11: not appropriate for the operation + critical -> unavailableCriticalExtension; OpenDJ returns compareTrue (6). | `3876.2.2` FAIL |
 | Increment with multiple values returns noSuchObject instead of protocolError | RFC 4525: protocolError. OpenDJ returns 32. | `4525.2.3` FAIL |
 | Increment on a non-incrementable attribute returns invalidAttributeSyntax instead of constraintViolation | RFC 4525: constraintViolation or another appropriate error; 21 is arguably appropriate — flag for review. | `4525.2.4` FAIL |
-| Assertion control advertised but FALSE assertions not honored | OpenDJ advertises 1.3.6.1.1.12; a FALSE assertion filter returns success (0) instead of assertionFailed (122). | `4528.3.2`, `4528.3.4` FAIL |
 | AuthzId response control not implemented | 2.16.840.1.113730.3.4.16 advertised, .15 (response) not; no response control returned. | `3829.2.1`, `3829.4.1` NOT_APPLICABLE |
 | Language ranges not implemented | `description;lang-en-` echoes the literal option (SHOULD-level, allowed). | `3866.3.1.1`, `3866.3.1.2` NOT_APPLICABLE |
 | Maintains 2 of the 4 operational attributes on the seed entry | creatorsName/createTimestamp yes; modifiersName/modifyTimestamp absent. | `4512.3.2` NOT_APPLICABLE |
@@ -60,6 +61,9 @@ interface's actual limits.
 | Empty AND/OR filters not evaluated | RFC 4526 SHALL allow; LLDAP denies the search (50). | `4526.2.1`, `4526.2.2` FAIL |
 | Critical control on a compare closes the connection | RFC 4511 §4.1.11: unavailableCriticalExtension; LLDAP terminates instead of responding. | `3876.2.2`, `3876.2.3` FAIL |
 | `@objectclass` raw searches denied | The @person attribute selection is not honored (50). | `4529.3.1`, `4529.3.2` FAIL |
+| Extensible-match filters not supported | RFC 4511 §4.5.1.7 defines the extensibleMatch filter choice; LLDAP's filter parser does not implement it, so (uid:caseExactMatch:=alice) matches nothing. | `4517.4.6` FAIL |
+| Password Modify ignores oldPasswd | RFC 3062: an incorrect oldPasswd must fail and leave the password unchanged; LLDAP changes it anyway. | `3062.3.3` FAIL |
+| Password Modify succeeds anonymously | RFC 3062: SHALL NOT be used anonymously; LLDAP accepts it. | `3062.3.4` FAIL |
 
 ## Investigated and resolved as suite bugs (not findings)
 
@@ -79,3 +83,12 @@ interface's actual limits.
 - **3866 range FAIL vs NOT_APPLICABLE** — range non-implementation is
   allowed (SHOULD) and now reports NOT_APPLICABLE; range-on-add acceptance
   is a SHALL violation and now FAILs.
+- **Assertion control (RFC 4528) never applied** — the raw control used the
+  double-SEQUENCE wrapper OpenLDAP does not honor, so FALSE assertions
+  silently returned success; single-SEQUENCE form fixed, `4528.3.2`/
+  `4528.3.4` pass on all servers.
+- **3045 root-DSE modify crashed ldap3** — ldap3 refuses empty DNs for
+  modify; the NO-USER-MODIFICATION check now uses the raw layer and passes
+  on 389 DS and OpenDJ (OpenLDAP stays NOT_APPLICABLE: no vendorName).
+- **5020.2.4 schema rejection** — ldap3's client-side schema check rejected
+  the entryDN filter on LLDAP; now a clean FAIL ('entryDN not in schema').

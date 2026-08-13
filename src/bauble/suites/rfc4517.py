@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, SCOPE_WHOLE_SUBTREE, Session
 from bauble.suites._base import assertion
+from bauble.suites._helpers import TEST_BASE
 
 _INTEROP = frozenset({Profile.INTEROP})
 _CORE = frozenset({Profile.CORE})
@@ -186,14 +187,37 @@ def generalized_time_match(session: Session) -> Result:
     section="§4.2",
     category=Category.SCHEMA,
     severity=Severity.MUST,
-    test_class=TestClass.B,
+    test_class=TestClass.A,
     profiles=_INTEROP,
     text="caseExactMatch compares attribute values case-sensitively.",
-    strategy="Requires a user-modifiable case-exact attribute; the base RFC 4519 schema has none.",
+    strategy="Extensible-match filter with caseExactMatch on uid; upper-case must not match.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Base-scope search with (uid:caseExactMatch:=alice), then (uid:caseExactMatch:=ALICE).",
+    expected_observables="Exact-case matches; a differing-case assertion does not.",
+    layer=Layer.WIRE,
 )
 def case_exact_match(session: Session) -> Result:
+    from bauble.raw import RawConnection, build_extensible_match_filter, build_search_request
+    from bauble.suites._helpers import ADMIN_DN, ADMIN_PW
+
+    dn = f"uid=alice,{TEST_BASE}"
+    # Exact case must match.
+    exact = build_search_request(
+        1, dn, ["uid"], filter_ber=build_extensible_match_filter("uid", "caseExactMatch", "alice")
+    )
+    # Differing case must NOT match (case-sensitive rule).
+    upper = build_search_request(
+        2, dn, ["uid"], filter_ber=build_extensible_match_filter("uid", "caseExactMatch", "ALICE")
+    )
+    raw = RawConnection(session.host, session.port)
+    exact_resp = raw.bind_then_send_raw(exact, ADMIN_DN, ADMIN_PW)
+    upper_resp = raw.bind_then_send_raw(upper, ADMIN_DN, ADMIN_PW)
+    from bauble.raw import parse_search_entries
+
+    if parse_search_entries(exact_resp) and not parse_search_entries(upper_resp):
+        return Result("4517.4.6", Status.PASS)
     return Result(
         "4517.4.6",
-        Status.UNTESTABLE,
-        detail="no case-exact attribute in base schema (caseExactMatch is on operational/config attrs)",
+        Status.FAIL,
+        detail=f"exact={bool(parse_search_entries(exact_resp))} upper={bool(parse_search_entries(upper_resp))}",
     )

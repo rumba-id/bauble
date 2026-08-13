@@ -255,6 +255,44 @@ def _build_modify_increment(message_id: int, dn: str, attribute: str, increment_
     return _encode_sequence(_encode_integer(message_id) + modify_request)
 
 
+def build_modify_request(
+    message_id: int,
+    dn: str,
+    attribute: str,
+    values: list[str],
+    operation: int = 2,
+) -> bytes:
+    """Build an LDAPMessage containing a ModifyRequest with one change.
+
+    ``operation`` is the ModifyRequest change operation: replace (2), add (0),
+    delete (1). Unlike the ldap3 Session.modify, this accepts an empty DN
+    (the root DSE), which client libraries refuse to address.
+    """
+    val_ber = b"".join(_encode_octet_string(v) for v in values)
+    attr_set = b"\x31" + _encode_length(len(val_ber)) + val_ber
+    mod = _encode_sequence(_encode_octet_string(attribute) + attr_set)
+    op_enum = b"\x0a\x01" + bytes([operation])
+    change = _encode_sequence(op_enum + mod)
+    changes = _encode_sequence(change)
+    object_dn = _encode_octet_string(dn)
+    modify_contents = object_dn + changes
+    modify_request = b"\x66" + _encode_length(len(modify_contents)) + modify_contents
+    return _encode_sequence(_encode_integer(message_id) + modify_request)
+
+
+def build_abandon_request(message_id: int, abandoned_message_id: int) -> bytes:
+    """Build an LDAPMessage containing an AbandonRequest (RFC 4511 §4.11).
+
+    ``AbandonRequest ::= [APPLICATION 16] MessageID`` — the enclosed
+    MessageID names the operation to abandon. The server sends no response
+    to an AbandonRequest.
+    """
+    # [APPLICATION 16] contains the abandoned operation's MessageID INTEGER.
+    inner = _encode_integer(abandoned_message_id)
+    abandon_pdu = b"\x50" + _encode_length(len(inner)) + inner
+    return _encode_sequence(_encode_integer(message_id) + abandon_pdu)
+
+
 def _parse_ldap_result(data: bytes) -> Outcome | None:
     """Parse a generic LDAPResult from a raw LDAP message.
 
@@ -535,6 +573,118 @@ def parse_search_response(data: bytes) -> tuple[int, list[dict[str, list[bytes]]
 # Public API
 # ---------------------------------------------------------------------------
 
+
+
+
+def build_search_request(
+    message_id: int,
+    base: str,
+    attributes: list[str],
+    scope: int = 0,
+    filter_ber: bytes | None = None,
+) -> bytes:
+    """Build an LDAPMessage containing a SearchRequest.
+
+    ``filter_ber`` is the raw BER of a Filter choice; defaults to a present
+    filter on ``objectClass``. Scope: 0 = baseObject, 1 = singleLevel,
+    2 = wholeSubtree.
+    """
+    base_ber = _encode_octet_string(base)
+    scope_ber = b"\x0a\x01" + bytes([scope])
+    deref = b"\x0a\x01\x00"
+    size_limit = _encode_integer(0)
+    time_limit = _encode_integer(0)
+    types_only = b"\x01\x01\x00"
+    if filter_ber is None:
+        present = _encode_octet_string("objectClass")
+        filter_ber = b"\x87" + _encode_length(len(present)) + present
+    attrs = _encode_sequence(b"".join(_encode_octet_string(a) for a in attributes))
+    contents = (
+        base_ber
+        + scope_ber
+        + deref
+        + size_limit
+        + time_limit
+        + types_only
+        + filter_ber
+        + attrs
+    )
+    search_request = b"\x63" + _encode_length(len(contents)) + contents
+    return _encode_sequence(_encode_integer(message_id) + search_request)
+
+
+def build_extensible_match_filter(attribute: str, rule: str, value: str) -> bytes:
+    """Build a MatchingRuleAssertion filter (RFC 4511 §4.5.1.7).
+
+    ``Filter ::= ... extensibleMatch [9] MatchingRuleAssertion`` where
+    MatchingRuleAssertion ::= SEQUENCE {
+        matchingRule [1] MatchingRuleId OPTIONAL,
+        type         [2] AttributeDescription OPTIONAL,
+        matchValue   [3] AssertionValue,
+        dnAttributes [4] BOOLEAN DEFAULT FALSE }
+    """
+    rule_ber = b"\x81" + _encode_length(len(rule)) + rule.encode()
+    type_ber = b"\x82" + _encode_length(len(attribute)) + attribute.encode()
+    value_ber = b"\x83" + _encode_length(len(value)) + value.encode()
+    inner = rule_ber + type_ber + value_ber
+    return b"\xa9" + _encode_length(len(inner)) + inner
+
+class RawSession:
+    """A persistent raw LDAP connection for multi-step wire sequences.
+
+    Used where a single connection must carry several operations (e.g. an
+    Abandon followed by a request on the same session) — the per-call
+    ``RawConnection`` methods open a fresh socket each time. Only the
+    operations the wire-UNTESTABLE assertions need are implemented; this is
+    deliberately not the full ``Session`` protocol.
+    """
+
+    def __init__(self, host: str, port: int, timeout: float = 5.0) -> None:
+        self._host = host
+        self._port = port
+        self._timeout = timeout
+        self._sock: socket.socket | None = None
+        self._next_message_id = 1
+
+    def open(self) -> None:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(self._timeout)
+        sock.connect((self._host, self._port))
+        self._sock = sock
+
+    def close(self) -> None:
+        if self._sock is not None:
+            self._sock.close()
+            self._sock = None
+
+    def bind(self, dn: str = "", password: str = "") -> Outcome:
+        """Simple bind; returns the BindResponse outcome."""
+        assert self._sock is not None
+        mid = self._next_message_id
+        self._next_message_id += 1
+        self._sock.sendall(_build_bind_request(mid, 3, dn, password))
+        try:
+            data = self._sock.recv(4096)
+        except (TimeoutError, ConnectionError, OSError):
+            return Outcome(result_code=-1, message="bind: no response")
+        outcome = _parse_bind_response(data)
+        if outcome is None:
+            return Outcome(result_code=-1, message="bind: unparseable response")
+        return outcome
+
+    def send(self, payload: bytes) -> bytes:
+        """Send a PDU and return whatever arrives before the timeout."""
+        assert self._sock is not None
+        self._sock.sendall(payload)
+        try:
+            return self._sock.recv(4096)
+        except (TimeoutError, ConnectionError, OSError):
+            return b""
+
+    def next_message_id(self) -> int:
+        mid = self._next_message_id
+        self._next_message_id += 1
+        return mid
 
 class RawConnection:
     """A bare TCP socket that sends and receives raw LDAP BER."""
