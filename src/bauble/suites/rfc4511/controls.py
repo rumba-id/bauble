@@ -19,6 +19,9 @@ _INTEROP = frozenset({Profile.INTEROP})
     profiles=_INTEROP,
     text="An unknown critical control returns unavailableCriticalExtension (12).",
     strategy="Search with a fake OID control marked critical; expect result code 12.",
+    preconditions="Seed base dc=bauble,dc=test exists.",
+    stimulus="SearchRequest with base dc=bauble,dc=test carrying a fake critical control.",
+    expected_observables="SearchResultDone resultCode unavailableCriticalExtension (12).",
 )
 def unknown_critical_control(session: Session) -> Result:
     outcome, _ = session.search(
@@ -42,6 +45,9 @@ def unknown_critical_control(session: Session) -> Result:
     profiles=_INTEROP,
     text="An unknown non-critical control is ignored and the operation succeeds.",
     strategy="Search with a fake OID control NOT marked critical; expect success.",
+    preconditions="Seed base dc=bauble,dc=test exists.",
+    stimulus="SearchRequest with base dc=bauble,dc=test carrying a fake non-critical control.",
+    expected_observables="SearchResultDone resultCode success (0); the control is ignored.",
     layer=Layer.WIRE,
 )
 def unknown_non_critical_control(session: Session) -> Result:

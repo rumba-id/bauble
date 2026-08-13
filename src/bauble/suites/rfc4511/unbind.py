@@ -19,6 +19,9 @@ _INTEROP = frozenset({Profile.INTEROP})
     profiles=_INTEROP,
     text="An unbind request returns without error.",
     strategy="Call unbind on a connected session; expect no exception.",
+    preconditions="Session is open.",
+    stimulus="UnbindRequest.",
+    expected_observables="No response; the session closes without error.",
 )
 def unbind_returns_without_error(session: Session) -> Result:
     session.unbind()

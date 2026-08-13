@@ -21,6 +21,9 @@ _INTEROP = frozenset({Profile.INTEROP})
     mutates=True,
     text="The objectClass attribute cannot be removed from an entry.",
     strategy="Try to delete objectClass from an entry via modify; expect an error.",
+    preconditions="Admin bound; seed entry uid=alice exists.",
+    stimulus="ModifyRequest deleting the objectClass value from uid=alice.",
+    expected_observables="ModifyResponse resultCode non-zero (objectClass cannot be removed).",
 )
 def object_class_cannot_be_removed(session: Session) -> Result:
     bind_admin(session)
@@ -44,6 +47,9 @@ def object_class_cannot_be_removed(session: Session) -> Result:
     mutates=True,
     text="Operational attributes (createTimestamp) cannot be modified by clients.",
     strategy="Try to modify createTimestamp on an entry; expect an error.",
+    preconditions="Admin bound; seed entry uid=alice exists.",
+    stimulus="ModifyRequest replacing createTimestamp on uid=alice.",
+    expected_observables="ModifyResponse resultCode non-zero (operational attribute is client-read-only).",
 )
 def operational_attribute_protected(session: Session) -> Result:
     bind_admin(session)

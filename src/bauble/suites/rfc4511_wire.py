@@ -87,6 +87,7 @@ def _raw_search_response(session: Session, message_id: int) -> bytes:
     profiles=_CORE,
     layer=Layer.WIRE,
     text="A response echoes the messageID of its request.",
+    preconditions="Target server is reachable on session.host:session.port.",
     stimulus="Raw SearchRequest with messageID=42; inspect response messageID.",
     expected_observables="First response PDU carries messageID=42.",
 )
@@ -114,6 +115,7 @@ def response_echoes_message_id(session: Session) -> Result:
     profiles=_CORE,
     layer=Layer.WIRE,
     text="A request with messageID 0 is rejected or handled without crash.",
+    preconditions="Target server is reachable on session.host:session.port.",
     stimulus="Raw SearchRequest with messageID=0.",
     expected_observables="Server responds or disconnects; no crash observed.",
 )
@@ -133,6 +135,7 @@ def message_id_zero_handled(session: Session) -> Result:
     profiles=_CORE,
     layer=Layer.WIRE,
     text="BER indefinite-length encoding is rejected.",
+    preconditions="Target server is reachable on session.host:session.port.",
     stimulus="Raw BindRequest with indefinite-length (0x80) SEQUENCE length.",
     expected_observables="Server rejects or disconnects; no crash.",
 )
@@ -279,6 +282,7 @@ def _search_contents(types_only_byte: int, filter_ber: bytes) -> bytes:
     profiles=_CORE,
     layer=Layer.WIRE,
     text="A non-conforming BOOLEAN value (0x01) is handled without crash.",
+    preconditions="Target server is reachable on session.host:session.port.",
     stimulus="Raw SearchRequest with typesOnly BOOLEAN encoded 0x01 (must be 0x00/0xFF).",
     expected_observables="Server returns a response or disconnects cleanly.",
 )
@@ -298,6 +302,7 @@ def boolean_encoding_handled(session: Session) -> Result:
     profiles=_CORE,
     layer=Layer.WIRE,
     text="A malformed filter returns an error result code.",
+    preconditions="Target server is reachable on session.host:session.port.",
     stimulus="Raw SearchRequest with a truncated equality filter.",
     expected_observables="Server returns protocolError (2) or similar; not success.",
 )
@@ -324,6 +329,7 @@ def malformed_filter_error(session: Session) -> Result:
     profiles=_CORE,
     layer=Layer.WIRE,
     text="A truncated LDAPMessage (declared length exceeds bytes sent) is handled without crash.",
+    preconditions="Target server is reachable on session.host:session.port.",
     stimulus="Raw SEQUENCE claiming 256 bytes but only a few sent.",
     expected_observables="Server waits for more or disconnects; no crash observed.",
 )
