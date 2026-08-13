@@ -31,7 +31,7 @@ __all__ = [
     "to_records",
 ]
 
-_CONFORMANT_OK = {"pass", "auto_pass"}
+_CONFORMANT_OK = {"pass", "not_applicable"}
 
 
 @dataclass(frozen=True)
@@ -294,7 +294,7 @@ class JUnitReporter:
         )
         failures = 0
         skipped = 0
-        _skip_statuses = {"skip", "blocked", "untestable", "auto_pass", "na"}
+        _skip_statuses = {"skip", "blocked", "untestable", "auto_pass", "not_applicable", "na"}
         for record in records:
             case = ET.SubElement(
                 suite,

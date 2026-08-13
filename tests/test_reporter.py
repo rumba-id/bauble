@@ -28,7 +28,7 @@ _RECORDS = [
     JournalRecord("4511.4.2.2", 4511, "pass", "must", "A", ("base",)),
     JournalRecord("4511.4.2.3", 4511, "fail", "must", "A", ("base",)),
     JournalRecord("4511.4.2.7", 4511, "untestable", "must", "B", ("base",)),
-    JournalRecord("4511.4.2.9", 4511, "auto_pass", "must", "A", ("base",)),
+    JournalRecord("4511.4.2.9", 4511, "not_applicable", "must", "A", ("base",)),
     JournalRecord("4512.1.1", 4512, "pass", "should", "A", ("standard",)),
 ]
 
@@ -57,7 +57,7 @@ def test_journal_is_valid_json_lines() -> None:
 
 def test_profile_verdict_conformant_rule() -> None:
     base = profile_verdict(_RECORDS, "base")
-    # must+A: 4 total (.1, .2 pass; .3 fail; .9 auto_pass); ok = 3; one FAIL -> not conformant
+    # must+A: 4 total (.1, .2 pass; .3 fail; .9 not_applicable); ok = 3; one FAIL -> not conformant
     assert base.must_a_total == 4
     assert base.must_a_ok == 3
     assert base.conformant is False
@@ -72,7 +72,7 @@ def test_profile_verdict_conformant_rule() -> None:
 def test_conformant_when_all_must_a_pass() -> None:
     records = [
         JournalRecord("1.0.0.1", 1, "pass", "must", "A", ("base",)),
-        JournalRecord("1.0.0.2", 1, "auto_pass", "must", "A", ("base",)),
+        JournalRecord("1.0.0.2", 1, "not_applicable", "must", "A", ("base",)),
         JournalRecord("1.0.0.3", 1, "untestable", "must", "B", ("base",)),
         JournalRecord("1.0.0.4", 1, "fail", "should", "A", ("base",)),
     ]
@@ -102,7 +102,7 @@ def test_junit_reporter_counts_failures_and_skips() -> None:
     assert suite is not None
     assert suite.get("tests") == str(len(_RECORDS))
     assert suite.get("failures") == "1"
-    # fail is a failure; auto_pass + untestable are skipped
+    # fail is a failure; not_applicable + untestable are skipped
     assert suite.get("skipped") == "2"
 
 
