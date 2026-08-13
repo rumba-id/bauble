@@ -57,6 +57,17 @@ def audit_text(
     if cross:
         for req_id, req_rfc, cid, a_rfc in cross:
             lines.append(f"  {req_id} (rfc {req_rfc}) <- {cid} (rfc {a_rfc})")
+        noted = [
+            req
+            for req in requirements
+            if req.note
+            and any(
+                (registry.get(cid).rfc != req.rfc) if cid in registry else False
+                for cid in req.covered_by
+            )
+        ]
+        for req in noted:
+            lines.append(f"    note: {req.note}")
     else:
         lines.append("  (none)")
 
@@ -67,7 +78,9 @@ def audit_text(
         statuses = [_metadata_status(registry, cid) for cid in req.covered_by]
         if not req.covered_by:
             meta_counter["uncovered"] += 1
-            lines.append(f"  {req.id}  [{req.test_class.value}/{req.severity.value}]  UNCOVERED")
+            lines.append(
+                f"  {req.id}  [{req.test_class.value}/{req.severity.value}]  UNCOVERED  {req.note}"
+            )
             continue
         worst = (
             "full"

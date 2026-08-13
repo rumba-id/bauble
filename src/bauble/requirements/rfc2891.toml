@@ -16,6 +16,7 @@ severity = "should"
 test_class = "B"
 text = "Servers SHOULD publish 1.2.840.113556.1.4.473/.474 in supportedControl."
 covered_by = []
+note = "SHOULD-level advertisement; absence is not a conformance failure."
 
 [[requirement]]
 id = "2891:2:3"

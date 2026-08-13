@@ -48,3 +48,4 @@ severity = "should"
 test_class = "B"
 text = "Servers SHOULD publish 1.3.6.1.4.1.4203.1.5.4 (tags) and .5 (ranges) in supportedFeatures."
 covered_by = []
+note = "SHOULD-level advertisement; absence is not a conformance failure."

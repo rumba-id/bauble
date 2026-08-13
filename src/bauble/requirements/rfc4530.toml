@@ -54,3 +54,4 @@ severity = "must"
 test_class = "B"
 text = "Servers MUST ensure each generated UUID is unique in space and time."
 covered_by = []
+note = "Uniqueness across space and time is not exhaustively observable."

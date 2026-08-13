@@ -272,3 +272,61 @@ def supported_ldap_version(session: Session) -> Result:
     if has_v3:
         return Result("4512.5.1.1", Status.PASS)
     return Result("4512.5.1.1", Status.FAIL, detail=f"version 3 not in {versions}")
+
+
+@assertion(
+    id="4512.3.3.1",
+    rfc=4512,
+    section="§3.3",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    mutates=True,
+    text="The objectClass attribute cannot be removed from an entry.",
+    strategy="Try to delete objectClass from an entry via modify; expect an error.",
+    preconditions="Admin bound; seed entry uid=alice exists.",
+    stimulus="ModifyRequest deleting the objectClass value from uid=alice.",
+    expected_observables="ModifyResponse resultCode non-zero (objectClass cannot be removed).",
+)
+def object_class_cannot_be_removed(session: Session) -> Result:
+    from bauble.session import MOD_DELETE, Modification
+    from bauble.suites._helpers import bind_admin
+
+    bind_admin(session)
+    outcome = session.modify(
+        "uid=alice,ou=people,dc=bauble,dc=test",
+        [Modification(MOD_DELETE, "objectClass", ["inetOrgPerson"])],
+    )
+    if outcome.result_code != 0:
+        return Result("4512.3.3.1", Status.PASS)
+    return Result("4512.3.3.1", Status.FAIL, detail=f"expected error, got {outcome.result_code}")
+
+
+@assertion(
+    id="4512.3.4.1",
+    rfc=4512,
+    section="§3.4",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    mutates=True,
+    text="Operational attributes (createTimestamp) cannot be modified by clients.",
+    strategy="Try to modify createTimestamp on an entry; expect an error.",
+    preconditions="Admin bound; seed entry uid=alice exists.",
+    stimulus="ModifyRequest replacing createTimestamp on uid=alice.",
+    expected_observables="ModifyResponse resultCode non-zero (operational attribute is client-read-only).",
+)
+def operational_attribute_protected(session: Session) -> Result:
+    from bauble.session import MOD_REPLACE, Modification
+    from bauble.suites._helpers import bind_admin
+
+    bind_admin(session)
+    outcome = session.modify(
+        "uid=alice,ou=people,dc=bauble,dc=test",
+        [Modification(MOD_REPLACE, "createTimestamp", ["20240101000000Z"])],
+    )
+    if outcome.result_code != 0:
+        return Result("4512.3.4.1", Status.PASS)
+    return Result("4512.3.4.1", Status.FAIL, detail=f"expected error, got {outcome.result_code}")

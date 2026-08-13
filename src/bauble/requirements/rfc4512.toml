@@ -64,3 +64,20 @@ severity = "should"
 test_class = "B"
 text = "Servers SHOULD maintain creatorsName/createTimestamp/modifiersName/modifyTimestamp."
 covered_by = []
+note = "SHOULD-level maintenance; absence is not a conformance failure."
+
+[[requirement]]
+id = "4512:3:3"
+section = "3.3"
+severity = "must"
+test_class = "A"
+text = "The objectClass attribute cannot be removed from an entry."
+covered_by = ["4512.3.3.1"]
+
+[[requirement]]
+id = "4512:3:4"
+section = "3.4"
+severity = "must"
+test_class = "A"
+text = "Operational attributes cannot be modified by clients."
+covered_by = ["4512.3.4.1"]

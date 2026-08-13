@@ -10,6 +10,7 @@ severity = "must"
 test_class = "B"
 text = "Clients and servers MUST ignore trailing SEQUENCE components whose tags they do not recognize."
 covered_by = []
+note = "Client-side extensibility requirement."
 
 [[requirement]]
 id = "4511:4.1.1:1"
@@ -58,6 +59,7 @@ severity = "must"
 test_class = "B"
 text = "A Referral MUST contain at least one URI."
 covered_by = []
+note = "Referral emission depends on distributed knowledge; not reliably triggerable portably."
 
 # §4.1.11 Controls
 
@@ -92,6 +94,7 @@ severity = "must"
 test_class = "B"
 text = "Criticality MUST be FALSE (and is ignored) on response and UnbindRequest controls."
 covered_by = []
+note = "Response-control criticality is a server-internal encoding; not observable."
 
 # §4.2 Bind
 
@@ -142,6 +145,7 @@ severity = "must"
 test_class = "B"
 text = "When locating the bind name, the server SHALL NOT dereference aliases."
 covered_by = []
+note = "Server-internal name-resolution behavior; not observable."
 
 [[requirement]]
 id = "4511:4.2:7"
@@ -158,6 +162,7 @@ severity = "must"
 test_class = "B"
 text = "Before processing a BindRequest, all uncompleted operations MUST complete or be abandoned."
 covered_by = []
+note = "Server-internal operation sequencing; not observable."
 
 [[requirement]]
 id = "4511:4.2.1:2"
@@ -166,6 +171,7 @@ severity = "must"
 test_class = "B"
 text = "A client MUST NOT send further PDUs between a BindRequest and its BindResponse."
 covered_by = []
+note = "Client-side sequencing requirement."
 
 # §4.2 Bind — remaining assertions
 

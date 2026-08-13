@@ -16,3 +16,4 @@ severity = "should"
 test_class = "B"
 text = "Servers SHOULD advertise the whoami OID (1.3.6.1.4.1.4203.1.11.3) in supportedExtension."
 covered_by = []
+note = "SHOULD-level advertisement; absence is not a conformance failure."

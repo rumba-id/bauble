@@ -48,3 +48,4 @@ severity = "must"
 test_class = "B"
 text = "Assertion evaluation and operation processing SHALL be one atomic action."
 covered_by = []
+note = "Atomicity is server-internal; not observable as a result code."

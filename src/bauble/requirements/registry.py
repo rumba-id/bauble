@@ -33,6 +33,8 @@ class Requirement:
     test_class: TestClass
     text: str
     covered_by: tuple[str, ...] = ()
+    note: str = ""
+    """Free-form note: e.g. an accepted cross-RFC link or why a gap is intrinsic."""
 
 
 def load_requirements() -> list[Requirement]:
@@ -54,6 +56,7 @@ def load_requirements() -> list[Requirement]:
                     test_class=TestClass(str(item["test_class"])),
                     text=str(item.get("text", "")),
                     covered_by=tuple(str(x) for x in item.get("covered_by", [])),
+                    note=str(item.get("note", "")),
                 )
             )
     return requirements
