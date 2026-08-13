@@ -132,3 +132,31 @@ def unknown_objectclass_treated_as_unknown_attr(session: Session) -> Result:
         Status.FAIL,
         detail=f"@1.2.3.4.5.9999 search failed: resultCode={result_code}",
     )
+
+
+@assertion(
+    id="4529.3.3",
+    rfc=4529,
+    section="§3",
+    category=Category.PROTOCOL,
+    severity=Severity.SHOULD,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    text="Servers supporting this feature SHOULD publish OID 1.3.6.1.4.1.4203.1.5.2 in supportedFeatures.",
+    strategy="Read root DSE supportedFeatures and check for the @objectclass OID.",
+    preconditions="Root DSE is readable.",
+    stimulus="Search the root DSE for the supportedFeatures attribute.",
+    expected_observables="The @objectclass feature OID present, or NOT_APPLICABLE if not advertised.",
+    layer=Layer.CAPABILITY,
+    oid="1.3.6.1.4.1.4203.1.5.2",
+)
+def objectclass_feature_advertised(session: Session) -> Result:
+    outcome, entries = session.search(
+        "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedFeatures"]
+    )
+    if outcome.result_code != 0 or not entries:
+        return Result("4529.3.3", Status.NOT_APPLICABLE, detail="root DSE not readable")
+    features = entries[0].attributes.get("supportedFeatures", [])
+    if "1.3.6.1.4.1.4203.1.5.2" in features:
+        return Result("4529.3.3", Status.PASS)
+    return Result("4529.3.3", Status.NOT_APPLICABLE, detail="feature OID not advertised")

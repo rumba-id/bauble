@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.raw import password_modify_request_value
 from bauble.session import Session
 from bauble.suites._base import assertion
@@ -112,3 +112,33 @@ def password_modify_anonymous_rejected(session: Session) -> Result:
         Status.FAIL,
         detail="anonymous password modify succeeded",
     )
+
+
+@assertion(
+    id="3062.3.2",
+    rfc=3062,
+    section="§3",
+    category=Category.PROTOCOL,
+    severity=Severity.SHOULD,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    text="Servers SHOULD publish passwdModifyOID (1.3.6.1.4.1.4203.1.11.1) in supportedExtension.",
+    strategy="Read root DSE supportedExtension and check for the passwdModifyOID.",
+    preconditions="Root DSE is readable.",
+    stimulus="Search the root DSE for the supportedExtension attribute.",
+    expected_observables="passwdModifyOID present, or NOT_APPLICABLE if not advertised.",
+    layer=Layer.CAPABILITY,
+    oid="1.3.6.1.4.1.4203.1.11.1",
+)
+def password_modify_advertised(session: Session) -> Result:
+    from bauble.session import SCOPE_BASE_OBJECT
+
+    outcome, entries = session.search(
+        "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedExtension"]
+    )
+    if outcome.result_code != 0 or not entries:
+        return Result("3062.3.2", Status.NOT_APPLICABLE, detail="root DSE not readable")
+    extensions = entries[0].attributes.get("supportedExtension", [])
+    if "1.3.6.1.4.1.4203.1.11.1" in extensions:
+        return Result("3062.3.2", Status.PASS)
+    return Result("3062.3.2", Status.NOT_APPLICABLE, detail="OID not advertised")

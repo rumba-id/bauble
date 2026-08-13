@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, SCOPE_WHOLE_SUBTREE, Session
 from bauble.suites._base import assertion
 
@@ -330,3 +330,45 @@ def operational_attribute_protected(session: Session) -> Result:
     if outcome.result_code != 0:
         return Result("4512.3.4.1", Status.PASS)
     return Result("4512.3.4.1", Status.FAIL, detail=f"expected error, got {outcome.result_code}")
+
+
+@assertion(
+    id="4512.3.2",
+    rfc=4512,
+    section="§3.4",
+    category=Category.DATA_MODEL,
+    severity=Severity.SHOULD,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    text="Servers SHOULD maintain creatorsName/createTimestamp/modifiersName/modifyTimestamp.",
+    strategy="Search a seed entry for the four operational attributes.",
+    preconditions="Seed entry uid=alice exists; root DSE is readable.",
+    stimulus="Base-scope search of uid=alice requesting the four operational attributes.",
+    expected_observables="All four attributes present, or NOT_APPLICABLE if the server does not maintain them.",
+    layer=Layer.CAPABILITY,
+)
+def operational_attrs_maintained(session: Session) -> Result:
+    from bauble.suites._helpers import bind_admin
+
+    bind_admin(session)
+    outcome, entries = session.search(
+        "uid=alice,ou=people,dc=bauble,dc=test",
+        SCOPE_BASE_OBJECT,
+        "(objectClass=*)",
+        ["creatorsName", "createTimestamp", "modifiersName", "modifyTimestamp"],
+    )
+    if outcome.result_code != 0 or not entries:
+        return Result("4512.3.2", Status.NOT_APPLICABLE, detail="seed entry not readable")
+    attrs = entries[0].attributes
+    maintained = [
+        a
+        for a in ("creatorsName", "createTimestamp", "modifiersName", "modifyTimestamp")
+        if attrs.get(a)
+    ]
+    if len(maintained) == 4:
+        return Result("4512.3.2", Status.PASS)
+    return Result(
+        "4512.3.2",
+        Status.NOT_APPLICABLE,
+        detail=f"server maintains {len(maintained)} of the four attributes",
+    )

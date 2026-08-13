@@ -37,9 +37,9 @@ text = "The returned entry reflects the post-update state."
 id = "4527:3:3"
 section = "3"
 severity = "should"
-test_class = "B"
+test_class = "A"
 text = "Servers SHOULD publish 1.3.6.1.1.13.1 and 1.3.6.1.1.13.2 in supportedControl."
-covered_by = []
+covered_by = ["4527.3.3"]
 note = "SHOULD-level advertisement; absence is not a conformance failure."
 
 [[requirement]]
