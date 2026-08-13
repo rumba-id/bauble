@@ -24,6 +24,7 @@ _BOB_DN = "uid=bob,ou=people,dc=bauble,dc=test"
     profiles=_CORE,
     text="The Password Modify extended operation is accepted for a valid user.",
     strategy="Send Password Modify as admin for bob with a new password; expect 0; restore.",
+    oid="1.3.6.1.4.1.4203.1.11.1",
 )
 def password_modify_accepted(session: Session) -> Result:
     bind_admin(session)

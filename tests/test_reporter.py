@@ -122,7 +122,7 @@ def test_to_records_enriches_from_registry() -> None:
     )
     records = to_records([Result("4511.4.2.1", Status.PASS, detail="ok")], registry)
     assert records == [
-        JournalRecord("4511.4.2.1", 4511, "pass", "must", "A", ("interop",), "semantic", "ok")
+        JournalRecord("4511.4.2.1", 4511, "pass", "must", "A", ("interop",), "semantic", "", "ok")
     ]
 
 

@@ -22,6 +22,7 @@ _SORT_OID = "1.2.840.113556.1.4.473"
     profiles=_CORE,
     text="A search with the server-side sorting control returns sorted results.",
     strategy="Search people with sort control on uid; expect alice before bob.",
+    oid="1.2.840.113556.1.4.473",
 )
 def sort_control_returns_sorted(session: Session) -> Result:
     outcome, results = session.search(

@@ -22,6 +22,7 @@ _ALICE_PW = "alice-secret"
     profiles=_CORE,
     text="The Who-Am-I extended operation returns the authenticated identity.",
     strategy="Bind as alice, send Who-Am-I extended op; expect the DN in the response.",
+    oid="1.3.6.1.4.1.4203.1.11.3",
 )
 def who_am_i(session: Session) -> Result:
     session.bind(_ALICE, _ALICE_PW)

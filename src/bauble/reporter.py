@@ -45,6 +45,7 @@ class JournalRecord:
     test_class: str
     profiles: tuple[str, ...]
     layer: str = "semantic"
+    oid: str = ""
     detail: str | None = None
 
 
@@ -73,6 +74,7 @@ def to_records(results: list[Result], registry: Registry) -> list[JournalRecord]
                 test_class=assertion.test_class.value,
                 profiles=tuple(p.value for p in sorted(assertion.profiles, key=lambda x: x.value)),
                 layer=assertion.layer.value,
+                oid=assertion.oid,
                 detail=result.detail,
             )
         )
@@ -93,6 +95,7 @@ def journal_dumps(records: list[JournalRecord]) -> str:
                     "test_class": record.test_class,
                     "profiles": list(record.profiles),
                     "layer": record.layer,
+                    "oid": record.oid,
                     "detail": record.detail,
                 }
             )
@@ -133,6 +136,7 @@ def journal_loads(text: str) -> list[JournalRecord]:
                 test_class=str(data.get("test_class", "")),
                 profiles=profiles,
                 layer=str(data.get("layer", "semantic")),
+                oid=str(data.get("oid", "")),
                 detail=detail,
             )
         )
@@ -251,6 +255,29 @@ class SummaryReporter:
                 f"  {layer:<11} must(A) {ok}/{len(must_a)}  "
                 f"fail={fail}  na={na}  untestable={untestable}\n"
             )
+
+        # Per-OID capability table.
+        oid_records = [r for r in records if r.oid]
+        if oid_records:
+            out.write("Per capability (OID):\n")
+            for oid in sorted({r.oid for r in oid_records}):
+                oid_group = [r for r in oid_records if r.oid == oid]
+                # Advertised if a capability-layer assertion PASSes, or if a
+                # behavioral assertion was exercised (PASS/FAIL implies the
+                # feature was advertised and tested).
+                advertised = any(
+                    (r.layer == "capability" and r.status == "pass")
+                    or (r.layer != "capability" and r.status in ("pass", "fail"))
+                    for r in oid_group
+                )
+                fails = [r for r in oid_group if r.status == "fail"]
+                if fails:
+                    verdict = f"FAIL — {fails[0].detail or 'behavioral test failed'}"
+                elif advertised:
+                    verdict = "CONFORMANT"
+                else:
+                    verdict = "not advertised"
+                out.write(f"  {oid:<24} {verdict}\n")
 
 
 class JUnitReporter:

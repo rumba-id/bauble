@@ -76,6 +76,7 @@ def _search_raw(session: Session, base: str, scope: int, attributes: list[str]) 
     text="'@person' in attribute list returns all attributes of the person object class.",
     strategy="Send raw SearchRequest with @person attribute; expect success (0).",
     layer=Layer.WIRE,
+    oid="1.3.6.1.4.1.4203.1.5.2",
 )
 def at_objectclass_returns_attrs(session: Session) -> Result:
     result_code = _search_raw(session, f"uid=alice,{TEST_BASE}", SCOPE_BASE_OBJECT, ["@person"])
@@ -99,6 +100,7 @@ def at_objectclass_returns_attrs(session: Session) -> Result:
     text="Unrecognized object class OID is treated as unrecognized attribute description.",
     strategy="Send raw SearchRequest with @1.2.3.4.5.9999; expect no error.",
     layer=Layer.WIRE,
+    oid="1.3.6.1.4.1.4203.1.5.2",
 )
 def unknown_objectclass_treated_as_unknown_attr(session: Session) -> Result:
     result_code = _search_raw(

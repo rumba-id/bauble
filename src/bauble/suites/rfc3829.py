@@ -26,6 +26,7 @@ _AUTHZID_RESPONSE_OID = "2.16.840.1.113730.3.4.15"
     text="Server SHOULD publish 2.16.840.1.113730.3.4.16/15 in supportedControl.",
     strategy="Read root DSE supportedControl and check for both OIDs.",
     layer=Layer.CAPABILITY,
+    oid="2.16.840.1.113730.3.4.16",
 )
 def authzid_controls_advertised(session: Session) -> Result:
     outcome, entries = session.search(
@@ -50,6 +51,7 @@ def authzid_controls_advertised(session: Session) -> Result:
     text="Successful bind with AuthzId Request control returns response control with authzId.",
     strategy="Bind as admin with request control; verify response control contains authzId.",
     mutates=True,
+    oid="2.16.840.1.113730.3.4.16",
 )
 def authzid_response_on_bind(session: Session) -> Result:
     # Use ldap3 to send the bind with the request control.

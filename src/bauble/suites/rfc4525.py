@@ -22,6 +22,7 @@ _INCREMENT_FEATURE_OID = "1.3.6.1.1.14"
     strategy="Read root DSE supportedFeatures and check for the OID.",
     requires_features=(_INCREMENT_FEATURE_OID,),
     layer=Layer.CAPABILITY,
+    oid="1.3.6.1.1.14",
 )
 def increment_feature_advertised(session: Session) -> Result:
     from bauble.session import SCOPE_BASE_OBJECT
@@ -50,6 +51,7 @@ def increment_feature_advertised(session: Session) -> Result:
     mutates=True,
     requires_features=(_INCREMENT_FEATURE_OID,),
     layer=Layer.WIRE,
+    oid="1.3.6.1.1.14",
 )
 def increment_adds_to_value(session: Session) -> Result:
     from bauble.raw import RawConnection
@@ -100,6 +102,7 @@ def increment_adds_to_value(session: Session) -> Result:
     mutates=True,
     requires_features=(_INCREMENT_FEATURE_OID,),
     layer=Layer.WIRE,
+    oid="1.3.6.1.1.14",
 )
 def increment_multiple_values_error(session: Session) -> Result:
     from bauble.raw import RawConnection
@@ -180,6 +183,7 @@ def increment_multiple_values_error(session: Session) -> Result:
     mutates=True,
     requires_features=(_INCREMENT_FEATURE_OID,),
     layer=Layer.WIRE,
+    oid="1.3.6.1.1.14",
 )
 def increment_non_integer_error(session: Session) -> Result:
     from bauble.raw import RawConnection

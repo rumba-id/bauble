@@ -22,6 +22,7 @@ _PAGED_OID = "1.2.840.113556.1.4.319"
     profiles=_CORE,
     text="A search with the paged-results control (size=2) is accepted.",
     strategy="Search the base DIT with paged-results control, page size 2; expect code 0.",
+    oid="1.2.840.113556.1.4.319",
 )
 def paged_results_accepted(session: Session) -> Result:
     outcome, _ = session.search(

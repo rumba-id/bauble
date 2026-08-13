@@ -54,6 +54,7 @@ def _ber_seq(c: bytes) -> bytes:
     text="Server SHOULD publish 1.2.826.0.1.3344810.2.3 in supportedControl.",
     strategy="Read root DSE supportedControl and check for the OID.",
     layer=Layer.CAPABILITY,
+    oid="1.2.826.0.1.3344810.2.3",
 )
 def matched_values_advertised(session: Session) -> Result:
     outcome, entries = session.search(
@@ -78,6 +79,7 @@ def matched_values_advertised(session: Session) -> Result:
     text="Search with valuesReturnFilter returns only matching values.",
     strategy="Search with attributes=description, valuesReturnFilter=(description=*). Verify.",
     mutates=True,
+    oid="1.2.826.0.1.3344810.2.3",
 )
 def matched_values_filter_returns_subset(session: Session) -> Result:
     from bauble.raw import RawConnection

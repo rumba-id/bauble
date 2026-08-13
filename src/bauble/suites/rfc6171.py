@@ -20,6 +20,7 @@ _DONT_USE_COPY_OID = "1.3.6.1.1.22"
     text="Server SHOULD publish 1.3.6.1.1.22 in supportedControl.",
     strategy="Read root DSE supportedControl and check for the OID.",
     layer=Layer.CAPABILITY,
+    oid="1.3.6.1.1.22",
 )
 def dont_use_copy_advertised(session: Session) -> Result:
     outcome, entries = session.search(

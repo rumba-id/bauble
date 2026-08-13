@@ -81,6 +81,7 @@ def _control_advertised(session: Session, oid: str) -> bool:
     text="Server SHOULD publish 1.3.6.1.1.12 in supportedControl.",
     strategy="Read root DSE supportedControl; check for the OID.",
     layer=Layer.CAPABILITY,
+    oid="1.3.6.1.1.12",
 )
 def assertion_control_advertised(session: Session) -> Result:
     if _control_advertised(session, _ASSERTION_CONTROL_OID):
@@ -123,6 +124,7 @@ def _build_modify_with_assertion(
     strategy="Modify with TRUE assertion (present objectClass) on existing entry; expect success.",
     mutates=True,
     layer=Layer.WIRE,
+    oid="1.3.6.1.1.12",
 )
 def assertion_true_proceeds(session: Session) -> Result:
     from bauble.raw import RawConnection
@@ -177,6 +179,7 @@ def assertion_true_proceeds(session: Session) -> Result:
     ),
     mutates=True,
     layer=Layer.WIRE,
+    oid="1.3.6.1.1.12",
 )
 def assertion_false_returns_122(session: Session) -> Result:
     from bauble.raw import RawConnection
@@ -219,6 +222,7 @@ def assertion_false_returns_122(session: Session) -> Result:
     strategy="Delete with TRUE assertion on temp entry; expect success.",
     mutates=True,
     layer=Layer.WIRE,
+    oid="1.3.6.1.1.12",
 )
 def assertion_delete_true(session: Session) -> Result:
     from bauble.raw import RawConnection
@@ -266,6 +270,7 @@ def assertion_delete_true(session: Session) -> Result:
     text="Search with FALSE assertion on baseObject returns assertionFailed.",
     strategy="Search with FALSE assertion on baseObject; expect 122.",
     layer=Layer.WIRE,
+    oid="1.3.6.1.1.12",
 )
 def assertion_search_false(session: Session) -> Result:
     from bauble.raw import RawConnection
