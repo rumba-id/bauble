@@ -25,9 +25,9 @@ delivers a prerequisite for the next.
 |---|---|---|
 | 2.1 | Fidelity & auditability | assertion-requirement fidelity audit; auditable assertion metadata; intrinsic-gap reasons | **shipped in v2.1.0** |
 | 2.2 | Coverage & capability | PARTIALLY_COVERED ontology; advertise-check coverage growth; capability model completion | **shipped in v2.2.0** |
-| 2.3 | Continuous verification | full-suite CI against all targets; verdict-regression gate; journal artifacts | **done on feat/v2.3-continuous-verification** |
+| 2.3 | Continuous verification | full-suite CI against all targets; verdict-regression gate; journal artifacts | **shipped in v2.3.0** |
 | 2.4 | Broad applicability | third test target; seed-DIT portability | third target + portability shipped in v2.2.0's cycle |
-| 2.5 | Wire completeness (conditional) | raw `Session` if the wire-UNTESTABLE count justifies it |
+| 2.5 | Wire completeness (conditional) | raw `Session` if the wire-UNTESTABLE count justifies it | **decision recorded in v2.3.0: no raw Session; count was small and the existing layer sufficed** |
 
 ---
 
@@ -113,7 +113,7 @@ target.
 Done when: CI is green only if all targets' full reports match the expected
 verdict set.
 
-Status: done. The four live CI jobs (one per target) run the smoke test
+**Shipped in v2.3.0.** The four live CI jobs (one per target) run the smoke test
 plus the verdict-regression gate: the full core profile's assertion ->
 status set must equal `ci/golden/<target>.txt`. Journals are uploaded as
 build artifacts per target. Goldens regenerate intentionally with
@@ -154,7 +154,7 @@ pre-2.0 review praised) so wire-level assertions stop depending on what ldap3
 can express. If not, record the decision with the count, as the pre-2.0
 review recommended. No raw layer is built on speculation.
 
-**Decision (recorded): no full raw `Session`.** The wire-UNTESTABLE count
+**Shipped in v2.3.0. Decision (recorded): no full raw `Session`.** The wire-UNTESTABLE count
 was 3 of 6 class-B assertions (the abandon pair and caseExactMatch). All
 three were implementable with the existing raw layer plus a minimal
 `RawSession` (a persistent socket for bind + abandon + follow-up — a dozen
@@ -182,5 +182,8 @@ and no raw `Session` could test them.
 A reviewer can pick any assertion and trace *RFC statement → assertion →
 preconditions → stimulus → observable → oracle → verdict*; `bauble coverage`
 reports covered/partially-covered/uncovered against an audited corpus; CI
-attaches a full conformance report for at least three implementations to
-every green commit.
+attaches a full conformance report for four implementations to every green
+commit.
+
+**Met with v2.3.0.** The remaining untestable requirements are client-side
+statements with recorded reasons; the wire-UNTESTABLE count is zero.
