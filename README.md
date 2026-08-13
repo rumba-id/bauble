@@ -25,7 +25,9 @@ for any modern LDAPv3 implementation.
 - [RFC reference tree](docs/references.md)
 
 Current coverage facts are never committed to the docs. Run `bauble coverage`
-to print them live from the registry.
+to print them live from the registry and requirements corpus — per-RFC
+requirement coverage, not just assertion counts. See the
+[design notes](docs/design-notes.md).
 
 ## Goal
 

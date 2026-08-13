@@ -136,7 +136,7 @@ honestly-blocked dependents, not a cascade of misleading failures.
 
 Conformance assertions are destructive: add, modify, modify-DN, and delete
 mutate the directory, and LDAP has no baseline transactions (RFC 5805
-transactions are optional and out of scope for Base). Left unmanaged, one
+transactions are optional and out of scope for Interop). Left unmanaged, one
 assertion's leftover entry changes another's outcome, and two runs of the
 same suite disagree because the directory drifted between them.
 
@@ -161,7 +161,7 @@ Isolation then rests on three guarantees:
   cannot be reset.
 - **Capability gating.** The capability statement carries `writable` and
   `resettable` flags. When `writable` is false, mutating assertions
-  `AUTO_PASS`. Seed and reset run only against a target whose `resettable`
+  `NOT_APPLICABLE`. Seed and reset run only against a target whose `resettable`
   is true.
 
 Safety boundary: bauble never seeds or wipes a server it does not own.
@@ -174,14 +174,14 @@ Safety boundary: bauble never seeds or wipes a server it does not own.
 
 - **PASS** — assertion holds.
 - **FAIL** — assertion violated.
-- **AUTO_PASS** — requirement does not apply (feature declared unsupported).
+- **NOT_APPLICABLE** — requirement does not apply (feature declared unsupported).
 - **SKIP** — excluded by the operator's selection.
 - **BLOCKED** — a prerequisite failed.
 - **UNTESTABLE** — no portable test exists.
 - **NA** — server feature not advertised.
 
 A conformance verdict for a profile: every mandatory, testable assertion in
-the profile is `PASS` or `AUTO_PASS`, with no `FAIL`. Optional (`SHOULD`/
+the profile is `PASS` or `NOT_APPLICABLE`, with no `FAIL`. Optional (`SHOULD`/
 `MAY`) failures are reported as warnings, not conformance failures.
 
 ## Reporting
@@ -196,9 +196,9 @@ bauble emits two outputs:
 
 The journal is primary; the summary is derived from it.
 
-## Standard-profile fixtures
+## Core-profile fixtures
 
-Standard-profile assertions need a richer directory than Base:
+Core-profile assertions need a richer directory than Interop:
 
 - **Schema extensions** beyond the core — additional attribute and object
   classes so schema-handling assertions have something to exercise.
@@ -209,8 +209,31 @@ Standard-profile assertions need a richer directory than Base:
   inspects the reference without following it.
 
 bauble's harness seeds these fixtures and documents the optional
-second-server setup so an operator can run the Standard profile without
+second-server setup so an operator can run the Core profile without
 guessing at the DIT shape.
+
+## Requirements corpus and coverage
+
+The assertion registry answers "what does bauble test?" but not "what does the
+RFC require?" or "what is still uncovered?". The requirements corpus closes
+that gap.
+
+For each RFC, a TOML file under `src/bauble/requirements/` lists every
+normative statement (MUST/SHOULD/MAY) with its section, severity, testability
+class, the requirement text, and the assertion ids that verify it
+(`covered_by`). Coverage is then measurable as the intersection of assertions
+and requirements: a requirement with no covering assertion is a surfaced gap,
+not a silent omission. SHALL is normalized to MUST (RFC 2119). The corpus owns
+the link — assertions are not edited to point at requirements — so changing an
+assertion never silently breaks a requirement link, and a test fails if a
+`covered_by` id names an assertion that no longer exists.
+
+`bauble coverage` is the single, live source of these facts. It prints
+assertion counts (by class, severity, layer, profile, RFC) and, from the
+corpus, per-RFC requirement coverage plus the list of uncovered requirements.
+Nothing is committed to the docs: the registry and corpus are the source of
+truth and the command reads them at run time, so the figures can never drift
+or go stale.
 
 ## What bauble targets
 

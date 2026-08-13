@@ -481,5 +481,5 @@ RFC 4510 (umbrella)
 
 - RFCs marked as "replaced by" are historic and superseded by their modern equivalents.
 - The core protocol stack (RFC 4510–4519) represents the minimum set for LDAPv3 conformance.
-- Extended operations and controls are optional but recommended for Standard Profile conformance.
+- Extended operations and controls are optional but recommended for Core profile conformance.
 - Schema RFCs define object classes and attribute types that may be required by specific profiles.

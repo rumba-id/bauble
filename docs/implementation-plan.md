@@ -24,7 +24,7 @@ working slice of the full path
    prerequisite marks dependents `BLOCKED`, not `FAIL`.
 5. **Capability declaration drives auto-pass.** Operators declare which
    optional features a server implements (including whether it is writable);
-   presence tests for unsupported features `AUTO_PASS`.
+   presence tests for unsupported features `NOT_APPLICABLE`.
 6. **One RFC = one module, self-registering.** Adding an RFC suite means
    dropping a file. No central manifest to edit.
 7. **Isolation is explicit.** The harness guarantees a known DIT at the start
@@ -98,7 +98,7 @@ Deliverables:
   `--exclude`, `--severity`, `--test-class`) and filter the registry.
   Combine semantics: AND across dimensions, OR within a dimension.
 - `src/bauble/runner.py` — topological sort over prerequisites; emit
-  `BLOCKED`, `AUTO_PASS` (incl. for non-writable servers and unsupported
+  `BLOCKED`, `NOT_APPLICABLE` (incl. for non-writable servers and unsupported
   features), `UNTESTABLE`, `SKIP` correctly; collect results. Callable both
   as a library (takes a `Session`) and via CLI.
 - `src/bauble/_fake.py` — an in-memory, scriptable fake `Session` for tests.
@@ -146,7 +146,7 @@ Deliverables:
   the disposable target, a fresh container per run (start → seed → run →
   stop), with subtree-wipe + reseed as a fallback for a long-lived resettable
   target; never best-effort. Each mutating assertion self-cleans in a
-  `finally`. Mutating assertions are gated on `writable` and `AUTO_PASS` when
+  `finally`. Mutating assertions are gated on `writable` and `NOT_APPLICABLE` when
   false. Running mutations against a live server under test requires explicit
   `--allow-mutation`; bauble then self-cleans per assertion but performs no
   whole-DIT reset, so that verdict is best-effort.
@@ -191,7 +191,7 @@ Deliverables:
 - Negative-path assertions that ldap3 cannot express are recorded as
   `UNTESTABLE` with the reason.
 
-Exit criteria: `uv run python -m bauble run --profile base --rfc 4511` against
+Exit criteria: `uv run python -m bauble run --profile interop --rfc 4511` against
 the containerized OpenLDAP returns real pass/fail/auto-pass verdicts.
 
 ### Phase 5 — Core operations (RFC 4511 remainder), one PR per operation
@@ -212,11 +212,11 @@ At the end of Phase 5, count `UNTESTABLE`-due-to-wire-format assertions and
 decide whether the optional raw-protocol `Session` earns its keep (see
 Constraints).
 
-Exit criteria: the full Base profile protocol surface runs and reports.
+Exit criteria: the full Interop profile protocol surface runs and reports.
 
 ### Phase 6 — Representation and schema RFCs
 
-The non-protocol parts of Base/Standard.
+The non-protocol parts of Interop/Core.
 
 Deliverables:
 
@@ -228,11 +228,11 @@ Deliverables:
 - `rfc4518.py` — internationalized string preparation.
 - `rfc4519.py` — user-application schema.
 
-Exit criteria: Standard profile coverage matches its defined scope.
+Exit criteria: Core profile coverage matches its defined scope.
 
 ### Phase 7 — Controls, extended operations, referrals
 
-The Advanced surface and the Standard-profile control/extension features.
+The Extended surface and the Core-profile control/extension features.
 
 Deliverables:
 
@@ -242,11 +242,11 @@ Deliverables:
 - `extended/` — `rfc3062` (password modify), `rfc4532` (who am I), and
   others from the dependency tree.
 - Referral and continuation-reference tests, including the second-server
-  continuation setup the Standard profile requires.
+  continuation setup the Core profile requires.
 - `supported_sasl_mechanisms` capability flag lands here with the auth
   surface (deferred from Phase 1).
 
-Exit criteria: Advanced profile runs; Standard profile conformance matches
+Exit criteria: Extended profile runs; Core profile conformance matches
 its defined scope, including optional-feature auto-pass.
 
 ### Phase 8 — Packaging, CI, and documentation
@@ -265,7 +265,7 @@ Deliverables:
   assertions per RFC.
 
 Exit criteria: a contributor can add an RFC suite by following documented
-steps; CI is green; a tagged release runs Base and Standard profiles.
+steps; CI is green; a tagged release runs Interop and Core profiles.
 
 ## Module dependency order
 
@@ -297,7 +297,7 @@ Build and land in this order so each module only imports what already exists:
 - **Isolation**: disposable test target (seed + authoritative reset,
   `resettable=true`) vs. server under test (read-only by default).
   Mutating assertions self-clean in `finally`; gated on `writable`
-  (`AUTO_PASS` when false). Mutations against a live SUT require
+  (`NOT_APPLICABLE` when false). Mutations against a live SUT require
   `--allow-mutation` and get best-effort verdicts (no whole-DIT reset).
 
 ## Out of scope (for now)
