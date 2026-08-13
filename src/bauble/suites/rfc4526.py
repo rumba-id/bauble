@@ -115,6 +115,9 @@ def _search_result_code(session: Session, filter_ber: bytes) -> int:
     profiles=_CORE,
     text="An 'and' filter with zero elements (&) SHALL evaluate to True.",
     strategy="Send raw SearchRequest with empty AND filter (a0 00); expect success (0).",
+    preconditions="Target server is reachable.",
+    stimulus="Raw SearchRequest with the empty AND filter (&).",
+    expected_observables="SearchResultDone resultCode success (0).",
     layer=Layer.WIRE,
     oid="1.3.6.1.4.1.4203.1.5.3",
 )
@@ -136,6 +139,9 @@ def absolute_true_filter(session: Session) -> Result:
     profiles=_CORE,
     text="An 'or' filter with zero elements (|) SHALL evaluate to False.",
     strategy="Send raw SearchRequest with empty OR filter (a1 00); expect success (no entries).",
+    preconditions="Target server is reachable.",
+    stimulus="Raw SearchRequest with the empty OR filter (|).",
+    expected_observables="SearchResultDone resultCode success (0) with no entries.",
     layer=Layer.WIRE,
     oid="1.3.6.1.4.1.4203.1.5.3",
 )
@@ -157,6 +163,9 @@ def absolute_false_filter(session: Session) -> Result:
     profiles=_CORE,
     text="Server SHOULD publish 1.3.6.1.4.1.4203.1.5.3 in supportedFeatures.",
     strategy="Read root DSE supportedFeatures and check for the OID.",
+    preconditions="Root DSE is readable.",
+    stimulus="Search the root DSE for the supportedFeatures attribute.",
+    expected_observables="Feature OID 1.3.6.1.4.1.4203.1.5.3 present, or NOT_APPLICABLE if not advertised.",
     layer=Layer.CAPABILITY,
     oid="1.3.6.1.4.1.4203.1.5.3",
 )

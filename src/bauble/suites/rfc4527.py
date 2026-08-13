@@ -64,6 +64,9 @@ def _build_read_control(oid: str) -> bytes:
     profiles=_EXTENDED,
     text="Pre-Read request control on Modify returns entry before update.",
     strategy="Modify with Pre-Read control; verify response includes Pre-Read response control.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="Add a test entry, then ModifyRequest with the Pre-Read control.",
+    expected_observables="ModifyResponse success with a Pre-Read response control carrying the pre-update entry; entry removed in cleanup.",
     mutates=True,
 )
 def pre_read_on_modify(session: Session) -> Result:
@@ -124,6 +127,9 @@ def pre_read_on_modify(session: Session) -> Result:
     profiles=_EXTENDED,
     text="Post-Read request control on Add returns newly created entry.",
     strategy="Add with Post-Read control; verify add succeeds.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="AddRequest with the Post-Read control.",
+    expected_observables="AddResponse success carrying the newly created entry; entry removed in cleanup.",
     mutates=True,
 )
 def post_read_on_add(session: Session) -> Result:

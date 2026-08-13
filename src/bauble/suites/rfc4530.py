@@ -26,6 +26,9 @@ _UUID_RE = re.compile(
     profiles=_CORE,
     text="Server SHALL assign an entryUUID to each entry upon addition.",
     strategy="Search any entry with '+' (all operational attrs) and check entryUUID is present.",
+    preconditions="Seed entries exist.",
+    stimulus="Search requesting all operational attributes ('+').",
+    expected_observables="Every returned entry carries an entryUUID.",
 )
 def entry_uuid_present(session: Session) -> Result:
     outcome, entries = session.search(TEST_BASE, SCOPE_WHOLE_SUBTREE, "(objectClass=*)", ["+"])
@@ -49,6 +52,9 @@ def entry_uuid_present(session: Session) -> Result:
     profiles=_CORE,
     text="entryUUID is SINGLE-VALUE and NO-USER-MODIFICATION.",
     strategy="Check entryUUID has exactly 1 value. Attempt to modify it — must be rejected.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="Add a test entry, read its entryUUID, then attempt to modify entryUUID.",
+    expected_observables="entryUUID has exactly one value; the modification is rejected; entry removed in cleanup.",
     mutates=True,
 )
 def entry_uuid_single_value_read_only(session: Session) -> Result:
@@ -96,6 +102,9 @@ def entry_uuid_single_value_read_only(session: Session) -> Result:
     profiles=_CORE,
     text="entryUUID values use the RFC 4122 string representation (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).",
     strategy="Read entryUUID and validate against the UUID hex-octet regex.",
+    preconditions="Seed entries exist.",
+    stimulus="Search requesting entryUUID on all entries.",
+    expected_observables="Every entryUUID matches the RFC 4122 hex-octet regex.",
 )
 def entry_uuid_valid_format(session: Session) -> Result:
     outcome, entries = session.search(TEST_BASE, SCOPE_WHOLE_SUBTREE, "(objectClass=*)", ["+"])
@@ -158,6 +167,9 @@ def entry_uuid_immutable(session: Session) -> Result:
     layer=Layer.SEMANTIC,
     text="uuidMatch locates an entry by its entryUUID value.",
     strategy="Read alice's entryUUID, then subtree-search with (entryUUID=<value>); expect alice.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Read alice's entryUUID, then subtree-search with the filter (entryUUID=<value>).",
+    expected_observables="The search returns uid=alice.",
 )
 def entry_uuid_searchable(session: Session) -> Result:
     dn = f"uid=alice,{TEST_BASE}"
