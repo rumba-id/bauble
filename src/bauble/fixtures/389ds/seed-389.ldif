@@ -16,7 +16,7 @@ objectClass: inetOrgPerson
 uid: alice
 cn: Alice
 sn: Example
-userPassword: alice-pw
+userPassword: alice-secret
 
 dn: uid=bob,ou=people,dc=bauble,dc=test
 objectClass: top
@@ -26,4 +26,4 @@ objectClass: inetOrgPerson
 uid: bob
 cn: Bob
 sn: Example
-userPassword: bob-pw
+userPassword: bob-secret

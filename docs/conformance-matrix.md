@@ -4,47 +4,36 @@ Bauble results against multiple LDAP implementations. The same seed DIT
 (`dc=bauble,dc=test`) is loaded into each server; results are comparable
 across implementations.
 
-## v1.3.0 — OpenLDAP vs 389 Directory Server
+## v2.0.0 — OpenLDAP vs 389 Directory Server
 
-| RFC | Description | OpenLDAP | 389 DS |
-|-----|-------------|----------|--------|
-| 2696 | Simple Paged Results | CONFORMANT | CONFORMANT |
-| 2891 | Server-Side Sorting | CONFORMANT | CONFORMANT |
-| 3045 | Vendor Info in root DSE | CONFORMANT | CONFORMANT |
-| 3062 | Password Modify | CONFORMANT | NON-CONFORMANT |
-| 3829 | Authz Identity Controls | NON-CONFORMANT | NON-CONFORMANT |
-| 3866 | Language Tags and Ranges | CONFORMANT | NON-CONFORMANT |
-| 3876 | Matched Values Control | CONFORMANT | CONFORMANT |
-| 4512 | Directory Information Models | CONFORMANT | NON-CONFORMANT |
-| 4513 | Auth Methods / Auth State | CONFORMANT | NON-CONFORMANT |
-| 4515 | Search Filter Representation | CONFORMANT | NON-CONFORMANT |
-| 4517 | Syntaxes and Matching Rules | CONFORMANT | NON-CONFORMANT |
-| 4519 | User-Application Schema | CONFORMANT | NON-CONFORMANT |
-| 4525 | Modify-Increment | CONFORMANT | NON-CONFORMANT |
-| 4526 | True/False Filters | CONFORMANT | NON-CONFORMANT |
-| 4528 | Assertion Control | NON-CONFORMANT | NON-CONFORMANT |
-| 4529 | Attributes by Object Class | CONFORMANT | CONFORMANT |
-| 4530 | entryUUID | CONFORMANT | CONFORMANT |
-| 4532 | Who Am I? | CONFORMANT | CONFORMANT |
-| 5020 | entryDN | CONFORMANT | NON-CONFORMANT |
+### Interop profile, per layer
 
-### Core profile verdict
+| Layer | OpenLDAP | 389 DS |
+|-------|----------|--------|
+| Wire | 5/5 | 5/5 |
+| Semantic | 58/58 | 43/58 (15 fail) |
+| Capability | 1/1 | 1/1 |
 
-| Server | must(A) PASS | Verdict |
-|--------|--------------|---------|
-| OpenLDAP | 24/33 | NON-CONFORMANT (2 assertion-control gaps) |
-| 389 DS | 15/33 | NON-CONFORMANT |
+### 389 DS semantic failures (15)
 
-### Notable 389 DS gaps
+| Cause | Count | RFCs |
+|-------|-------|------|
+| Subschema subentry not published at `cn=Subschema` | 8 | 4512, 4517, 4519 |
+| Anonymous compare/search denied by default ACL | 7 | 4511, 4515, 4517 |
 
-- **Subschema subentry** (RFC 4512 §4.2, RFC 4517, RFC 4519): 389 DS does
-  not publish the subschema subentry at `cn=Subschema`, causing 8 related
-  assertions to fail with resultCode 32 (noSuchObject).
-- **Anonymous subtree search** (RFC 4513 §4.1): 389 DS denies anonymous
-  subtree search by default.
-- **entryDN** (RFC 5020): 3 of 4 assertions fail — 389 DS does not expose
-  entryDN with `+` operational attribute requests.
-- **Language tags** (RFC 3866): 3 of 5 fail.
+### Notes
+
+- **Subschema (8 failures)** is a genuine RFC 4512 gap. 389 DS does not
+  publish the subschema subentry where RFC 4512 §4.2 requires it.
+- **Anonymous access (7 failures)** is a configuration difference, not a
+  protocol violation. RFC 4513 §4.1 mandates treating unauthenticated
+  operations as anonymous, but access control policy is a local matter.
+  389 DS ships with stricter default ACLs than OpenLDAP.
+
+### Wire layer — conformant on both
+
+Both servers correctly decode/encode LDAPMessage BER, echo messageIDs,
+reject bad protocol versions, and handle malformed PDUs.
 
 ## Running against 389 DS
 
@@ -54,7 +43,7 @@ uv run bauble run --target --target-type 389ds
 
 # run with the 389 DS admin credentials
 BAUBLE_ADMIN_DN="cn=Directory Manager" BAUBLE_ADMIN_PW="bauble-admin" \
-  uv run bauble run --profile core --target --target-type 389ds
+  uv run bauble run --profile interop --target --target-type 389ds
 ```
 
 The admin DN differs per implementation:
