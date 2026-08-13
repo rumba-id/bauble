@@ -35,6 +35,9 @@ _INTEROP = frozenset({Profile.INTEROP})
     profiles=_INTEROP,
     text="Anonymous bind (empty DN + empty password) returns success.",
     strategy="Bind with empty DN and empty password; expect result code 0.",
+    preconditions="Session is fresh or unauthenticated.",
+    stimulus="Simple BindRequest with empty name and empty password.",
+    expected_observables="BindResponse resultCode success (0).",
 )
 def anonymous_bind(session: Session) -> Result:
     outcome = session.bind(None, None)
@@ -53,6 +56,9 @@ def anonymous_bind(session: Session) -> Result:
     profiles=_INTEROP,
     text="Simple bind with valid credentials returns success.",
     strategy="Bind as a known user with the correct password; expect 0.",
+    preconditions="Seed entry uid=alice,ou=people,dc=bauble,dc=test exists with password alice-secret.",
+    stimulus="Simple BindRequest with DN uid=alice and password alice-secret.",
+    expected_observables="BindResponse resultCode success (0).",
 )
 def simple_bind_valid(session: Session) -> Result:
     outcome = session.bind(_ALICE, _ALICE_PW)
@@ -71,6 +77,9 @@ def simple_bind_valid(session: Session) -> Result:
     profiles=_INTEROP,
     text="Simple bind with invalid credentials returns invalidCredentials (49).",
     strategy="Bind as a known user with a wrong password; expect 49.",
+    preconditions="Seed entry uid=alice,ou=people,dc=bauble,dc=test exists with password alice-secret.",
+    stimulus="Simple BindRequest with DN uid=alice and an incorrect password.",
+    expected_observables="BindResponse resultCode invalidCredentials (49).",
 )
 def simple_bind_invalid(session: Session) -> Result:
     outcome = session.bind(_ALICE, "wrong-password")
@@ -89,6 +98,9 @@ def simple_bind_invalid(session: Session) -> Result:
     profiles=_INTEROP,
     text="Re-bind on an already-bound connection succeeds.",
     strategy="Bind as one user, then re-bind as a different user; expect both 0.",
+    preconditions="Prerequisite 4511.4.2.2 passed; seed alice and bob exist with their passwords.",
+    stimulus="Simple BindRequest as alice, then a second Simple BindRequest as bob on the same session.",
+    expected_observables="Both BindResponses resultCode success (0).",
     requires=("4511.4.2.2",),
 )
 def rebind(session: Session) -> Result:
@@ -120,6 +132,9 @@ def rebind(session: Session) -> Result:
     profiles=_INTEROP,
     text="Simple bind with non-empty name and empty password does not authenticate.",
     strategy="Raw BindRequest with a named DN and empty password; expect non-zero.",
+    preconditions="Seed entry uid=alice,ou=people,dc=bauble,dc=test exists and requires a non-empty password.",
+    stimulus="Raw simple BindRequest with DN uid=alice and an empty password.",
+    expected_observables="BindResponse resultCode non-zero (authentication must not succeed).",
     layer=Layer.WIRE,
 )
 def empty_password_rejected(session: Session) -> Result:
@@ -144,6 +159,9 @@ def empty_password_rejected(session: Session) -> Result:
     profiles=_INTEROP,
     text="Successful simple-bind response carries no serverSaslCreds.",
     strategy="Raw simple-auth bind with valid creds; check serverSaslCreds is absent.",
+    preconditions="Prerequisite 4511.4.2.2 passed; valid alice credentials exist.",
+    stimulus="Raw simple BindRequest with uid=alice and password alice-secret.",
+    expected_observables="BindResponse success (0) with serverSaslCreds absent.",
     requires=("4511.4.2.2",),
     layer=Layer.WIRE,
 )
@@ -171,6 +189,9 @@ def no_server_sasl_creds(session: Session) -> Result:
     profiles=_INTEROP,
     text="Bind with unrecognized protocol version returns protocolError.",
     strategy="Raw BindRequest with version 99; expect result code 2.",
+    preconditions="Session is fresh.",
+    stimulus="Raw BindRequest with protocol version 99.",
+    expected_observables="BindResponse resultCode protocolError (2).",
     layer=Layer.WIRE,
 )
 def bad_protocol_version(session: Session) -> Result:
@@ -193,6 +214,9 @@ def bad_protocol_version(session: Session) -> Result:
     profiles=_INTEROP,
     text="Malformed BindRequest PDU returns protocolError and disconnect.",
     strategy="Send garbage bytes; expect the server to disconnect (no response).",
+    preconditions="Session is fresh.",
+    stimulus="Raw bytes 0xffffffff sent as an LDAPMessage.",
+    expected_observables="Server disconnects without a valid response.",
     layer=Layer.WIRE,
 )
 def malformed_pdu_disconnects(session: Session) -> Result:
@@ -214,6 +238,9 @@ def malformed_pdu_disconnects(session: Session) -> Result:
     layer=Layer.WIRE,
     text="A BindRequest with an empty SASL mechanism returns authMethodNotSupported (7).",
     strategy="Raw SASL BindRequest with mechanism=''; expect result code 7.",
+    preconditions="Session is fresh.",
+    stimulus="Raw SASL BindRequest with the mechanism field set to the empty string.",
+    expected_observables="BindResponse resultCode authMethodNotSupported (7).",
 )
 def empty_sasl_mechanism_rejected(session: Session) -> Result:
     raw = RawConnection(session.host, session.port)
@@ -238,6 +265,9 @@ def empty_sasl_mechanism_rejected(session: Session) -> Result:
     layer=Layer.WIRE,
     text="A BindRequest with an unsupported authentication choice returns authMethodNotSupported (7).",
     strategy="Raw BindRequest with an unrecognized auth CHOICE tag [5]; expect result code 7.",
+    preconditions="Session is fresh.",
+    stimulus="Raw BindRequest with an unrecognized AuthenticationChoice tag ([5]).",
+    expected_observables="BindResponse resultCode authMethodNotSupported (7).",
 )
 def unsupported_auth_choice_rejected(session: Session) -> Result:
     raw = RawConnection(session.host, session.port)

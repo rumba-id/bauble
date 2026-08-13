@@ -69,13 +69,13 @@ def audit_text(
             meta_counter["uncovered"] += 1
             lines.append(f"  {req.id}  [{req.test_class.value}/{req.severity.value}]  UNCOVERED")
             continue
-        worst = "full" if all(s == "full" for s in statuses) else (
-            "none" if all(s == "none" for s in statuses) else "partial"
+        worst = (
+            "full"
+            if all(s == "full" for s in statuses)
+            else ("none" if all(s == "none" for s in statuses) else "partial")
         )
         meta_counter[worst] += 1
-        detail = ", ".join(
-            f"{cid}[{s}]" for cid, s in zip(req.covered_by, statuses, strict=True)
-        )
+        detail = ", ".join(f"{cid}[{s}]" for cid, s in zip(req.covered_by, statuses, strict=True))
         lines.append(
             f"  {req.id}  [{req.test_class.value}/{req.severity.value}]  "
             f"audit-chain={worst}  {detail}"

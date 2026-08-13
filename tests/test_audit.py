@@ -22,7 +22,11 @@ def test_audit_rollup_counts_cover_all_requirements() -> None:
     from bauble.requirements import load_requirements
 
     text = audit_text(default_registry())
-    total = sum(int(n[1]) for n in re.findall(r"^  (\w+)\s+(\d+)$", text, re.MULTILINE) if n[0] in ("full", "partial", "none", "uncovered"))
+    total = sum(
+        int(n[1])
+        for n in re.findall(r"^  (\w+)\s+(\d+)$", text, re.MULTILINE)
+        if n[0] in ("full", "partial", "none", "uncovered")
+    )
     assert total == len(load_requirements())
 
 
