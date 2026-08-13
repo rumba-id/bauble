@@ -30,3 +30,25 @@ def case_insensitive_match(session: Session) -> Result:
         Status.FAIL,
         detail=f"expected alice matched case-insensitively, got {len(entries)}",
     )
+
+
+@assertion(
+    id="4518.2.2",
+    rfc=4518,
+    section="§2.6",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="caseIgnoreMatch treats leading/trailing/multiple consecutive spaces as insignificant.",
+    strategy="Search (cn=Alice  Anderson) (extra inner spaces); expect alice matched.",
+)
+def case_insensitive_space_handling(session: Session) -> Result:
+    outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(cn=Alice  Anderson)")
+    if outcome.result_code == 0 and any(e.dn.startswith("uid=alice") for e in entries):
+        return Result("4518.2.2", Status.PASS)
+    return Result(
+        "4518.2.2",
+        Status.FAIL,
+        detail="extra-space assertion did not match alice",
+    )

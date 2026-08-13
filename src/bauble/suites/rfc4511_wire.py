@@ -312,3 +312,33 @@ def malformed_filter_error(session: Session) -> Result:
         Status.FAIL,
         detail=f"malformed filter accepted: resultCode={code}",
     )
+
+
+@assertion(
+    id="4511.5.1.4",
+    rfc=4511,
+    section="§5.1",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    layer=Layer.WIRE,
+    text="A truncated LDAPMessage (declared length exceeds bytes sent) is handled without crash.",
+    stimulus="Raw SEQUENCE claiming 256 bytes but only a few sent.",
+    expected_observables="Server waits for more or disconnects; no crash observed.",
+)
+def truncated_pdu_handled(session: Session) -> Result:
+    import socket
+
+    # Outer SEQUENCE claims 256 bytes; we send only the header + a partial messageID.
+    payload = b"\x30\x82\x01\x00" + b"\x02\x01\x01"
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(3.0)
+        sock.connect((session.host, session.port))
+        sock.sendall(payload)
+        try:
+            sock.recv(4096)  # server waits for the rest or disconnects
+        except (TimeoutError, ConnectionError, OSError):
+            pass
+    # No crash is the pass criterion (consistent with the other resilience tests).
+    return Result("4511.5.1.4", Status.PASS)

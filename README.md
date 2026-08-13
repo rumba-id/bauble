@@ -9,28 +9,23 @@
 </picture>
 
 A free, open-source, implementation-independent LDAP RFC conformance test suite,
-Built to validate the [Rumba Identity Platform](https://rumba.id) and suitable
+built to validate the [Rumba Identity Platform](https://rumba.id) and suitable
 for any modern LDAPv3 implementation.
-Validates any LDAPv3 server against the current RFC specifications.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.13+](https://img.shields.io/badge/Python-3.13+-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
-[![RFC Coverage](https://img.shields.io/badge/RFCs-27-darkgreen.svg)](docs/assertion-coverage.md)
 </div>
 
 ---
 
-## Status
-
-v1.1.0 — 97 assertions across 27 RFCs, 90 class A, 7 class B.
-On OpenLDAP: Interop CONFORMANT (55/55), Core with 2 known gaps
-(assertion control advertised but not processed). See [assertion
-coverage](docs/assertion-coverage.md).
+## Documentation
 
 - [Implementation plan](docs/implementation-plan.md)
 - [Design notes](docs/design-notes.md)
 - [RFC reference tree](docs/references.md)
-- [Assertion coverage](docs/assertion-coverage.md)
+
+Current coverage facts are never committed to the docs. Run `bauble coverage`
+to print them live from the registry.
 
 ## Goal
 
@@ -77,55 +72,6 @@ Targets the LDAPv3 RFC series and extensions:
 - **RFC 4532** — Who Am I?
 - **RFC 6171** — Don't Use Copy Control
 
-## Current coverage
-
-### RFC 4511 — The Protocol (33 assertions)
-
-- **§4.1.12 Controls** (2) — known/critical controls
-- **§4.2 Bind** (8) — anonymous, valid/invalid credentials, empty password,
-  serverSaslCreds, re-bind, bad protocol version, malformed PDU
-- **§4.5 Search** (4) — base/one-level/subtree scope, filter match
-- **§4.6 Modify** (3) — replace, add value, non-existent entry
-- **§4.7 Add** (4) — valid, duplicate, missing parent, schema violation
-- **§4.8 Delete** (3) — leaf, non-existent, with children
-- **§4.9 ModifyDN** (2) — rename, rename-to-existing
-- **§4.10 Compare** (4) — true, false, missing attribute, non-existent entry
-- **§4.11 Abandon** (2) — UNTESTABLE (timing-dependent)
-- **§4.12 Extended** (1) — unrecognized OID returns error
-
-### Schema and representation (16 assertions)
-
-- **RFC 4512** (4) — root DSE, subschema, entries have objectClass
-- **RFC 4514** (2) — DN parsing, case preservation
-- **RFC 4515** (3) — AND/OR/NOT filter evaluation
-- **RFC 4516** (1) — supportedLDAPVersion advertised
-- **RFC 4517** (2) — ldapSyntaxes + matchingRules advertised
-- **RFC 4518** (1) — case-insensitive matching
-- **RFC 4519** (3) — inetOrgPerson/OU/dc advertised in subschema
-
-### Operational attributes (8 assertions)
-
-- **RFC 4530** (4) — entryUUID present, single-value, valid format, immutable
-- **RFC 5020** (4) — entryDN present, equals DN, single-value, searchable
-
-### Controls and extensions (40 assertions)
-
-- **RFC 2696** (1) — simple paged results
-- **RFC 2891** (1) — server-side sorting
-- **RFC 3045** (2) — vendorName/vendorVersion in root DSE
-- **RFC 3062** (1) — password modify
-- **RFC 3829** (2) — authorization identity request/response controls
-- **RFC 3866** (5) — language tag add/search, language range matching
-- **RFC 3876** (2) — matched values filter, control advertisement
-- **RFC 4513 §4.1** (2) — anonymous initial state, pre-bind operations
-- **RFC 4525** (4) — modify-increment (value, multi-value error, non-int error)
-- **RFC 4526** (3) — absolute true (&), absolute false (|), advertisement
-- **RFC 4527** (2) — pre-read on modify, post-read on add
-- **RFC 4528** (5) — TRUE/FALSE/Delete/Search with assertion, advertisement
-- **RFC 4529** (2) — @person attribute list, unknown @OID
-- **RFC 4532** (1) — who am I?
-- **RFC 6171** (1) — don't use copy advertisement
-
 ## Profiles
 
 Three tiers. A profile is a selection of assertions, not separate code:
@@ -136,15 +82,6 @@ Three tiers. A profile is a selection of assertions, not separate code:
   attributes, controls, extended operations, language features.
 - **Extended** — optional extensions such as read-entry controls.
 
-| Profile  | MUST(A)                                         | Verdict    |
-| -------- | ----------------------------------------------- | ---------- |
-| Interop  | 55/55                                           | CONFORMANT |
-| Core     | 24 PASS, 2 FAIL, 7 NOT_APPLICABLE, 4 UNTESTABLE | 2 gaps     |
-| Extended | 2/2                                             | CONFORMANT |
-
-The 2 Core gaps are RFC 4528 assertion control — OpenLDAP advertises
-the control in `supportedControl` but does not process it.
-
 ## Model
 
 Every test is an assertion tied to one RFC requirement. Severity (RFC 2119
@@ -154,6 +91,11 @@ tracked independently: a `MUST` with no portable test is reported
 follow the advertise-then-test pattern: if the server doesn't claim
 support, `NOT_APPLICABLE`; if it claims support but fails, `FAIL` with
 detail. See the [design notes](docs/design-notes.md).
+
+Each assertion is also classified by the kind of conformance it establishes
+— Wire (protocol-unit correctness), Semantic (operation meaning), or
+Capability (advertised vs. behavior) — so reports can distinguish what a
+pass actually proves.
 
 LDAP access uses [ldap3](https://github.com/cannatag/ldap3) for most
 operations and a stdlib-only raw BER+socket layer for edge-case PDUs
@@ -166,6 +108,9 @@ Start the podman OpenLDAP test target once, then run any selection:
 ```bash
 # start the test target (stays running for reuse)
 uv run bauble run --target
+
+# print current coverage facts (assertions per RFC, class, layer, profile)
+uv run bauble coverage
 
 # run the Interop profile and get a conformance summary
 uv run bauble run --profile interop --target --reporter summary
@@ -181,6 +126,18 @@ uv run bauble run --profile interop --target --reporter journal --out run.jsonl
 ```
 
 Use `--fresh-target` to force a fresh container (opt-in, slower).
+
+### Additional targets
+
+The OpenLDAP target is the default. A 389 Directory Server target is also
+available for cross-implementation checks:
+
+```bash
+uv run bauble run --target --target-type 389ds
+```
+
+Its admin DN differs (`cn=Directory Manager`). Override credentials and the
+base DN with `BAUBLE_ADMIN_DN`, `BAUBLE_ADMIN_PW`, and `BAUBLE_TEST_BASE`.
 
 ### Capability file
 

@@ -1,0 +1,58 @@
+rfc = 4517
+title = "LDAP: Syntaxes and Matching Rules"
+
+[[requirement]]
+id = "4517:3:1"
+section = "3"
+severity = "should"
+test_class = "A"
+text = "Servers publish the base set of LDAP syntaxes (ldapSyntaxes) in the subschema."
+covered_by = ["4517.4.1"]
+
+[[requirement]]
+id = "4517:4:1"
+section = "4"
+severity = "should"
+test_class = "A"
+text = "Servers publish the base set of matching rules (matchingRules) in the subschema."
+covered_by = ["4517.4.2"]
+
+[[requirement]]
+id = "4517:4:2"
+section = "4.2.11"
+severity = "must"
+test_class = "A"
+text = "caseIgnoreMatch compares Directory String values case-insensitively."
+covered_by = ["4517.4.3"]
+
+[[requirement]]
+id = "4517:4:3"
+section = "4.2.19"
+severity = "must"
+test_class = "A"
+text = "integerMatch compares Integer values numerically."
+covered_by = ["4517.4.4"]
+
+[[requirement]]
+id = "4517:4:4"
+section = "4.2.16"
+severity = "must"
+test_class = "A"
+text = "generalizedTimeMatch compares Generalized Time values chronologically."
+covered_by = ["4517.4.5"]
+
+[[requirement]]
+id = "4517:4:5"
+section = "4.2.4"
+severity = "must"
+test_class = "B"
+text = "caseExactMatch compares Directory String values case-sensitively."
+covered_by = ["4517.4.6"]
+
+[[requirement]]
+id = "4517:4:6"
+section = "4.2.15"
+severity = "must"
+test_class = "A"
+text = "distinguishedNameMatch compares DN values per RFC 4514."
+covered_by = ["5020.2.4"]

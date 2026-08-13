@@ -1,0 +1,34 @@
+rfc = 4514
+title = "LDAP: String Representation of Distinguished Names"
+
+[[requirement]]
+id = "4514:2:1"
+section = "2"
+severity = "must"
+test_class = "A"
+text = "A DN conforming to the string grammar (§3) is accepted and round-trips through search."
+covered_by = ["4514.2.1"]
+
+[[requirement]]
+id = "4514:3:1"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "Implementations MUST recognize the standard attribute-type descriptors (CN, OU, DC, UID, ...) case-insensitively."
+covered_by = ["4514.2.3"]
+
+[[requirement]]
+id = "4514:1:1"
+section = "1"
+severity = "must"
+test_class = "A"
+text = "DN equality comparison uses distinguishedNameMatch (caseIgnoreMatch for directory-string attribute values)."
+covered_by = ["4514.2.4"]
+
+[[requirement]]
+id = "4514:2:2"
+section = "2"
+severity = "must"
+test_class = "A"
+text = "Attribute values in a returned DN are represented per the §2 encoding rules."
+covered_by = ["4514.2.2"]

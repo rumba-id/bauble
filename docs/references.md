@@ -1,6 +1,9 @@
 # LDAP RFC References
 
-Complete list of LDAP-related RFCs from the IETF RFC Editor search, organized by dependency.
+A broad reference tree of LDAP-related RFCs from the IETF RFC Editor, organized by
+dependency. This is reference material, not the conformance scope: only the RFCs
+listed under Scope in the README are tested by bauble. Run `bauble coverage` for the
+current per-RFC requirement coverage.
 
 ## Core Protocol Stack
 

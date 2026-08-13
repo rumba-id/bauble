@@ -64,6 +64,28 @@ def _build_bind_request(message_id: int, version: int, dn: str, password: str) -
     return _encode_sequence(_encode_integer(message_id) + bind_request)
 
 
+def build_bind_request_auth(message_id: int, version: int, dn: str, auth_element: bytes) -> bytes:
+    """Build a BindRequest with an arbitrary authentication element.
+
+    ``auth_element`` is the raw CHOICE bytes for AuthenticationChoice: simple
+    (``\\x80...``), sasl (``\\xa3...``), or an unsupported tag (e.g. ``\\xa5...``).
+    """
+    bind_contents = _encode_integer(version) + _encode_octet_string(dn) + auth_element
+    bind_request = b"\x60" + _encode_length(len(bind_contents)) + bind_contents
+    return _encode_sequence(_encode_integer(message_id) + bind_request)
+
+
+def build_sasl_bind_request(
+    message_id: int, version: int, dn: str, mechanism: str, credentials: bytes | None = None
+) -> bytes:
+    """Build a SASL BindRequest (AuthenticationChoice sasl [3])."""
+    mech = _encode_octet_string(mechanism)
+    sasl_contents = mech + (_encode_octet_string(credentials) if credentials is not None else b"")
+    sasl_seq = b"\x30" + _encode_length(len(sasl_contents)) + sasl_contents
+    auth_element = b"\xa3" + _encode_length(len(sasl_seq)) + sasl_seq
+    return build_bind_request_auth(message_id, version, dn, auth_element)
+
+
 # ---------------------------------------------------------------------------
 # BER parsing helpers (read side)
 # ---------------------------------------------------------------------------
@@ -181,17 +203,22 @@ def sort_control_value(attributes: list[str]) -> bytes:
     return _encode_sequence(inner)
 
 
-def password_modify_request_value(new_password: str, user_dn: str = "") -> bytes:
+def password_modify_request_value(
+    new_password: str, user_dn: str = "", old_password: str = ""
+) -> bytes:
     """BER-encoded Password Modify request value (RFC 3062).
 
-    SEQUENCE { userIdentity [0] "...", newPasswd [2] "..." }
-    If ``user_dn`` is empty the server applies to the bound identity;
-    oldPasswd is omitted so the server does not verify it.
+    SEQUENCE { userIdentity [0]?, oldPasswd [1]?, newPasswd [2] }.
+    If ``user_dn`` is empty the server applies to the bound identity.
+    If ``old_password`` is empty oldPasswd is omitted.
     """
     parts = b""
     if user_dn:
         dn_bytes = user_dn.encode()
         parts += b"\x80" + _encode_length(len(dn_bytes)) + dn_bytes
+    if old_password:
+        old_bytes = old_password.encode()
+        parts += b"\x81" + _encode_length(len(old_bytes)) + old_bytes
     payload = new_password.encode()
     parts += b"\x82" + _encode_length(len(payload)) + payload
     return _encode_sequence(parts)
@@ -280,6 +307,133 @@ def _parse_ldap_result(data: bytes) -> Outcome | None:
     return Outcome(result_code=result_code, matched_dn=matched_dn, message=message)
 
 
+def _last_complete_message(data: bytes) -> bytes:
+    """Return the bytes of the last complete LDAPMessage SEQUENCE in ``data``."""
+    last = b""
+    pos = 0
+    while pos + 2 <= len(data):
+        if data[pos] != 0x30:
+            pos += 1
+            continue
+        seq_len, next_pos = _parse_length(data, pos + 1)
+        end = next_pos + seq_len
+        if end > len(data):
+            break
+        last = data[pos:end]
+        pos = end
+    return last
+
+
+def _controls_of_message(pdu: bytes) -> list[tuple[str, bytes]]:
+    """Parse the optional [0] Controls field from one LDAPMessage.
+
+    Each Control is SEQUENCE { controlType OCTET STRING, criticality BOOLEAN?,
+    controlValue OCTET STRING? }. criticality is ignored here.
+    """
+    if len(pdu) < 2 or pdu[0] != 0x30:
+        return []
+    pos = 1
+    _, pos = _parse_length(pdu, pos)  # outer SEQUENCE length
+    # messageID (INTEGER 0x02)
+    if pos >= len(pdu) or pdu[pos] != 0x02:
+        return []
+    pos += 1
+    mi_len, pos = _parse_length(pdu, pos)
+    pos += mi_len
+    # protocolOp — skip one definite-length tagged element.
+    if pos >= len(pdu):
+        return []
+    pos += 1
+    pop_len, pos = _parse_length(pdu, pos)
+    pos += pop_len
+    # Optional controls [0] = 0xA0.
+    if pos >= len(pdu) or pdu[pos] != 0xA0:
+        return []
+    pos += 1
+    ctrls_len, pos = _parse_length(pdu, pos)
+    end = pos + ctrls_len
+    controls: list[tuple[str, bytes]] = []
+    while pos + 2 <= end:
+        if pdu[pos] != 0x30:  # each Control is a SEQUENCE
+            break
+        pos += 1
+        c_len, pos = _parse_length(pdu, pos)
+        c_end = pos + c_len
+        oid = ""
+        value = b""
+        seen_oid = False
+        while pos + 1 <= c_end and pos + 1 < len(pdu):
+            tag = pdu[pos]
+            pos += 1
+            el_len, pos = _parse_length(pdu, pos)
+            el = pdu[pos : pos + el_len]
+            pos += el_len
+            if tag == 0x04:  # OCTET STRING
+                if not seen_oid:
+                    oid = el.decode("utf-8", errors="replace")
+                    seen_oid = True
+                else:
+                    value = el
+            # 0x01 (criticality BOOLEAN) is ignored.
+        if seen_oid:
+            controls.append((oid, value))
+        pos = c_end
+    return controls
+
+
+def parse_response_controls(data: bytes) -> list[tuple[str, bytes]]:
+    """Extract ``(controlType, controlValue)`` pairs from the controls field of
+    the last complete LDAPMessage in ``data``. Returns ``[]`` if there are none.
+
+    The controls field is the optional ``[0]`` tag at the end of an
+    LDAPMessage, after the messageID and protocolOp.
+    """
+    last = _last_complete_message(data)
+    if not last:
+        return []
+    return _controls_of_message(last)
+
+
+def parse_sort_result(control_value: bytes) -> int:
+    """Parse the ``sortResult`` ENUMERATED from a sort-response control value.
+
+    ``SortResult ::= SEQUENCE { sortResult ENUMERATED, attributeType [0]? }``.
+    ``control_value`` is the OCTET STRING contents (the bytes returned by
+    :func:`parse_response_controls`). Returns -1 if unparseable.
+    """
+    if len(control_value) < 2 or control_value[0] != 0x30:
+        return -1
+    pos = 1
+    _, pos = _parse_length(control_value, pos)
+    if pos >= len(control_value) or control_value[pos] != 0x0A:
+        return -1
+    pos += 1
+    n_len, pos = _parse_length(control_value, pos)
+    return int.from_bytes(control_value[pos : pos + n_len], "big")
+
+
+def parse_paged_cookie(control_value: bytes) -> bytes:
+    """Parse the cookie from a paged-results response control value.
+
+    ``realSearchControlValue ::= SEQUENCE { size INTEGER, cookie OCTET STRING }``.
+    Returns the raw cookie bytes (empty when no more pages remain).
+    """
+    if len(control_value) < 2 or control_value[0] != 0x30:
+        return b""
+    pos = 1
+    _, pos = _parse_length(control_value, pos)
+    if pos >= len(control_value) or control_value[pos] != 0x02:  # size INTEGER
+        return b""
+    pos += 1
+    size_len, pos = _parse_length(control_value, pos)
+    pos += size_len
+    if pos >= len(control_value) or control_value[pos] != 0x04:  # cookie OCTET STRING
+        return b""
+    pos += 1
+    ck_len, pos = _parse_length(control_value, pos)
+    return control_value[pos : pos + ck_len]
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -359,6 +513,33 @@ class RawConnection:
             if outcome is None:
                 return Outcome(result_code=-1, message="no valid LDAPResult")
             return outcome
+
+    def bind_then_send_raw(self, payload: bytes, dn: str = "", password: str = "") -> bytes:
+        """Bind (simple) then send a PDU; return the raw operation-response bytes.
+
+        Reads until the response stream ends (disconnect or read timeout), so a
+        full multi-PDU response (e.g. SearchResultEntry* + SearchResultDone) is
+        captured for response-control extraction.
+        """
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(self._timeout)
+            sock.connect((self._host, self._port))
+            sock.sendall(_build_bind_request(1, 3, dn, password))
+            try:
+                sock.recv(4096)  # discard bind response
+            except (TimeoutError, ConnectionError, OSError):
+                return b""
+            sock.sendall(payload)
+            buf = b""
+            try:
+                while True:
+                    chunk = sock.recv(4096)
+                    if not chunk:
+                        break
+                    buf += chunk
+            except (TimeoutError, ConnectionError, OSError):
+                pass
+            return buf
 
     def modify_increment(
         self,

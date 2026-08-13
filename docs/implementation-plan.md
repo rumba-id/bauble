@@ -89,8 +89,8 @@ Deliverables:
 
 - `src/bauble/scenarios.py` — named scenario filters (`search`, `bind`, ...).
   Profiles are not hardcoded ID lists; a profile selection derives from each
-  assertion's `profiles` tag, so adding an assertion tagged BASE automatically
-  includes it in BASE.
+  assertion's `profiles` tag, so adding an assertion tagged INTEROP automatically
+  includes it in INTEROP.
 - `src/bauble/capability.py` — parse a TOML conformance statement, including a
   `writable` flag (default true) and optional-feature declarations.
 - `src/bauble/selector.py` — build a `Selector` from CLI args
@@ -110,7 +110,7 @@ Exit criteria:
 - `uv run pytest` green, `uv run ruff check`, `uv run ruff format --check`,
   and `uv run pyright` clean.
 - The runner, invoked as a library with a `FakeSession` and
-  `Selector(profile=BASE)`, produces a result list with correct statuses.
+  `Selector(profile=INTEROP)`, produces a result list with correct statuses.
   (The CLI is validated against a real server in Phase 2.)
 - A **golden "broken fake" test**: a fake that returns wrong result codes
   causes the suite to emit `FAIL`, and a deliberately-failed prerequisite
@@ -261,8 +261,8 @@ Deliverables:
   conformance run against the containerized OpenLDAP from Phase 2.
 - README rewrite with quickstart, profile table, and capability-file
   reference.
-- `docs/assertion-coverage.md` tracking implemented vs. `UNTESTABLE` vs.
-  pending assertions per RFC.
+- `bauble coverage` printing implemented vs. `UNTESTABLE` vs. pending
+  assertions per RFC.
 
 Exit criteria: a contributor can add an RFC suite by following documented
 steps; CI is green; a tagged release runs Base and Standard profiles.

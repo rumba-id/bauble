@@ -93,16 +93,14 @@ ones.
 
 Three profiles organize assertions into increasing capability tiers:
 
-- **BASE** — core operations: simple bind, search, add, delete, modify,
-  modify DN; over TCP and TLS.
-- **STANDARD** — builds on BASE: root DSE, alias dereferencing, operational
-  attributes, controls, extended operations, referrals, continuation
-  references.
-- **ADVANCED** — optional surfaces such as SASL controls and the
-  extensibleObject object class.
+- **Interop** — minimum needed to interoperate: simple bind; search, add,
+  delete, modify, modify DN; over TCP.
+- **Core** — the main LDAPv3 conformance surface: root DSE, operational
+  attributes, controls, extended operations, language features.
+- **Extended** — optional extensions such as read-entry controls.
 
-Base is a prerequisite for Standard: a server that fails core operations
-cannot be meaningfully judged on the advanced surface.
+Interop is a prerequisite for Core: a server that fails core operations
+cannot be meaningfully judged on the extended surface.
 
 ## Profiles and scenarios are selections, not code
 

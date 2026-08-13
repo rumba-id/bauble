@@ -1,0 +1,56 @@
+rfc = 4530
+title = "LDAP: entryUUID Operational Attribute"
+
+# §2.1 UUID Syntax
+
+[[requirement]]
+id = "4530:2.1:1"
+section = "2.1"
+severity = "must"
+test_class = "A"
+text = "UUID values use the RFC 4122 string representation (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)."
+covered_by = ["4530.2.1.1"]
+
+# §2.2 uuidMatch (equality matching rule) — testable via search; currently untested.
+
+[[requirement]]
+id = "4530:2.2:1"
+section = "2.2"
+severity = "must"
+test_class = "A"
+text = "uuidMatch compares an asserted UUID with a stored UUID for equality (search by entryUUID)."
+covered_by = ["4530.2.2.1"]
+
+# §2.4 entryUUID attribute
+
+[[requirement]]
+id = "4530:2.4:1"
+section = "2.4"
+severity = "must"
+test_class = "A"
+text = "Servers SHALL generate and assign a new UUID to each entry upon its addition and provide it as entryUUID."
+covered_by = ["4530.2.4.1"]
+
+[[requirement]]
+id = "4530:2.4:2"
+section = "2.4"
+severity = "must"
+test_class = "A"
+text = "entryUUID is SINGLE-VALUE and NO-USER-MODIFICATION."
+covered_by = ["4530.2.4.2"]
+
+[[requirement]]
+id = "4530:2.4:3"
+section = "2.4"
+severity = "must"
+test_class = "A"
+text = "An entry's UUID is immutable."
+covered_by = ["4530.2.4.3"]
+
+[[requirement]]
+id = "4530:2.4:4"
+section = "2.4"
+severity = "must"
+test_class = "B"
+text = "Servers MUST ensure each generated UUID is unique in space and time."
+covered_by = []

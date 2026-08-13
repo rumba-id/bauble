@@ -1,0 +1,26 @@
+rfc = 2891
+title = "LDAP Control Extension for Server Side Sorting of Search Results"
+
+[[requirement]]
+id = "2891:2:1"
+section = "2"
+severity = "must"
+test_class = "A"
+text = "A search with the server-side sort control returns results ordered by the sort keys."
+covered_by = ["2891.2.1"]
+
+[[requirement]]
+id = "2891:2:2"
+section = "2"
+severity = "should"
+test_class = "B"
+text = "Servers SHOULD publish 1.2.840.113556.1.4.473/.474 in supportedControl."
+covered_by = []
+
+[[requirement]]
+id = "2891:2:3"
+section = "2"
+severity = "must"
+test_class = "A"
+text = "An unrecognized attribute in the sort key yields noSuchAttribute in the sortResult."
+covered_by = ["2891.2.3"]

@@ -216,3 +216,32 @@ def attribute_syntax_validated(session: Session) -> Result:
         return Result("4512.4.6", Status.PASS)
     cleanup(session, dn)
     return Result("4512.4.6", Status.FAIL, detail="invalid uidNumber syntax accepted")
+
+
+@assertion(
+    id="4512.5.1.1",
+    rfc=4512,
+    section="§5.1",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="The root DSE advertises supportedLDAPVersion including version 3.",
+    strategy="Search the root DSE for supportedLDAPVersion; expect value 3.",
+)
+def supported_ldap_version(session: Session) -> Result:
+    outcome, entries = session.search(
+        "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedLDAPVersion"]
+    )
+    if outcome.result_code != 0 or not entries:
+        return Result(
+            "4512.5.1.1", Status.FAIL, detail=f"root DSE not found: {outcome.result_code}"
+        )
+    versions = entries[0].attributes.get("supportedLDAPVersion", [])
+    has_v3 = any(
+        (isinstance(v, int) and v == 3) or (isinstance(v, str) and v.isdigit() and int(v) == 3)
+        for v in versions
+    )
+    if has_v3:
+        return Result("4512.5.1.1", Status.PASS)
+    return Result("4512.5.1.1", Status.FAIL, detail=f"version 3 not in {versions}")

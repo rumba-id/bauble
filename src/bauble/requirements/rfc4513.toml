@@ -1,0 +1,58 @@
+rfc = 4513
+title = "LDAP: Authentication Methods and Security Mechanisms"
+
+[[requirement]]
+id = "4513:3:1"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "The StartTLS operation establishes a TLS layer on an unencrypted session."
+covered_by = ["4513.3.1.1"]
+
+[[requirement]]
+id = "4513:3:2"
+section = "3.1.1"
+severity = "must"
+test_class = "A"
+text = "A StartTLS request issued when TLS is already established returns operationsError."
+covered_by = ["4513.3.1.1-2"]
+
+[[requirement]]
+id = "4513:3:3"
+section = "3.2"
+severity = "must"
+test_class = "A"
+text = "Establishing a TLS layer moves the session's authorization state to anonymous."
+covered_by = ["4513.3.2"]
+
+[[requirement]]
+id = "4513:3:4"
+section = "3.1.5"
+severity = "should"
+test_class = "B"
+text = "After establishing TLS, the client SHOULD refresh server-capabilities information."
+covered_by = ["4513.3.1.5"]
+
+[[requirement]]
+id = "4513:4:1"
+section = "4"
+severity = "must"
+test_class = "A"
+text = "Upon initial session establishment, the authorization state is anonymous."
+covered_by = ["4513.4.1.1"]
+
+[[requirement]]
+id = "4513:4:2"
+section = "4"
+severity = "must"
+test_class = "A"
+text = "An operation received before any Bind is treated as post-anonymous-Bind."
+covered_by = ["4513.4.1.2"]
+
+[[requirement]]
+id = "4513:5:1"
+section = "5.1.3"
+severity = "must"
+test_class = "A"
+text = "The name/password simple bind authenticates over a TLS-protected session."
+covered_by = ["4513.2.2"]

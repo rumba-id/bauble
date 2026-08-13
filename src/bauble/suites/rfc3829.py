@@ -91,3 +91,45 @@ def authzid_response_on_bind(session: Session) -> Result:
         Status.NOT_APPLICABLE,
         detail="no authzId response control returned",
     )
+
+
+@assertion(
+    id="3829.4.2",
+    rfc=3829,
+    section="§4",
+    category=Category.AUTH,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    text="The Authorization Identity Response control is included only when the bind resultCode is success.",
+    strategy="Bind with wrong credentials and the request control; verify no response control is returned.",
+    oid="2.16.840.1.113730.3.4.16",
+)
+def authzid_no_response_on_failed_bind(session: Session) -> Result:
+    from bauble.harness import LdapSession, ServerConfig, outcome_from_result
+
+    cfg = ServerConfig(session.host, session.port)
+    raw_session = LdapSession(cfg)
+    raw_session._ensure_open()  # type: ignore[reportPrivateUsage]
+    conn = raw_session._connection  # type: ignore[reportPrivateUsage]
+    conn.rebind(  # type: ignore[reportUnknownMemberType]
+        user=ADMIN_DN,  # type: ignore[reportCallIssue]
+        password="wrong-password",  # type: ignore[reportCallIssue]
+        controls=[(_AUTHZID_REQUEST_OID, False, None)],
+    )
+    result = outcome_from_result(conn.result)
+    if result.result_code == 0:
+        return Result(
+            "3829.4.2",
+            Status.FAIL,
+            detail="bind unexpectedly succeeded with wrong password",
+        )
+    response_controls: list = getattr(conn.result, "controls", None) or []  # type: ignore[reportUnknownVariableType]
+    for c in response_controls:  # type: ignore[reportUnknownVariableType]
+        if getattr(c, "controlType", None) == _AUTHZID_RESPONSE_OID:  # type: ignore[reportUnknownArgumentType]
+            return Result(
+                "3829.4.2",
+                Status.FAIL,
+                detail="authzId response control present on a failed bind",
+            )
+    return Result("3829.4.2", Status.PASS)

@@ -98,6 +98,13 @@ def _topo_sort(assertions: list[Assertion]) -> list[Assertion]:
 def main(argv: Sequence[str] | None = None) -> int:
     """CLI entry point: ``bauble run [--profile ...] [--dry-run|--server ...|--target]``."""
     args = _parse(argv)
+    if args.command == "coverage":
+        from bauble.coverage import coverage_text
+        from bauble.suites import discover
+
+        discover()
+        sys.stdout.write(coverage_text(default_registry()))
+        return 0
     if args.command != "run":
         return 2
     selector = _selector_from_args(args)
@@ -225,6 +232,7 @@ def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
         help="output format (default: text)",
     )
     run_parser.add_argument("--out", help="write output to a file (default: stdout)")
+    sub.add_parser("coverage", help="print coverage facts from the assertion registry")
     return parser.parse_args(argv)
 
 

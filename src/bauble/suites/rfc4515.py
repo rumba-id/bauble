@@ -182,3 +182,81 @@ def extensible_match(session: Session) -> Result:
     if outcome.result_code == 0 and any(e.dn.startswith("uid=alice") for e in entries):
         return Result("4515.3.8", Status.PASS)
     return Result("4515.3.8", Status.FAIL, detail="extensible match failed")
+
+
+@assertion(
+    id="4515.3.9",
+    rfc=4515,
+    section="§3",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="A substring filter with a final component matches trailing substrings.",
+    strategy="Search with (uid=*lice); expect alice.",
+)
+def substring_final(session: Session) -> Result:
+    outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(uid=*lice)")
+    if outcome.result_code == 0 and any(e.dn.startswith("uid=alice") for e in entries):
+        return Result("4515.3.9", Status.PASS)
+    return Result("4515.3.9", Status.FAIL, detail="substring final did not return alice")
+
+
+@assertion(
+    id="4515.3.10",
+    rfc=4515,
+    section="§3",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="A greaterOrEqual filter matches entries with values not less than the assertion.",
+    strategy="Search with (createTimestamp>=20000101000000Z); expect at least one entry.",
+)
+def greater_or_equal_filter(session: Session) -> Result:
+    outcome, entries = session.search(
+        _ROOT, SCOPE_WHOLE_SUBTREE, "(createTimestamp>=20000101000000Z)"
+    )
+    if outcome.result_code == 0 and len(entries) >= 1:
+        return Result("4515.3.10", Status.PASS)
+    return Result(
+        "4515.3.10", Status.FAIL, detail=f"greaterOrEqual expected >=1, got {len(entries)}"
+    )
+
+
+@assertion(
+    id="4515.3.11",
+    rfc=4515,
+    section="§3",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="A lessOrEqual filter matches entries with values not greater than the assertion.",
+    strategy="Search with (createTimestamp<=29991231235959Z); expect at least one entry.",
+)
+def less_or_equal_filter(session: Session) -> Result:
+    outcome, entries = session.search(
+        _ROOT, SCOPE_WHOLE_SUBTREE, "(createTimestamp<=29991231235959Z)"
+    )
+    if outcome.result_code == 0 and len(entries) >= 1:
+        return Result("4515.3.11", Status.PASS)
+    return Result("4515.3.11", Status.FAIL, detail=f"lessOrEqual expected >=1, got {len(entries)}")
+
+
+@assertion(
+    id="4515.3.12",
+    rfc=4515,
+    section="§3",
+    category=Category.DATA_MODEL,
+    severity=Severity.MAY,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="An approxMatch filter matches entries per the server's approximate matching rule.",
+    strategy="Search with (cn~=alice); expect alice under OpenLDAP's phonetic approx.",
+)
+def approx_match_filter(session: Session) -> Result:
+    outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(cn~=alice)")
+    if outcome.result_code == 0 and any(e.dn.startswith("uid=alice") for e in entries):
+        return Result("4515.3.12", Status.PASS)
+    return Result("4515.3.12", Status.FAIL, detail="approxMatch did not return alice")

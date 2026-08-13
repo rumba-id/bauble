@@ -1,0 +1,176 @@
+rfc = 4511
+title = "Lightweight Directory Access Protocol (LDAP): The Protocol"
+
+# §4 Elements of Protocol
+
+[[requirement]]
+id = "4511:4:1"
+section = "4"
+severity = "must"
+test_class = "B"
+text = "Clients and servers MUST ignore trailing SEQUENCE components whose tags they do not recognize."
+covered_by = []
+
+[[requirement]]
+id = "4511:4.1.1:1"
+section = "4.1.1"
+severity = "should"
+test_class = "B"
+text = "An unparseable LDAPMessage (unrecognized tag, unparseable messageID, unrecognized protocolOp, bad lengths) SHOULD return Notice of Disconnection with protocolError and MUST terminate the session."
+covered_by = ["4511.4.2.8", "4511.5.1.1"]
+
+[[requirement]]
+id = "4511:4.1.1:2"
+section = "4.1.1"
+severity = "must"
+test_class = "A"
+text = "A parseable but otherwise invalid LDAP PDU MUST return a response with resultCode protocolError."
+covered_by = ["4511.4.2.8"]
+
+[[requirement]]
+id = "4511:4.1.1.1:1"
+section = "4.1.1.1"
+severity = "must"
+test_class = "A"
+text = "Response messages carry the messageID of the corresponding request."
+covered_by = ["4511.4.1.1.1"]
+
+[[requirement]]
+id = "4511:4.1.1.1:2"
+section = "4.1.1.1"
+severity = "must"
+test_class = "A"
+text = "The messageID value 0 is reserved for unsolicited notification."
+covered_by = ["4511.4.1.1.2"]
+
+[[requirement]]
+id = "4511:4.1.1.1:3"
+section = "4.1.1.1"
+severity = "must"
+test_class = "B"
+text = "A request messageID MUST be non-zero and unique among in-progress requests in the session."
+covered_by = ["4511.4.1.1.3"]
+
+[[requirement]]
+id = "4511:4.1.10:1"
+section = "4.1.10"
+severity = "must"
+test_class = "B"
+text = "A Referral MUST contain at least one URI."
+covered_by = []
+
+# §4.1.11 Controls
+
+[[requirement]]
+id = "4511:4.1.11:1"
+section = "4.1.11"
+severity = "must"
+test_class = "A"
+text = "An unrecognized control marked critical MUST fail the operation with unavailableCriticalExtension."
+covered_by = ["4511.4.1.1"]
+
+[[requirement]]
+id = "4511:4.1.11:2"
+section = "4.1.11"
+severity = "must"
+test_class = "A"
+text = "An unrecognized control marked non-critical MUST be ignored and the operation proceeds."
+covered_by = ["4511.4.1.2"]
+
+[[requirement]]
+id = "4511:4.1.11:3"
+section = "4.1.11"
+severity = "must"
+test_class = "B"
+text = "The controls field, when present, follows the protocolOp in the LDAPMessage SEQUENCE."
+covered_by = ["4511.4.1.11.1"]
+
+[[requirement]]
+id = "4511:4.1.11:4"
+section = "4.1.11"
+severity = "must"
+test_class = "B"
+text = "Criticality MUST be FALSE (and is ignored) on response and UnbindRequest controls."
+covered_by = []
+
+# §4.2 Bind
+
+[[requirement]]
+id = "4511:4.2:1"
+section = "4.2"
+severity = "must"
+test_class = "A"
+text = "A Bind with an unsupported protocol version MUST return protocolError."
+covered_by = ["4511.4.2.7"]
+
+[[requirement]]
+id = "4511:4.2:2"
+section = "4.2"
+severity = "must"
+test_class = "A"
+text = "An unsupported authentication choice MUST return authMethodNotSupported."
+covered_by = ["4511.4.2.10"]
+
+[[requirement]]
+id = "4511:4.2:3"
+section = "4.2"
+severity = "must"
+test_class = "A"
+text = "A BindRequest with an empty SASL mechanism MUST return authMethodNotSupported."
+covered_by = ["4511.4.2.9"]
+
+[[requirement]]
+id = "4511:4.2:4"
+section = "4.2"
+severity = "must"
+test_class = "A"
+text = "A successful Bind is indicated by a BindResponse with resultCode success."
+covered_by = ["4511.4.2.1", "4511.4.2.2"]
+
+[[requirement]]
+id = "4511:4.2:5"
+section = "4.2"
+severity = "must"
+test_class = "A"
+text = "Invalid credentials on a simple bind MUST return invalidCredentials."
+covered_by = ["4511.4.2.3"]
+
+[[requirement]]
+id = "4511:4.2:6"
+section = "4.2"
+severity = "must"
+test_class = "B"
+text = "When locating the bind name, the server SHALL NOT dereference aliases."
+covered_by = []
+
+[[requirement]]
+id = "4511:4.2:7"
+section = "4.2.2"
+severity = "must"
+test_class = "A"
+text = "A successful simple bind (or SASL bind needing no server creds) SHALL NOT include serverSaslCreds in the BindResponse."
+covered_by = ["4511.4.2.5"]
+
+[[requirement]]
+id = "4511:4.2.1:1"
+section = "4.2.1"
+severity = "must"
+test_class = "B"
+text = "Before processing a BindRequest, all uncompleted operations MUST complete or be abandoned."
+covered_by = []
+
+[[requirement]]
+id = "4511:4.2.1:2"
+section = "4.2.1"
+severity = "must"
+test_class = "B"
+text = "A client MUST NOT send further PDUs between a BindRequest and its BindResponse."
+covered_by = []
+
+[[requirement]]
+id = "4511:5.1:4"
+section = "5.1"
+severity = "must"
+test_class = "A"
+text = "A truncated LDAPMessage (declared length exceeds bytes sent) is handled without crash."
+covered_by = ["4511.5.1.4"]

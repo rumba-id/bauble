@@ -1,0 +1,18 @@
+rfc = 4518
+title = "LDAP: Internationalized String Preparation"
+
+[[requirement]]
+id = "4518:2:1"
+section = "2"
+severity = "must"
+test_class = "A"
+text = "caseIgnoreMatch applies the §2 string preparation (case-insensitive, insignificant-space normalized)."
+covered_by = ["4518.2.1"]
+
+[[requirement]]
+id = "4518:2:2"
+section = "2.6"
+severity = "must"
+test_class = "A"
+text = "Leading/trailing/multiple consecutive spaces are insignificant in caseIgnore and caseExact matching."
+covered_by = ["4518.2.2"]

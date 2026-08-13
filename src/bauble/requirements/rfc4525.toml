@@ -1,0 +1,34 @@
+rfc = 4525
+title = "LDAP: Modify-Increment Extension"
+
+[[requirement]]
+id = "4525:2:1"
+section = "2"
+severity = "should"
+test_class = "A"
+text = "Servers supporting modify-increment SHOULD publish OID 1.3.6.1.1.14 in supportedFeatures."
+covered_by = ["4525.2.1"]
+
+[[requirement]]
+id = "4525:2:2"
+section = "2"
+severity = "must"
+test_class = "A"
+text = "The increment operation adds the specified value to all existing values of the attribute."
+covered_by = ["4525.2.2"]
+
+[[requirement]]
+id = "4525:2:3"
+section = "2"
+severity = "must"
+test_class = "A"
+text = "An increment modification with multiple values returns protocolError."
+covered_by = ["4525.2.3"]
+
+[[requirement]]
+id = "4525:2:4"
+section = "2"
+severity = "must"
+test_class = "A"
+text = "An increment on a non-incrementable attribute returns constraintViolation or another appropriate error."
+covered_by = ["4525.2.4"]

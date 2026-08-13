@@ -9,7 +9,7 @@ on a bare socket. Credentials come from the Phase 2 base seed
 from __future__ import annotations
 
 from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
-from bauble.raw import RawConnection
+from bauble.raw import RawConnection, build_bind_request_auth, build_sasl_bind_request
 from bauble.session import Session
 from bauble.suites._base import assertion
 
@@ -201,3 +201,51 @@ def malformed_pdu_disconnects(session: Session) -> Result:
     if response is None:
         return Result("4511.4.2.8", Status.PASS)
     return Result("4511.4.2.8", Status.FAIL, detail="expected disconnect, got a response")
+
+
+@assertion(
+    id="4511.4.2.9",
+    rfc=4511,
+    section="§4.2",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    layer=Layer.WIRE,
+    text="A BindRequest with an empty SASL mechanism returns authMethodNotSupported (7).",
+    strategy="Raw SASL BindRequest with mechanism=''; expect result code 7.",
+)
+def empty_sasl_mechanism_rejected(session: Session) -> Result:
+    raw = RawConnection(session.host, session.port)
+    outcome = raw.raw_send(build_sasl_bind_request(1, 3, "", ""))
+    if outcome.result_code == 7:
+        return Result("4511.4.2.9", Status.PASS)
+    return Result(
+        "4511.4.2.9",
+        Status.FAIL,
+        detail=f"expected 7 (authMethodNotSupported), got {outcome.result_code}",
+    )
+
+
+@assertion(
+    id="4511.4.2.10",
+    rfc=4511,
+    section="§4.2",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    layer=Layer.WIRE,
+    text="A BindRequest with an unsupported authentication choice returns authMethodNotSupported (7).",
+    strategy="Raw BindRequest with an unrecognized auth CHOICE tag [5]; expect result code 7.",
+)
+def unsupported_auth_choice_rejected(session: Session) -> Result:
+    raw = RawConnection(session.host, session.port)
+    outcome = raw.raw_send(build_bind_request_auth(1, 3, "", b"\xa5\x01\x00"))
+    if outcome.result_code == 7:
+        return Result("4511.4.2.10", Status.PASS)
+    return Result(
+        "4511.4.2.10",
+        Status.FAIL,
+        detail=f"expected 7 (authMethodNotSupported), got {outcome.result_code}",
+    )
