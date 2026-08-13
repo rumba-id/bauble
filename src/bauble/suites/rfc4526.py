@@ -159,7 +159,7 @@ def absolute_false_filter(session: Session) -> Result:
     section="§2",
     category=Category.PROTOCOL,
     severity=Severity.SHOULD,
-    test_class=TestClass.B,
+    test_class=TestClass.A,
     profiles=_CORE,
     text="Server SHOULD publish 1.3.6.1.4.1.4203.1.5.3 in supportedFeatures.",
     strategy="Read root DSE supportedFeatures and check for the OID.",

@@ -5,7 +5,7 @@ title = "LDAP: Authorization Identity Request and Response Controls"
 id = "3829:2:1"
 section = "2"
 severity = "should"
-test_class = "B"
+test_class = "A"
 text = "Servers supporting these controls publish 2.16.840.1.113730.3.4.16/.15 in supportedControl."
 covered_by = ["3829.2.1"]
 
@@ -16,6 +16,18 @@ severity = "must"
 test_class = "A"
 text = "A successful bind with the Authorization Identity Request control returns the response control with the authzId (empty for anonymous)."
 covered_by = ["3829.4.1"]
+[[requirement.obligation]]
+id = "3829:4:1:control"
+text = "A successful bind with the request control returns the Authorization Identity Response control."
+covered_by = ["3829.4.1"]
+
+[[requirement.obligation]]
+id = "3829:4:1:value"
+text = "The response control's authzId value matches the bound identity."
+
+[[requirement.obligation]]
+id = "3829:4:1:anonymous"
+text = "An anonymous bind returns an empty authzId."
 
 [[requirement]]
 id = "3829:4:2"

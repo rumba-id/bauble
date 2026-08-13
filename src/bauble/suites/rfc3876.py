@@ -49,13 +49,13 @@ def _ber_seq(c: bytes) -> bytes:
     section="§7",
     category=Category.CONTROL,
     severity=Severity.SHOULD,
-    test_class=TestClass.B,
+    test_class=TestClass.A,
     profiles=_CORE,
     text="Server SHOULD publish 1.2.826.0.1.3344810.2.3 in supportedControl.",
     strategy="Read root DSE supportedControl and check for the OID.",
     preconditions="Root DSE is readable.",
     stimulus="Search the root DSE for the supportedControl attribute.",
-    expected_observables="Matched-values control OID present, or UNTESTABLE if not advertised.",
+    expected_observables="Matched-values control OID present, or NOT_APPLICABLE if not advertised.",
     layer=Layer.CAPABILITY,
     oid="1.2.826.0.1.3344810.2.3",
 )
@@ -64,11 +64,11 @@ def matched_values_advertised(session: Session) -> Result:
         "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedControl"]
     )
     if outcome.result_code != 0 or not entries:
-        return Result("3876.7.1", Status.UNTESTABLE, detail="root DSE not readable")
+        return Result("3876.7.1", Status.NOT_APPLICABLE, detail="root DSE not readable")
     controls = entries[0].attributes.get("supportedControl", [])
     if _MATCHED_VALUES_OID in controls:
         return Result("3876.7.1", Status.PASS)
-    return Result("3876.7.1", Status.UNTESTABLE, detail="OID not advertised")
+    return Result("3876.7.1", Status.NOT_APPLICABLE, detail="OID not advertised")
 
 
 @assertion(

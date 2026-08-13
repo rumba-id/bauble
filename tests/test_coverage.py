@@ -5,8 +5,9 @@ from __future__ import annotations
 import re
 
 from bauble.coverage import coverage_text
+from bauble.model import Severity, TestClass
 from bauble.registry import default_registry
-from bauble.requirements import load_requirements
+from bauble.requirements import Obligation, Requirement, load_requirements
 from bauble.suites import discover
 
 discover()  # register every suite's assertions into the default registry
@@ -55,6 +56,13 @@ def test_corpus_covered_by_links_all_resolve() -> None:
     broken = [
         cid for req in load_requirements() for cid in req.covered_by if cid not in assertion_ids
     ]
+    broken += [
+        cid
+        for req in load_requirements()
+        for ob in req.obligations
+        for cid in ob.covered_by
+        if cid not in assertion_ids
+    ]
     assert not broken, f"covered_by references unknown assertions: {broken}"
 
 
@@ -63,4 +71,49 @@ def test_uncovered_requirements_are_listed() -> None:
     text = coverage_text(default_registry())
     # 4511:4.1.10:1 (Referral MUST contain >=1 URI) has no covering assertion.
     assert "4511:4.1.10:1" in text
-    assert "Uncovered requirements" in text
+    assert "Not fully covered requirements" in text
+
+
+def test_partially_covered_requirements_are_listed() -> None:
+    """A requirement with partly-covered obligations must show as partial."""
+    text = coverage_text(default_registry())
+    # 4528:3:3 covers Delete only; Add/Modify/ModifyDN obligations are gaps.
+    assert "Partially covered requirements" in text
+    assert "4528:3:3" in text
+    assert "gap 4528:3:3:add" in text
+    assert "ok  4528:3:3:delete" in text
+
+
+def _req(id_: str, covered_by: list[str], obligations: list[tuple[str, list[str]]]) -> Requirement:
+    return Requirement(
+        id=id_,
+        rfc=4511,
+        section="§x",
+        severity=Severity.MUST,
+        test_class=TestClass.A,
+        text="test",
+        covered_by=tuple(covered_by),
+        obligations=tuple(
+            Obligation(id=oid, text="ob", covered_by=tuple(cb)) for oid, cb in obligations
+        ),
+    )
+
+
+def test_requirement_state_no_obligations() -> None:
+    from bauble.coverage import CoverageState, requirement_state
+
+    ids = {"a1"}
+    assert requirement_state(_req("r1", ["a1"], []), ids) is CoverageState.COVERED
+    assert requirement_state(_req("r2", ["missing"], []), ids) is CoverageState.UNCOVERED
+
+
+def test_requirement_state_with_obligations() -> None:
+    from bauble.coverage import CoverageState, requirement_state
+
+    ids = {"a1", "a2"}
+    full = _req("r1", [], [("o1", ["a1"]), ("o2", ["a2"])])
+    assert requirement_state(full, ids) is CoverageState.COVERED
+    partial = _req("r2", [], [("o1", ["a1"]), ("o2", ["missing"])])
+    assert requirement_state(partial, ids) is CoverageState.PARTIALLY_COVERED
+    none_ = _req("r3", [], [("o1", ["missing"]), ("o2", ["nope"])])
+    assert requirement_state(none_, ids) is CoverageState.UNCOVERED

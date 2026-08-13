@@ -14,7 +14,22 @@ from pathlib import Path
 
 from bauble.model import Severity, TestClass
 
-__all__ = ["Requirement", "load_requirements"]
+__all__ = ["Obligation", "Requirement", "load_requirements"]
+
+
+@dataclass(frozen=True)
+class Obligation:
+    """One independently-testable normative sub-statement of a requirement.
+
+    Splitting a requirement into obligations is what makes
+    PARTIALLY_COVERED meaningful: a requirement whose obligations are only
+    partly covered is reported as PARTIALLY_COVERED rather than COVERED,
+    so a single exercised clause cannot mask an unexercised one.
+    """
+
+    id: str
+    text: str
+    covered_by: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -24,6 +39,9 @@ class Requirement:
     ``covered_by`` lists the assertion ids that verify this requirement. A
     requirement whose ``covered_by`` entries are absent from the assertion
     registry is an uncovered conformance gap.
+
+    ``obligations`` splits the statement into independently-testable parts;
+    when present, coverage is computed per obligation.
     """
 
     id: str
@@ -33,6 +51,7 @@ class Requirement:
     test_class: TestClass
     text: str
     covered_by: tuple[str, ...] = ()
+    obligations: tuple[Obligation, ...] = ()
     note: str = ""
     """Free-form note: e.g. an accepted cross-RFC link or why a gap is intrinsic."""
 
@@ -56,6 +75,14 @@ def load_requirements() -> list[Requirement]:
                     test_class=TestClass(str(item["test_class"])),
                     text=str(item.get("text", "")),
                     covered_by=tuple(str(x) for x in item.get("covered_by", [])),
+                    obligations=tuple(
+                        Obligation(
+                            id=str(ob["id"]),
+                            text=str(ob.get("text", "")),
+                            covered_by=tuple(str(x) for x in ob.get("covered_by", [])),
+                        )
+                        for ob in item.get("obligation", [])
+                    ),
                     note=str(item.get("note", "")),
                 )
             )

@@ -13,9 +13,9 @@ covered_by = ["3062.2.1"]
 id = "3062:3:2"
 section = "3"
 severity = "should"
-test_class = "B"
+test_class = "A"
 text = "Servers SHOULD publish passwdModifyOID (1.3.6.1.4.1.4203.1.11.1) in supportedExtension."
-covered_by = []
+covered_by = ["3062.3.2"]
 note = "SHOULD-level advertisement; absence is not a conformance failure."
 
 [[requirement]]

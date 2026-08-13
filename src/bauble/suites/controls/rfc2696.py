@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.raw import paged_results_control_value
 from bauble.session import SCOPE_WHOLE_SUBTREE, Control, Session
 from bauble.suites._base import assertion
@@ -101,3 +101,33 @@ def paged_results_cookie_exhausts(session: Session) -> Result:
         Status.FAIL,
         detail=f"cookie did not exhaust (saw_nonempty={saw_nonempty}, exhausted={exhausted})",
     )
+
+
+@assertion(
+    id="2696.3.3",
+    rfc=2696,
+    section="§3",
+    category=Category.PROTOCOL,
+    severity=Severity.SHOULD,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    text="Servers SHOULD publish 1.2.840.113556.1.4.319 in supportedControl.",
+    strategy="Read root DSE supportedControl and check for the paged-results OID.",
+    preconditions="Root DSE is readable.",
+    stimulus="Search the root DSE for the supportedControl attribute.",
+    expected_observables="Paged-results control OID present, or NOT_APPLICABLE if not advertised.",
+    layer=Layer.CAPABILITY,
+    oid="1.2.840.113556.1.4.319",
+)
+def paged_control_advertised(session: Session) -> Result:
+    from bauble.session import SCOPE_BASE_OBJECT
+
+    outcome, entries = session.search(
+        "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedControl"]
+    )
+    if outcome.result_code != 0 or not entries:
+        return Result("2696.3.3", Status.NOT_APPLICABLE, detail="root DSE not readable")
+    controls = entries[0].attributes.get("supportedControl", [])
+    if "1.2.840.113556.1.4.319" in controls:
+        return Result("2696.3.3", Status.PASS)
+    return Result("2696.3.3", Status.NOT_APPLICABLE, detail="OID not advertised")

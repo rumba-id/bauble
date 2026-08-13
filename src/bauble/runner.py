@@ -12,7 +12,8 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Sequence
-from typing import cast
+from pathlib import Path
+from typing import Protocol, cast, runtime_checkable
 from urllib.parse import urlparse
 
 from bauble.capability import Capability, load_capability
@@ -72,6 +73,70 @@ def _decide(
         return Result(assertion.id, Status.FAIL, detail=f"runner raised: {exc!r}")
 
 
+@runtime_checkable
+class FixtureTarget(Protocol):
+    """The surface every podman fixture target exposes to the runner."""
+
+    name: str
+    host_port: int
+    capability_path: Path
+    admin_dn: str
+    admin_pw: str
+
+    def build(self) -> None: ...
+    def start(self) -> None: ...
+    def stop(self) -> None: ...
+    def ensure_running(self) -> None: ...
+    def server_config(
+        self, *, use_ssl: bool = False, use_start_tls: bool = False
+    ) -> ServerConfig: ...
+
+
+def _make_target(args: argparse.Namespace) -> FixtureTarget:
+    """Construct the podman fixture target for --target-type."""
+    if args.target_type == "389ds":
+        from bauble.fixtures.directory389 import Directory389Target
+
+        return Directory389Target()
+    if args.target_type == "opendj":
+        from bauble.fixtures.opendj import OpenDJTarget
+
+        return OpenDJTarget()
+    if args.target_type == "lldap":
+        from bauble.fixtures.lldap import LLDAPTarget
+
+        return LLDAPTarget()
+    from bauble.fixtures.container import OpenLDAPTarget
+
+    return OpenLDAPTarget()
+
+
+def _apply_target_admin(target: FixtureTarget) -> None:
+    """Make the fixture's admin credentials the assertion default.
+
+    Assertions read ADMIN_DN/ADMIN_PW from the environment at import time,
+    so this must run before discover(). The fixture's admin is definitive
+    for its own container.
+    """
+    import os
+
+    os.environ["BAUBLE_ADMIN_DN"] = target.admin_dn
+    os.environ["BAUBLE_ADMIN_PW"] = target.admin_pw
+
+
+def _resolve_capability(
+    args: argparse.Namespace, target: FixtureTarget | None = None
+) -> Capability:
+    """The operator's capability statement, or the fixture target's default."""
+    if args.capability:
+        return load_capability(args.capability)
+    if args.target or args.fresh_target:
+        if target is None:
+            target = _make_target(args)
+        return load_capability(target.capability_path)
+    return Capability()
+
+
 def _topo_sort(assertions: list[Assertion]) -> list[Assertion]:
     by_id = {a.id: a for a in assertions}
     done: set[str] = set()
@@ -115,7 +180,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command != "run":
         return 2
     selector = _selector_from_args(args)
-    capability = load_capability(args.capability) if args.capability else Capability()
+    fixture_target: FixtureTarget | None = None
+    if args.target or args.fresh_target:
+        fixture_target = _make_target(args)
+        _apply_target_admin(fixture_target)
+    capability = _resolve_capability(args, fixture_target)
     # Importing the suites package registers assertions; discover() is idempotent.
     from bauble.suites import discover
 
@@ -128,14 +197,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"{len(selected)} assertion(s) selected")
         return 0
     if args.target or args.fresh_target:
-        if args.target_type == "389ds":
-            from bauble.fixtures.directory389 import Directory389Target
-
-            target: OpenLDAPTarget | Directory389Target = Directory389Target()
-        else:
-            from bauble.fixtures.container import OpenLDAPTarget
-
-            target = OpenLDAPTarget()
+        assert fixture_target is not None
+        target = fixture_target
         if args.fresh_target:
             target.build()
             target.start()
@@ -220,7 +283,7 @@ def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
     )
     run_parser.add_argument(
         "--target-type",
-        choices=["openldap", "389ds"],
+        choices=["openldap", "389ds", "opendj", "lldap"],
         default="openldap",
         help="test target implementation (default: openldap)",
     )

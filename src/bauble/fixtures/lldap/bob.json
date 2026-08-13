@@ -1,0 +1,8 @@
+{
+  "id": "bob",
+  "email": "bob@bauble.test",
+  "display_name": "Bob",
+  "first_name": "Bob",
+  "last_name": "Builder",
+  "password": "bob-secret"
+}

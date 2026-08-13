@@ -90,13 +90,15 @@ def matching_rules_present(session: Session) -> Result:
     text="caseIgnoreMatch compares attribute values case-insensitively.",
     strategy="Search (cn=ALICE ANDERSON); expect Alice Anderson matches.",
     preconditions="Seed entry uid=alice exists.",
-    stimulus="Subtree search with the filter (cn=ALICE ANDERSON) (uppercase).",
+    stimulus="Subtree search with the filter (uid=ALICE) (uppercase).",
     expected_observables="uid=alice is returned (caseIgnore matching).",
 )
 def case_ignore_match(session: Session) -> Result:
-    outcome, entries = session.search(
-        "dc=bauble,dc=test", SCOPE_WHOLE_SUBTREE, "(cn=ALICE ANDERSON)"
-    )
+    from bauble.suites._helpers import bind_admin
+
+    bind_admin(session)
+    # uid is the same value on both seeds (OpenLDAP and 389 DS), unlike cn.
+    outcome, entries = session.search("dc=bauble,dc=test", SCOPE_WHOLE_SUBTREE, "(uid=ALICE)")
     if outcome.result_code == 0 and any(e.dn.startswith("uid=alice") for e in entries):
         return Result("4517.4.3", Status.PASS)
     return Result("4517.4.3", Status.FAIL, detail="caseIgnoreMatch failed")
@@ -111,10 +113,10 @@ def case_ignore_match(session: Session) -> Result:
     test_class=TestClass.A,
     profiles=_INTEROP,
     text="integerMatch compares attribute values numerically.",
-    strategy="Add entry with uidNumber=100, search (uidNumber>=50); expect it returned.",
+    strategy="Add entry with uidNumber=100, search (uidNumber=0100); expect it returned.",
     preconditions="Admin bound; target is writable; posixAccount schema available.",
-    stimulus="Add an entry with uidNumber=100, then subtree search with (uidNumber>=50).",
-    expected_observables="The entry is returned (100 >= 50); entry removed in cleanup.",
+    stimulus="Add an entry with uidNumber=100, then subtree search with (uidNumber=0100).",
+    expected_observables="The entry is returned (numeric equality: 100 matches 0100); entry removed in cleanup.",
     mutates=True,
 )
 def integer_match(session: Session) -> Result:
@@ -140,10 +142,14 @@ def integer_match(session: Session) -> Result:
             detail=f"posixAccount add failed: {add_outcome.result_code}",
         )
     try:
-        outcome, entries = session.search(TEST_BASE, SCOPE_WHOLE_SUBTREE, "(uidNumber>=50)")
+        # Numeric equality: the integer value 100 must match the assertion 0100,
+        # which a string comparison would reject. (greaterOrEqual needs an
+        # ordering rule the 389 DS schema omits on uidNumber — see
+        # docs/server-findings.md.)
+        outcome, entries = session.search(TEST_BASE, SCOPE_WHOLE_SUBTREE, "(uidNumber=0100)")
         if outcome.result_code == 0 and any(e.dn == dn for e in entries):
             return Result("4517.4.4", Status.PASS)
-        return Result("4517.4.4", Status.FAIL, detail="integerMatch >= failed")
+        return Result("4517.4.4", Status.FAIL, detail="integerMatch equality failed")
     finally:
         cleanup(session, dn)
 

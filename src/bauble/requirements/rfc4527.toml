@@ -8,6 +8,14 @@ severity = "must"
 test_class = "A"
 text = "The Pre-Read control returns a copy of the target entry before the update is applied."
 covered_by = ["4527.3.1.1"]
+[[requirement.obligation]]
+id = "4527:3:1:control"
+text = "A Pre-Read response control is returned with the update response."
+covered_by = ["4527.3.1.1"]
+
+[[requirement.obligation]]
+id = "4527:3:1:content"
+text = "The returned entry reflects the pre-update state."
 
 [[requirement]]
 id = "4527:3:2"
@@ -16,14 +24,22 @@ severity = "must"
 test_class = "A"
 text = "The Post-Read control returns a copy of the target entry after the update is applied."
 covered_by = ["4527.3.2.1"]
+[[requirement.obligation]]
+id = "4527:3:2:control"
+text = "A Post-Read response control is returned with the update response."
+covered_by = ["4527.3.2.1"]
+
+[[requirement.obligation]]
+id = "4527:3:2:content"
+text = "The returned entry reflects the post-update state."
 
 [[requirement]]
 id = "4527:3:3"
 section = "3"
 severity = "should"
-test_class = "B"
+test_class = "A"
 text = "Servers SHOULD publish 1.3.6.1.1.13.1 and 1.3.6.1.1.13.2 in supportedControl."
-covered_by = []
+covered_by = ["4527.3.3"]
 note = "SHOULD-level advertisement; absence is not a conformance failure."
 
 [[requirement]]

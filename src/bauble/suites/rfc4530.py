@@ -5,7 +5,13 @@ import re
 from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, SCOPE_WHOLE_SUBTREE, Session
 from bauble.suites._base import assertion
-from bauble.suites._helpers import TEST_BASE, bind_admin, cleanup, test_entry_attrs
+from bauble.suites._helpers import (
+    TEST_BASE,
+    attribute_value,
+    bind_admin,
+    cleanup,
+    test_entry_attrs,
+)
 
 _CORE = frozenset({Profile.CORE})
 
@@ -31,13 +37,14 @@ _UUID_RE = re.compile(
     expected_observables="Every returned entry carries an entryUUID.",
 )
 def entry_uuid_present(session: Session) -> Result:
+    bind_admin(session)
     outcome, entries = session.search(TEST_BASE, SCOPE_WHOLE_SUBTREE, "(objectClass=*)", ["+"])
     if outcome.result_code != 0:
         return Result("4530.2.4.1", Status.FAIL, detail=f"search failed: {outcome.result_code}")
     if not entries:
         return Result("4530.2.4.1", Status.FAIL, detail="no entries found")
     for entry in entries:
-        if "entryUUID" not in entry.attributes:
+        if attribute_value(entry, "entryUUID") is None:
             return Result("4530.2.4.1", Status.FAIL, detail=f"entryUUID missing from {entry.dn}")
     return Result("4530.2.4.1", Status.PASS)
 
@@ -68,7 +75,7 @@ def entry_uuid_single_value_read_only(session: Session) -> Result:
         if outcome.result_code != 0 or not entries:
             return Result("4530.2.4.2", Status.FAIL, detail="could not read back entry")
         entry = entries[0]
-        entry_uuid = entry.attributes.get("entryUUID")
+        entry_uuid = attribute_value(entry, "entryUUID")
         if entry_uuid is None:
             return Result("4530.2.4.2", Status.FAIL, detail="entryUUID missing")
         if len(entry_uuid) != 1:
@@ -107,11 +114,12 @@ def entry_uuid_single_value_read_only(session: Session) -> Result:
     expected_observables="Every entryUUID matches the RFC 4122 hex-octet regex.",
 )
 def entry_uuid_valid_format(session: Session) -> Result:
+    bind_admin(session)
     outcome, entries = session.search(TEST_BASE, SCOPE_WHOLE_SUBTREE, "(objectClass=*)", ["+"])
     if outcome.result_code != 0 or not entries:
         return Result("4530.2.1.1", Status.FAIL, detail="search failed or no entries")
     for entry in entries:
-        uuid_vals = entry.attributes.get("entryUUID")
+        uuid_vals = attribute_value(entry, "entryUUID")
         if uuid_vals is None:
             # Already caught by entry_uuid_present; skip.
             continue
@@ -140,15 +148,18 @@ def entry_uuid_valid_format(session: Session) -> Result:
     expected_observables="Both reads return the same entryUUID value; no modification occurred.",
 )
 def entry_uuid_immutable(session: Session) -> Result:
+    bind_admin(session)
     dn = f"uid=alice,{TEST_BASE}"
-    outcome1, entries1 = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["+"])
-    outcome2, entries2 = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["+"])
+    # Request entryUUID explicitly: portable across servers (LLDAP's '+'
+    # selector returns nothing).
+    outcome1, entries1 = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["entryUUID"])
+    outcome2, entries2 = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["entryUUID"])
     if outcome1.result_code != 0 or not entries1:
         return Result("4530.2.4.3", Status.FAIL, detail="first read failed")
     if outcome2.result_code != 0 or not entries2:
         return Result("4530.2.4.3", Status.FAIL, detail="second read failed")
-    uuid1 = entries1[0].attributes.get("entryUUID")
-    uuid2 = entries2[0].attributes.get("entryUUID")
+    uuid1 = attribute_value(entries1[0], "entryUUID")
+    uuid2 = attribute_value(entries2[0], "entryUUID")
     if uuid1 is None or uuid2 is None:
         return Result("4530.2.4.3", Status.FAIL, detail="entryUUID missing")
     if uuid1 != uuid2:
@@ -172,11 +183,12 @@ def entry_uuid_immutable(session: Session) -> Result:
     expected_observables="The search returns uid=alice.",
 )
 def entry_uuid_searchable(session: Session) -> Result:
+    bind_admin(session)
     dn = f"uid=alice,{TEST_BASE}"
-    outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["+"])
+    outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["entryUUID"])
     if outcome.result_code != 0 or not entries:
         return Result("4530.2.2.1", Status.FAIL, detail="could not read entryUUID")
-    uuid_vals = entries[0].attributes.get("entryUUID")
+    uuid_vals = attribute_value(entries[0], "entryUUID")
     if not uuid_vals or not isinstance(uuid_vals[0], str):
         return Result("4530.2.2.1", Status.FAIL, detail="entryUUID missing or non-string")
     uuid_value = uuid_vals[0]

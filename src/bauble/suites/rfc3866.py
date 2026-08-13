@@ -1,6 +1,6 @@
 """RFC 3866 — Language Tags and Ranges in LDAP."""
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import TEST_BASE, bind_admin, cleanup, test_entry_attrs
@@ -135,8 +135,19 @@ def language_range_matches_prefix(session: Session) -> Result:
         attrs = entries[0].attributes
         # Attribute names are case-insensitive; ldap3 normalizes to lowercase.
         attr_keys = {k.lower() for k in attrs}
-        if "description;lang-en" in attr_keys and "description;lang-en-us" in attr_keys:
+        expanded = {
+            k for k in attr_keys if k.startswith("description;lang-") and not k.endswith("-")
+        }
+        if "description;lang-en" in expanded and "description;lang-en-us" in expanded:
             return Result("3866.3.1.1", Status.PASS)
+        if not expanded:
+            # No language-tagged values expanded: the server does not
+            # implement ranges (SHOULD-level per RFC 3866 §3).
+            return Result(
+                "3866.3.1.1",
+                Status.NOT_APPLICABLE,
+                detail=f"language ranges not implemented; got keys: {sorted(attr_keys)}",
+            )
         return Result(
             "3866.3.1.1",
             Status.FAIL,
@@ -220,6 +231,34 @@ def language_range_rejected_on_add(session: Session) -> Result:
     cleanup(session, dn)
     return Result(
         "3866.3.3",
-        Status.NOT_APPLICABLE,
-        detail="server accepted language range on add",
+        Status.FAIL,
+        detail="server accepted a language range option on add (RFC 3866 §3: SHALL treat as undefined attribute type and error)",
     )
+
+
+@assertion(
+    id="3866.4.1",
+    rfc=3866,
+    section="§4",
+    category=Category.PROTOCOL,
+    severity=Severity.SHOULD,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    text="Servers SHOULD publish 1.3.6.1.4.1.4203.1.5.4 (tags) and .5 (ranges) in supportedFeatures.",
+    strategy="Read root DSE supportedFeatures and check for both OIDs.",
+    preconditions="Root DSE is readable.",
+    stimulus="Search the root DSE for the supportedFeatures attribute.",
+    expected_observables="Both language-tag/range feature OIDs present, or NOT_APPLICABLE if not advertised.",
+    layer=Layer.CAPABILITY,
+    oid="1.3.6.1.4.1.4203.1.5.4",
+)
+def language_options_advertised(session: Session) -> Result:
+    outcome, entries = session.search(
+        "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedFeatures"]
+    )
+    if outcome.result_code != 0 or not entries:
+        return Result("3866.4.1", Status.NOT_APPLICABLE, detail="root DSE not readable")
+    features = entries[0].attributes.get("supportedFeatures", [])
+    if "1.3.6.1.4.1.4203.1.5.4" in features and "1.3.6.1.4.1.4203.1.5.5" in features:
+        return Result("3866.4.1", Status.PASS)
+    return Result("3866.4.1", Status.NOT_APPLICABLE, detail="language feature OIDs not advertised")

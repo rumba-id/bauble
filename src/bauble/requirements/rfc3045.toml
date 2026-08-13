@@ -8,6 +8,14 @@ severity = "must"
 test_class = "A"
 text = "vendorName, when present, is SINGLE-VALUE and NO-USER-MODIFICATION."
 covered_by = ["3045.2.1"]
+[[requirement.obligation]]
+id = "3045:2:1:value"
+text = "vendorName, when present, is SINGLE-VALUE and NO-USER-MODIFICATION."
+covered_by = ["3045.2.1"]
+
+[[requirement.obligation]]
+id = "3045:2:1:schema"
+text = "The subschema declares vendorName as NO-USER-MODIFICATION."
 
 [[requirement]]
 id = "3045:2:2"
@@ -16,3 +24,11 @@ severity = "must"
 test_class = "A"
 text = "vendorVersion, when present, is SINGLE-VALUE and NO-USER-MODIFICATION."
 covered_by = ["3045.2.2"]
+[[requirement.obligation]]
+id = "3045:2:2:value"
+text = "vendorVersion, when present, is SINGLE-VALUE and NO-USER-MODIFICATION."
+covered_by = ["3045.2.2"]
+
+[[requirement.obligation]]
+id = "3045:2:2:schema"
+text = "The subschema declares vendorVersion as NO-USER-MODIFICATION."

@@ -24,6 +24,22 @@ severity = "must"
 test_class = "A"
 text = "The assertion control applies to update operations (Add, Delete, Modify, ModifyDN)."
 covered_by = ["4528.3.3"]
+[[requirement.obligation]]
+id = "4528:3:3:delete"
+text = "The assertion control applies to Delete."
+covered_by = ["4528.3.3"]
+
+[[requirement.obligation]]
+id = "4528:3:3:add"
+text = "The assertion control applies to Add."
+
+[[requirement.obligation]]
+id = "4528:3:3:modify"
+text = "The assertion control applies to Modify."
+
+[[requirement.obligation]]
+id = "4528:3:3:moddn"
+text = "The assertion control applies to ModifyDN."
 
 [[requirement]]
 id = "4528:3:4"
@@ -32,6 +48,14 @@ severity = "must"
 test_class = "A"
 text = "For Search, a FALSE assertion on the baseObject returns assertionFailed and no entries."
 covered_by = ["4528.3.4"]
+[[requirement.obligation]]
+id = "4528:3:4:failed"
+text = "A FALSE assertion on the base object returns assertionFailed."
+covered_by = ["4528.3.4"]
+
+[[requirement.obligation]]
+id = "4528:3:4:noentries"
+text = "No entries are returned before the assertionFailed result."
 
 [[requirement]]
 id = "4528:2:1"

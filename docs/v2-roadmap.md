@@ -24,9 +24,9 @@ delivers a prerequisite for the next.
 | Release | Theme | Delivers |
 |---|---|---|
 | 2.1 | Fidelity & auditability | assertion-requirement fidelity audit; auditable assertion metadata; intrinsic-gap reasons | **shipped in v2.1.0** |
-| 2.2 | Coverage & capability | PARTIALLY_COVERED ontology; advertise-check coverage growth; capability model completion |
+| 2.2 | Coverage & capability | PARTIALLY_COVERED ontology; advertise-check coverage growth; capability model completion | **shipped in v2.2.0** |
 | 2.3 | Continuous verification | full-suite CI against both targets |
-| 2.4 | Broad applicability | third test target; seed-DIT portability |
+| 2.4 | Broad applicability | third test target; seed-DIT portability | third target + portability shipped in v2.2.0's cycle |
 | 2.5 | Wire completeness (conditional) | raw `Session` if the wire-UNTESTABLE count justifies it |
 
 ---
@@ -71,21 +71,32 @@ model so new assertions gate correctly.
    Sequenced after 2.1 so the obligation split is grounded in the audit.
 2. **Coverage growth.** Eight SHOULD-advertise requirements are testable via
    the existing advertise-check pattern (2696, 2891, 3062, 3866, 4512, 4527,
-   4529, 4532). Then investigate the 389 DS-specific
-   unimplemented entryDN, matching-rule and language-range behavior) and
-   decide per finding whether to document or assert.
-3. **Capability model completion.** The capability file currently gates
-   `writable`, `resettable`, `alt_server`, `naming_context`,
-   `supported_extension:<oid>`, `supported_control:<oid>`. Missing:
+   4529, 4532) — done, all eight land with capability-layer assertions.
+   The 389 DS-specific finding investigation is also done; genuine
+   deviations (RFC 4526 empty filters, auth-choice `protocolError`,
+   language range-on-add acceptance, no `@objectclass` expansion) are
+   asserted and documented in `docs/server-findings.md`, and three suspected
+   deviations (entryDN, caseIgnoreMatch, integerMatch) were resolved as
+   suite bugs and fixed.
+3. **Capability model completion.** The capability file gains
    `supported_sasl_mechanisms` (deferred from Phase 7, never landed) and
-   `supported_features:<oid>` — the advertise checks read the root DSE
-   directly instead of through the capability model. Completing this makes
-   applicability a first-class, declared input as the pre-2.0 review
-   described.
+   `supported_features:<oid>` — done. The completion also fixed a real
+   gating bug: the RFC 4525 increment assertions passed bare OIDs to
+   `requires_features`, which the capability never matched, so they were
+   permanently NOT_APPLICABLE since v2.0.0 and had never run live; they now
+   run and pass on OpenLDAP. Both fixtures ship capability statements
+   declared from live root-DSE probes, and `bauble run --target` loads the
+   fixture's statement by default.
 
 Done when: `bauble coverage` reports the three coverage states; the advertise
 assertions land and pass on both targets; SASL/feature applicability is
 capability-gated.
+
+**Shipped in v2.2.0.** All three items done. Coverage reports the three
+states; the PARTIALLY_COVERED obligations are rendered by
+`bauble coverage`; genuine per-server deviations are asserted and recorded
+in `docs/server-findings.md`. The v2.4 target work (OpenDJ + LLDAP
+fixtures, operator guide) landed in the same cycle.
 
 ## v2.3 — Continuous verification
 
@@ -107,8 +118,16 @@ verdict set.
 Demonstrate the "any LDAPv3 implementation" claim beyond two servers, and
 make the seed a portable input rather than a harness-only convention.
 
-1. **Third test target** — ApacheDS or LLDAP, following the OpenLDAP / 389 DS
-   fixture pattern (Containerfile, seed, live test, CI job).
+1. **Third test target** — OpenDJ and LLDAP landed as podman fixtures
+   (fixtures/opendj.py, fixtures/lldap.py, capability statements, live
+   tests, `--target-type opendj|lldap`). OpenDJ is the enterprise Java
+   endpoint; LLDAP is the minimal read-mostly interface. Both surfaced
+   new findings recorded in docs/server-findings.md.
+2. **Seed-DIT portability** — the operator guide
+   (docs/operator-guide.md) covers loading the seed into a non-fixture
+   server, the capability statement as the declared lever, and the
+   per-server adjustments (admin DN, anonymous-read policy, schema
+   gaps, subschema discovery).
 2. **Seed-DIT portability** — the base seed is a bauble convention; real
    servers differ (ACL policy, subschema location, schema). Document how an
    operator loads the seed and adjusts for these; the capability file is the

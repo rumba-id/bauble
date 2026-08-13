@@ -61,9 +61,9 @@ covered_by = ["4512.4.6"]
 id = "4512:3:2"
 section = "3.4"
 severity = "should"
-test_class = "B"
+test_class = "A"
 text = "Servers SHOULD maintain creatorsName/createTimestamp/modifiersName/modifyTimestamp."
-covered_by = []
+covered_by = ["4512.3.2"]
 note = "SHOULD-level maintenance; absence is not a conformance failure."
 
 [[requirement]]

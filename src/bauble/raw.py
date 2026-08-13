@@ -644,13 +644,17 @@ class RawConnection:
         attribute: str,
         increment_by: int,
         message_id: int = 1,
+        bind_dn: str = "",
+        bind_password: str = "",
     ) -> Outcome:
         """Send a Modify-Increment request (RFC 4525).
 
         Modify operation type 3 increments all values of ``attribute``
-        on ``dn`` by ``increment_by``.
+        on ``dn`` by ``increment_by``. Binds first when ``bind_dn`` is given.
         """
         payload = _build_modify_increment(message_id, dn, attribute, increment_by)
+        if bind_dn:
+            return self.bind_then_send(payload, bind_dn, bind_password)
         response = self._send_and_receive(payload)
         outcome = _parse_ldap_result(response)
         if outcome is None:

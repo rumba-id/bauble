@@ -129,3 +129,33 @@ def sort_unknown_attribute(session: Session) -> Result:
                 detail=f"expected sortResult 16 (noSuchAttribute), got {result}",
             )
     return Result("2891.2.3", Status.FAIL, detail="no sort-response control returned")
+
+
+@assertion(
+    id="2891.2.2",
+    rfc=2891,
+    section="§2",
+    category=Category.PROTOCOL,
+    severity=Severity.SHOULD,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    text="Servers SHOULD publish 1.2.840.113556.1.4.473/.474 in supportedControl.",
+    strategy="Read root DSE supportedControl and check for both sort OIDs.",
+    preconditions="Root DSE is readable.",
+    stimulus="Search the root DSE for the supportedControl attribute.",
+    expected_observables="Both server-side sort control OIDs present, or NOT_APPLICABLE if not advertised.",
+    layer=Layer.CAPABILITY,
+    oid="1.2.840.113556.1.4.473",
+)
+def sort_controls_advertised(session: Session) -> Result:
+    from bauble.session import SCOPE_BASE_OBJECT
+
+    outcome, entries = session.search(
+        "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedControl"]
+    )
+    if outcome.result_code != 0 or not entries:
+        return Result("2891.2.2", Status.NOT_APPLICABLE, detail="root DSE not readable")
+    controls = entries[0].attributes.get("supportedControl", [])
+    if "1.2.840.113556.1.4.473" in controls and "1.2.840.113556.1.4.474" in controls:
+        return Result("2891.2.2", Status.PASS)
+    return Result("2891.2.2", Status.NOT_APPLICABLE, detail="sort OIDs not advertised")

@@ -1,6 +1,6 @@
 """RFC 4527 — Read Entry Controls (Pre-Read and Post-Read)."""
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import (
@@ -177,3 +177,33 @@ def post_read_on_add(session: Session) -> Result:
         )
     finally:
         cleanup(session, dn)
+
+
+@assertion(
+    id="4527.3.3",
+    rfc=4527,
+    section="§3",
+    category=Category.PROTOCOL,
+    severity=Severity.SHOULD,
+    test_class=TestClass.A,
+    profiles=_EXTENDED,
+    text="Servers SHOULD publish 1.3.6.1.1.13.1 and 1.3.6.1.1.13.2 in supportedControl.",
+    strategy="Read root DSE supportedControl and check for both read-entry OIDs.",
+    preconditions="Root DSE is readable.",
+    stimulus="Search the root DSE for the supportedControl attribute.",
+    expected_observables="Both read-entry control OIDs present, or NOT_APPLICABLE if not advertised.",
+    layer=Layer.CAPABILITY,
+    oid="1.3.6.1.1.13.1",
+)
+def read_entry_controls_advertised(session: Session) -> Result:
+    from bauble.session import SCOPE_BASE_OBJECT
+
+    outcome, entries = session.search(
+        "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedControl"]
+    )
+    if outcome.result_code != 0 or not entries:
+        return Result("4527.3.3", Status.NOT_APPLICABLE, detail="root DSE not readable")
+    controls = entries[0].attributes.get("supportedControl", [])
+    if "1.3.6.1.1.13.1" in controls and "1.3.6.1.1.13.2" in controls:
+        return Result("4527.3.3", Status.PASS)
+    return Result("4527.3.3", Status.NOT_APPLICABLE, detail="read-entry OIDs not advertised")

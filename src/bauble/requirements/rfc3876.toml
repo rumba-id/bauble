@@ -29,6 +29,6 @@ covered_by = ["3876.2.3"]
 id = "3876:7:1"
 section = "2"
 severity = "should"
-test_class = "B"
+test_class = "A"
 text = "Servers SHOULD publish 1.2.826.0.1.3344810.2.3 in supportedControl."
 covered_by = ["3876.7.1"]

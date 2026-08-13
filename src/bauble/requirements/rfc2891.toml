@@ -13,9 +13,9 @@ covered_by = ["2891.2.1"]
 id = "2891:2:2"
 section = "2"
 severity = "should"
-test_class = "B"
+test_class = "A"
 text = "Servers SHOULD publish 1.2.840.113556.1.4.473/.474 in supportedControl."
-covered_by = []
+covered_by = ["2891.2.2"]
 note = "SHOULD-level advertisement; absence is not a conformance failure."
 
 [[requirement]]

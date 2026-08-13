@@ -24,6 +24,8 @@ for any modern LDAPv3 implementation.
 - [Design notes](docs/design-notes.md)
 - [RFC reference tree](docs/references.md)
 - [v2.x roadmap](docs/v2-roadmap.md)
+- [Server findings](docs/server-findings.md)
+- [Operator guide](docs/operator-guide.md)
 
 Current coverage facts are never committed to the docs. Run `bauble coverage`
 to print them live from the registry and requirements corpus — per-RFC

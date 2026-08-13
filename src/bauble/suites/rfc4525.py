@@ -3,7 +3,14 @@
 from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
-from bauble.suites._helpers import TEST_BASE, bind_admin, cleanup, test_entry_attrs
+from bauble.suites._helpers import (
+    ADMIN_DN,
+    ADMIN_PW,
+    TEST_BASE,
+    bind_admin,
+    cleanup,
+    test_entry_attrs,
+)
 
 _CORE = frozenset({Profile.CORE})
 
@@ -23,7 +30,7 @@ _INCREMENT_FEATURE_OID = "1.3.6.1.1.14"
     preconditions="Root DSE is readable.",
     stimulus="Search the root DSE for the supportedFeatures attribute.",
     expected_observables="Feature OID 1.3.6.1.1.14 present, or NOT_APPLICABLE if not advertised.",
-    requires_features=(_INCREMENT_FEATURE_OID,),
+    requires_features=(f"supported_features:{_INCREMENT_FEATURE_OID}",),
     layer=Layer.CAPABILITY,
     oid="1.3.6.1.1.14",
 )
@@ -55,7 +62,7 @@ def increment_feature_advertised(session: Session) -> Result:
     stimulus="Add an entry with uidNumber=1000, then ModifyRequest with increment (3) of +1.",
     expected_observables="ModifyResponse success; uidNumber reads back 1001; entry removed in cleanup.",
     mutates=True,
-    requires_features=(_INCREMENT_FEATURE_OID,),
+    requires_features=(f"supported_features:{_INCREMENT_FEATURE_OID}",),
     layer=Layer.WIRE,
     oid="1.3.6.1.1.14",
 )
@@ -66,12 +73,27 @@ def increment_adds_to_value(session: Session) -> Result:
     dn = f"uid=incr-test,{TEST_BASE}"
     cleanup(session, dn)
 
-    attrs = test_entry_attrs("incr-test")
-    attrs["uidNumber"] = ["1000"]
-    session.add(dn, attrs)
+    attrs: dict[str, list[str | bytes]] = {
+        "objectClass": ["inetOrgPerson", "posixAccount"],
+        "cn": ["IncrTest"],
+        "sn": ["Test"],
+        "uid": ["incr-test"],
+        "uidNumber": ["1000"],
+        "gidNumber": ["1000"],
+        "homeDirectory": ["/home/incr-test"],
+    }
+    add = session.add(dn, attrs)
+    if add.result_code != 0:
+        return Result(
+            "4525.2.2",
+            Status.FAIL,
+            detail=f"test entry add failed: {add.result_code}",
+        )
     try:
         raw = RawConnection(session.host, session.port)
-        outcome = raw.modify_increment(dn, "uidNumber", 1, message_id=1)
+        outcome = raw.modify_increment(
+            dn, "uidNumber", 1, message_id=1, bind_dn=ADMIN_DN, bind_password=ADMIN_PW
+        )
         if outcome.result_code != 0:
             return Result(
                 "4525.2.2",
@@ -84,11 +106,12 @@ def increment_adds_to_value(session: Session) -> Result:
         if not entries:
             return Result("4525.2.2", Status.FAIL, detail="could not read back entry")
         uid_numbers = entries[0].attributes.get("uidNumber", [])
-        if uid_numbers != ["1001"]:
+        numeric = [int(v) for v in uid_numbers]
+        if numeric != [1001]:
             return Result(
                 "4525.2.2",
                 Status.FAIL,
-                detail=f"expected uidNumber=['1001'], got {uid_numbers}",
+                detail=f"expected uidNumber=[1001], got {uid_numbers}",
             )
         return Result("4525.2.2", Status.PASS)
     finally:
@@ -109,7 +132,7 @@ def increment_adds_to_value(session: Session) -> Result:
     stimulus="ModifyRequest with increment (3) providing two values for the attribute.",
     expected_observables="ModifyResponse resultCode protocolError (2); entry removed in cleanup.",
     mutates=True,
-    requires_features=(_INCREMENT_FEATURE_OID,),
+    requires_features=(f"supported_features:{_INCREMENT_FEATURE_OID}",),
     layer=Layer.WIRE,
     oid="1.3.6.1.1.14",
 )
@@ -193,7 +216,7 @@ def increment_multiple_values_error(session: Session) -> Result:
     stimulus="ModifyRequest with increment (3) on a Directory String attribute (cn).",
     expected_observables="ModifyResponse resultCode constraintViolation (19) or similar error; entry removed in cleanup.",
     mutates=True,
-    requires_features=(_INCREMENT_FEATURE_OID,),
+    requires_features=(f"supported_features:{_INCREMENT_FEATURE_OID}",),
     layer=Layer.WIRE,
     oid="1.3.6.1.1.14",
 )
