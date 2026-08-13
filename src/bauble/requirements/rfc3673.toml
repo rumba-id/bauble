@@ -8,6 +8,14 @@ severity = "must"
 test_class = "A"
 text = "A request for the '+' attribute selector MUST return all operational attributes."
 covered_by = ["3673.2.1"]
+[[requirement.obligation]]
+id = "3673:2:1:present"
+text = "Requesting '+' returns at least one operational attribute."
+covered_by = ["3673.2.1"]
+
+[[requirement.obligation]]
+id = "3673:2:1:all"
+text = "Requesting '+' returns ALL operational attributes."
 
 [[requirement]]
 id = "3673:2:2"

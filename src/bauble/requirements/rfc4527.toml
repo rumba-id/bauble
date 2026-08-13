@@ -8,6 +8,14 @@ severity = "must"
 test_class = "A"
 text = "The Pre-Read control returns a copy of the target entry before the update is applied."
 covered_by = ["4527.3.1.1"]
+[[requirement.obligation]]
+id = "4527:3:1:control"
+text = "A Pre-Read response control is returned with the update response."
+covered_by = ["4527.3.1.1"]
+
+[[requirement.obligation]]
+id = "4527:3:1:content"
+text = "The returned entry reflects the pre-update state."
 
 [[requirement]]
 id = "4527:3:2"
@@ -16,6 +24,14 @@ severity = "must"
 test_class = "A"
 text = "The Post-Read control returns a copy of the target entry after the update is applied."
 covered_by = ["4527.3.2.1"]
+[[requirement.obligation]]
+id = "4527:3:2:control"
+text = "A Post-Read response control is returned with the update response."
+covered_by = ["4527.3.2.1"]
+
+[[requirement.obligation]]
+id = "4527:3:2:content"
+text = "The returned entry reflects the post-update state."
 
 [[requirement]]
 id = "4527:3:3"

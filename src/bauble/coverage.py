@@ -10,12 +10,41 @@ requirement with no covering assertion is a surfaced gap, not a silent omission.
 
 from __future__ import annotations
 
+import enum
 from collections import Counter
 
 from bauble.registry import Registry
 from bauble.requirements import Requirement, load_requirements
 
-__all__ = ["coverage_text"]
+__all__ = ["CoverageState", "coverage_text", "requirement_state"]
+
+
+class CoverageState(str, enum.Enum):
+    """Per-requirement coverage state.
+
+    COVERED — every obligation (or, without obligations, the requirement's
+    own covered_by) has at least one resolving assertion.
+    PARTIALLY_COVERED — at least one but not all obligations are covered.
+    UNCOVERED — no obligation (and no requirement-level link) is covered.
+    """
+
+    COVERED = "covered"
+    PARTIALLY_COVERED = "partial"
+    UNCOVERED = "uncovered"
+
+
+def requirement_state(req: Requirement, assertion_ids: set[str]) -> CoverageState:
+    """Classify one requirement by its obligations (or covered_by)."""
+    if req.obligations:
+        covered = [o for o in req.obligations if any(cid in assertion_ids for cid in o.covered_by)]
+        if len(covered) == len(req.obligations):
+            return CoverageState.COVERED
+        if covered:
+            return CoverageState.PARTIALLY_COVERED
+        return CoverageState.UNCOVERED
+    if any(cid in assertion_ids for cid in req.covered_by):
+        return CoverageState.COVERED
+    return CoverageState.UNCOVERED
 
 
 def coverage_text(
@@ -82,22 +111,51 @@ def _render_requirements(
     requirements: list[Requirement],
     assertion_ids: set[str],
 ) -> None:
-    """Append per-RFC requirements coverage and the uncovered-requirement gaps."""
+    """Append per-RFC coverage states, the partial detail, and the gaps."""
     by_rfc: dict[int, list[Requirement]] = {}
     for req in requirements:
         by_rfc.setdefault(req.rfc, []).append(req)
 
     lines.append("")
     lines.append("Requirements coverage (RFC corpus):")
+    rollup: Counter[CoverageState] = Counter()
     for rfc in sorted(by_rfc):
-        reqs = by_rfc[rfc]
-        covered = sum(1 for r in reqs if any(cid in assertion_ids for cid in r.covered_by))
-        lines.append(f"  RFC {rfc:<6} {covered}/{len(reqs)} requirements covered")
+        states = Counter(requirement_state(r, assertion_ids) for r in by_rfc[rfc])
+        rollup.update(states)
+        lines.append(
+            f"  RFC {rfc:<6} "
+            f"{states[CoverageState.COVERED]} covered / "
+            f"{states[CoverageState.PARTIALLY_COVERED]} partial / "
+            f"{states[CoverageState.UNCOVERED]} uncovered"
+        )
+    lines.append(
+        f"  total: {rollup[CoverageState.COVERED]} covered / "
+        f"{rollup[CoverageState.PARTIALLY_COVERED]} partial / "
+        f"{rollup[CoverageState.UNCOVERED]} uncovered"
+    )
 
-    gaps = [r for r in requirements if not any(cid in assertion_ids for cid in r.covered_by)]
+    partials = [
+        r
+        for r in requirements
+        if requirement_state(r, assertion_ids) is CoverageState.PARTIALLY_COVERED
+    ]
+    if partials:
+        lines.append("")
+        lines.append(f"Partially covered requirements ({len(partials)}):")
+        for req in sorted(partials, key=lambda r: (r.rfc, r.id)):
+            lines.append(f"  {req.id}  RFC {req.rfc} §{req.section}  {req.text}")
+            for obligation in req.obligations:
+                covered = any(cid in assertion_ids for cid in obligation.covered_by)
+                lines.append(
+                    f"    {'ok ' if covered else 'gap'} {obligation.id}: {obligation.text}"
+                )
+
+    gaps = [
+        r for r in requirements if requirement_state(r, assertion_ids) is not CoverageState.COVERED
+    ]
     if gaps:
         lines.append("")
-        lines.append(f"Uncovered requirements ({len(gaps)}):")
+        lines.append(f"Not fully covered requirements ({len(gaps)}):")
         for req in gaps:
             lines.append(
                 f"  {req.id}  RFC {req.rfc} §{req.section}  "

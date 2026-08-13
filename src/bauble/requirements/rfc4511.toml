@@ -43,6 +43,14 @@ severity = "must"
 test_class = "A"
 text = "The messageID value 0 is reserved for unsolicited notification."
 covered_by = ["4511.4.1.1.2"]
+[[requirement.obligation]]
+id = "4511:4.1.1.1:2:robust"
+text = "A request using messageID 0 is handled without crashing."
+covered_by = ["4511.4.1.1.2"]
+
+[[requirement.obligation]]
+id = "4511:4.1.1.1:2:notify"
+text = "The server uses messageID 0 for unsolicited notifications."
 
 [[requirement]]
 id = "4511:4.1.1.1:3"
@@ -190,6 +198,14 @@ severity = "must"
 test_class = "A"
 text = "Re-binding on an already-bound session establishes the new identity."
 covered_by = ["4511.4.2.6"]
+[[requirement.obligation]]
+id = "4511:4.2:9:rebind"
+text = "Re-binding on an already-bound session succeeds."
+covered_by = ["4511.4.2.6"]
+
+[[requirement.obligation]]
+id = "4511:4.2:9:identity"
+text = "The re-bind establishes the new identity."
 
 # §4.3 Unbind
 
