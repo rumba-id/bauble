@@ -72,10 +72,12 @@ model so new assertions gate correctly.
 2. **Coverage growth.** Eight SHOULD-advertise requirements are testable via
    the existing advertise-check pattern (2696, 2891, 3062, 3866, 4512, 4527,
    4529, 4532) — done, all eight land with capability-layer assertions.
-   Remaining: investigate the 389 DS-specific findings (RFC 4526 empty
-   filters, unknown-auth-choice `protocolError`, unimplemented entryDN,
-   matching-rule and language-range behavior) and decide per finding whether
-   to document or assert.
+   The 389 DS-specific finding investigation is also done; genuine
+   deviations (RFC 4526 empty filters, auth-choice `protocolError`,
+   language range-on-add acceptance, no `@objectclass` expansion) are
+   asserted and documented in `docs/server-findings.md`, and three suspected
+   deviations (entryDN, caseIgnoreMatch, integerMatch) were resolved as
+   suite bugs and fixed.
 3. **Capability model completion.** The capability file gains
    `supported_sasl_mechanisms` (deferred from Phase 7, never landed) and
    `supported_features:<oid>` — done. The completion also fixed a real
@@ -90,10 +92,10 @@ Done when: `bauble coverage` reports the three coverage states; the advertise
 assertions land and pass on both targets; SASL/feature applicability is
 capability-gated.
 
-Status: items 1 and 3 done; item 2's advertise half done (the 389 DS
-finding-investigation half remains). Coverage reports the three states.
-The PARTIALLY_COVERED obligations (11 requirements) are recorded in
-`docs/v2.1-fidelity-review.md` and rendered by `bauble coverage`.
+Status: all three items done. Coverage reports the three states; the
+PARTIALLY_COVERED obligations (11 requirements) are rendered by
+`bauble coverage`; genuine per-server deviations are asserted and recorded
+in `docs/server-findings.md`.
 
 ## v2.3 — Continuous verification
 

@@ -21,13 +21,13 @@ _AUTHZID_RESPONSE_OID = "2.16.840.1.113730.3.4.15"
     section="§2",
     category=Category.AUTH,
     severity=Severity.SHOULD,
-    test_class=TestClass.B,
+    test_class=TestClass.A,
     profiles=_CORE,
     text="Server SHOULD publish 2.16.840.1.113730.3.4.16/15 in supportedControl.",
     strategy="Read root DSE supportedControl and check for both OIDs.",
     preconditions="Root DSE is readable.",
     stimulus="Search the root DSE for the supportedControl attribute.",
-    expected_observables="Both authzId control OIDs present, or UNTESTABLE if not advertised.",
+    expected_observables="Both authzId control OIDs present, or NOT_APPLICABLE if not advertised.",
     layer=Layer.CAPABILITY,
     oid="2.16.840.1.113730.3.4.16",
 )
@@ -36,11 +36,11 @@ def authzid_controls_advertised(session: Session) -> Result:
         "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedControl"]
     )
     if outcome.result_code != 0 or not entries:
-        return Result("3829.2.1", Status.UNTESTABLE, detail="root DSE not readable")
+        return Result("3829.2.1", Status.NOT_APPLICABLE, detail="root DSE not readable")
     controls = entries[0].attributes.get("supportedControl", [])
     if _AUTHZID_REQUEST_OID in controls and _AUTHZID_RESPONSE_OID in controls:
         return Result("3829.2.1", Status.PASS)
-    return Result("3829.2.1", Status.UNTESTABLE, detail="OIDs not advertised")
+    return Result("3829.2.1", Status.NOT_APPLICABLE, detail="OIDs not advertised")
 
 
 @assertion(

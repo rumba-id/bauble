@@ -5,7 +5,7 @@ title = "LDAP: Authorization Identity Request and Response Controls"
 id = "3829:2:1"
 section = "2"
 severity = "should"
-test_class = "B"
+test_class = "A"
 text = "Servers supporting these controls publish 2.16.840.1.113730.3.4.16/.15 in supportedControl."
 covered_by = ["3829.2.1"]
 

@@ -23,13 +23,14 @@ _CORE = frozenset({Profile.CORE})
     expected_observables="Every returned entry carries an entryDN.",
 )
 def entry_dn_present(session: Session) -> Result:
+    bind_admin(session)
     outcome, entries = session.search(TEST_BASE, SCOPE_WHOLE_SUBTREE, "(objectClass=*)", ["+"])
     if outcome.result_code != 0:
         return Result("5020.2.1", Status.FAIL, detail=f"search failed: {outcome.result_code}")
     if not entries:
         return Result("5020.2.1", Status.FAIL, detail="no entries found")
     for entry in entries:
-        if "entryDN" not in entry.attributes:
+        if _attr_lookup(entry, "entryDN") is None:
             return Result("5020.2.1", Status.FAIL, detail=f"entryDN missing from {entry.dn}")
     return Result("5020.2.1", Status.PASS)
 
@@ -49,12 +50,13 @@ def entry_dn_present(session: Session) -> Result:
     expected_observables="entryDN equals the entry's actual DN.",
 )
 def entry_dn_equals_dn(session: Session) -> Result:
+    bind_admin(session)
     dn = f"uid=alice,{TEST_BASE}"
     outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["+", "*"])
     if outcome.result_code != 0 or not entries:
         return Result("5020.2.2", Status.FAIL, detail="search failed")
     entry = entries[0]
-    entry_dn_val = entry.attributes.get("entryDN")
+    entry_dn_val = _attr_lookup(entry, "entryDN")
     if entry_dn_val is None:
         return Result("5020.2.2", Status.FAIL, detail="entryDN missing")
     if len(entry_dn_val) != 1 or entry_dn_val[0] != dn:
@@ -92,7 +94,7 @@ def entry_dn_single_value_read_only(session: Session) -> Result:
         if outcome.result_code != 0 or not entries:
             return Result("5020.2.3", Status.FAIL, detail="could not read back entry")
         entry = entries[0]
-        entry_dn_val = entry.attributes.get("entryDN")
+        entry_dn_val = _attr_lookup(entry, "entryDN")
         if entry_dn_val is None:
             return Result("5020.2.3", Status.FAIL, detail="entryDN missing")
         if len(entry_dn_val) != 1:
@@ -130,6 +132,7 @@ def entry_dn_single_value_read_only(session: Session) -> Result:
     expected_observables="The correct entry is returned.",
 )
 def entry_dn_searchable(session: Session) -> Result:
+    bind_admin(session)
     dn = f"uid=alice,{TEST_BASE}"
     outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, f"(entryDN={dn})", ["*"])
     if outcome.result_code != 0:
@@ -141,3 +144,13 @@ def entry_dn_searchable(session: Session) -> Result:
             detail=f"expected 1 entry with dn={dn}, got {len(entries)}",
         )
     return Result("5020.2.4", Status.PASS)
+
+
+def _attr_lookup(entry: object, name: str) -> list[str | bytes] | None:
+    """Case-insensitive attribute lookup (attribute-type names are case-insensitive)."""
+    attrs: dict[str, list[str | bytes]] = getattr(entry, "attributes", {})
+    lowered = name.lower()
+    for key, value in attrs.items():
+        if key.lower() == lowered:
+            return value
+    return None

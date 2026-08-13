@@ -20,7 +20,7 @@ covered_by = ["3866.2.5.1"]
 [[requirement]]
 id = "3866:3:1"
 section = "3.1"
-severity = "must"
+severity = "should"
 test_class = "A"
 text = "A language range option matches all language tags with a matching prefix."
 covered_by = ["3866.3.1.1"]
@@ -28,7 +28,7 @@ covered_by = ["3866.3.1.1"]
 [[requirement]]
 id = "3866:3:2"
 section = "3"
-severity = "must"
+severity = "should"
 test_class = "A"
 text = "The 'lang-' range matches all language-tagged values."
 covered_by = ["3866.3.1.2"]

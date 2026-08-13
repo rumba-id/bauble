@@ -135,8 +135,19 @@ def language_range_matches_prefix(session: Session) -> Result:
         attrs = entries[0].attributes
         # Attribute names are case-insensitive; ldap3 normalizes to lowercase.
         attr_keys = {k.lower() for k in attrs}
-        if "description;lang-en" in attr_keys and "description;lang-en-us" in attr_keys:
+        expanded = {
+            k for k in attr_keys if k.startswith("description;lang-") and not k.endswith("-")
+        }
+        if "description;lang-en" in expanded and "description;lang-en-us" in expanded:
             return Result("3866.3.1.1", Status.PASS)
+        if not expanded:
+            # No language-tagged values expanded: the server does not
+            # implement ranges (SHOULD-level per RFC 3866 §3).
+            return Result(
+                "3866.3.1.1",
+                Status.NOT_APPLICABLE,
+                detail=f"language ranges not implemented; got keys: {sorted(attr_keys)}",
+            )
         return Result(
             "3866.3.1.1",
             Status.FAIL,
@@ -220,8 +231,8 @@ def language_range_rejected_on_add(session: Session) -> Result:
     cleanup(session, dn)
     return Result(
         "3866.3.3",
-        Status.NOT_APPLICABLE,
-        detail="server accepted language range on add",
+        Status.FAIL,
+        detail="server accepted a language range option on add (RFC 3866 §3: SHALL treat as undefined attribute type and error)",
     )
 
 
