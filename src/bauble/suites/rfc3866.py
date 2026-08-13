@@ -21,6 +21,9 @@ _LANG_RANGE_OID = "1.3.6.1.4.1.4203.1.5.5"
     profiles=_CORE,
     text="Server accepts add with language-tagged attribute values.",
     strategy="Add entry with description;lang-en and description;lang-de. Verify both stored.",
+    preconditions="Admin bound; target is writable; language tags supported.",
+    stimulus="Add an entry with description;lang-en and description;lang-de values.",
+    expected_observables="Both language-tagged values are stored; entry removed in cleanup.",
     mutates=True,
 )
 def add_language_tagged_values(session: Session) -> Result:
@@ -59,6 +62,9 @@ def add_language_tagged_values(session: Session) -> Result:
     profiles=_CORE,
     text="Search filter with language tag option matches only same-tag values.",
     strategy="Add entries with lang-en and lang-de, search with lang-en filter.",
+    preconditions="Admin bound; target is writable; language tags supported.",
+    stimulus="Add an entry with lang-en and lang-de values, then search with (description;lang-en=Hello).",
+    expected_observables="Only the lang-en value matches; entry removed in cleanup.",
     mutates=True,
 )
 def search_filter_language_tag(session: Session) -> Result:
@@ -100,6 +106,9 @@ def search_filter_language_tag(session: Session) -> Result:
     profiles=_CORE,
     text="Language range option matches all language tags with matching prefix.",
     strategy="Search with description;lang-en-; verify both lang-en and lang-en-US match.",
+    preconditions="Admin bound; target is writable; language ranges supported.",
+    stimulus="Add an entry with lang-en, lang-en-US, and lang-de values, then request description;lang-en-.",
+    expected_observables="Both lang-en and lang-en-US match; entry removed in cleanup.",
     mutates=True,
 )
 def language_range_matches_prefix(session: Session) -> Result:
@@ -147,6 +156,9 @@ def language_range_matches_prefix(session: Session) -> Result:
     profiles=_CORE,
     text="lang- range matches all language-tagged values.",
     strategy="Request description;lang- ; verify en, en-US, de all returned.",
+    preconditions="Admin bound; target is writable; language ranges supported.",
+    stimulus="Add an entry with lang-en and lang-de values, then request description;lang-.",
+    expected_observables="All language-tagged values are returned; entry removed in cleanup.",
     mutates=True,
 )
 def lang_range_matches_all(session: Session) -> Result:
@@ -190,6 +202,9 @@ def lang_range_matches_all(session: Session) -> Result:
     profiles=_CORE,
     text="Language range option on add returns error (ranges are not tagging options).",
     strategy="Try to add entry with description;lang-en-; expect error.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="AddRequest with an attribute using a language RANGE option (description;lang-en-).",
+    expected_observables="AddResponse non-zero (ranges are not tagging options).",
     mutates=True,
 )
 def language_range_rejected_on_add(session: Session) -> Result:

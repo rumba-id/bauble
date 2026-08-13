@@ -22,6 +22,9 @@ _ALICE_PW = "alice-secret"
     profiles=_CORE,
     text="The Who-Am-I extended operation returns the authenticated identity.",
     strategy="Bind as alice, send Who-Am-I extended op; expect the DN in the response.",
+    preconditions="Seed entry uid=alice with password alice-secret exists.",
+    stimulus="Bind as alice, then Who-Am-I extended request.",
+    expected_observables="ExtendedResponse success (0) returning the authorization identity.",
     oid="1.3.6.1.4.1.4203.1.11.3",
 )
 def who_am_i(session: Session) -> Result:

@@ -18,6 +18,9 @@ _INTEROP = frozenset({Profile.INTEROP})
     profiles=_INTEROP,
     text="Upon initial session establishment, the authorization state is anonymous.",
     strategy="Open a fresh unauthenticated session and issue a search; must succeed.",
+    preconditions="Fresh session with no Bind performed.",
+    stimulus="Search before any Bind.",
+    expected_observables="The search succeeds anonymously (entries are readable).",
 )
 def initial_session_anonymous(session: Session) -> Result:
     # The session is created fresh by the runner — no Bind called yet.
@@ -44,6 +47,9 @@ def initial_session_anonymous(session: Session) -> Result:
     profiles=_INTEROP,
     text="Any operation before Bind MUST be treated as post-anonymous-Bind.",
     strategy="Issue search, then bind as admin, then search again — both succeed.",
+    preconditions="Fresh session; admin credentials available.",
+    stimulus="Search before Bind, then Bind as admin, then search again.",
+    expected_observables="Both searches succeed (pre-Bind ops are treated as post-anonymous-Bind).",
 )
 def pre_bind_ops_treated_as_anonymous(session: Session) -> Result:
     # First, search before binding (anonymous).

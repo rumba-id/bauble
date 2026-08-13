@@ -21,6 +21,9 @@ _SUBSCHEMA = "cn=Subschema"
     profiles=_INTEROP,
     text="The subschema advertises ldapSyntaxes.",
     strategy="Search cn=Subschema for ldapSyntaxes; verify it has values.",
+    preconditions="Admin bound; the subschema subentry is advertised in the root DSE.",
+    stimulus="Search the subschema requesting the ldapSyntaxes attribute.",
+    expected_observables="ldapSyntaxes has at least one value.",
 )
 def ldap_syntaxes_present(session: Session) -> Result:
     from bauble.suites._helpers import bind_admin, subschema_dn
@@ -52,6 +55,9 @@ def ldap_syntaxes_present(session: Session) -> Result:
     profiles=_INTEROP,
     text="The subschema advertises matchingRules.",
     strategy="Search cn=Subschema for matchingRules; verify it has values.",
+    preconditions="Admin bound; the subschema subentry is advertised in the root DSE.",
+    stimulus="Search the subschema requesting the matchingRules attribute.",
+    expected_observables="matchingRules has at least one value.",
 )
 def matching_rules_present(session: Session) -> Result:
     from bauble.suites._helpers import bind_admin, subschema_dn
@@ -83,6 +89,9 @@ def matching_rules_present(session: Session) -> Result:
     profiles=_INTEROP,
     text="caseIgnoreMatch compares attribute values case-insensitively.",
     strategy="Search (cn=ALICE ANDERSON); expect Alice Anderson matches.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Subtree search with the filter (cn=ALICE ANDERSON) (uppercase).",
+    expected_observables="uid=alice is returned (caseIgnore matching).",
 )
 def case_ignore_match(session: Session) -> Result:
     outcome, entries = session.search(
@@ -103,6 +112,9 @@ def case_ignore_match(session: Session) -> Result:
     profiles=_INTEROP,
     text="integerMatch compares attribute values numerically.",
     strategy="Add entry with uidNumber=100, search (uidNumber>=50); expect it returned.",
+    preconditions="Admin bound; target is writable; posixAccount schema available.",
+    stimulus="Add an entry with uidNumber=100, then subtree search with (uidNumber>=50).",
+    expected_observables="The entry is returned (100 >= 50); entry removed in cleanup.",
     mutates=True,
 )
 def integer_match(session: Session) -> Result:
@@ -146,6 +158,9 @@ def integer_match(session: Session) -> Result:
     profiles=_INTEROP,
     text="generalizedTimeMatch compares timestamps chronologically.",
     strategy="Search (modifyTimestamp>=20200101000000Z); expect recently-added entries.",
+    preconditions="Seed entries exist with a modifyTimestamp after 2020.",
+    stimulus="Subtree search with the filter (modifyTimestamp>=20200101000000Z).",
+    expected_observables="At least 2 entries returned.",
 )
 def generalized_time_match(session: Session) -> Result:
     outcome, entries = session.search(
