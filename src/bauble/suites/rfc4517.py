@@ -23,12 +23,15 @@ _SUBSCHEMA = "cn=Subschema"
     strategy="Search cn=Subschema for ldapSyntaxes; verify it has values.",
 )
 def ldap_syntaxes_present(session: Session) -> Result:
-    outcome, entries = session.search(
-        _SUBSCHEMA,
-        SCOPE_BASE_OBJECT,
-        "(objectClass=*)",
-        ["ldapSyntaxes"],
-    )
+    from bauble.suites._helpers import bind_admin, subschema_dn
+
+    bind_admin(session)
+    dn = subschema_dn(session)
+    if dn is None:
+        return Result(
+            "4517.4.1", Status.FAIL, detail="subschemaSubentry not advertised in root DSE"
+        )
+    outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["ldapSyntaxes"])
     if outcome.result_code != 0 or not entries:
         return Result(
             "4517.4.1", Status.FAIL, detail=f"subschema not found: {outcome.result_code}"
@@ -51,12 +54,15 @@ def ldap_syntaxes_present(session: Session) -> Result:
     strategy="Search cn=Subschema for matchingRules; verify it has values.",
 )
 def matching_rules_present(session: Session) -> Result:
-    outcome, entries = session.search(
-        _SUBSCHEMA,
-        SCOPE_BASE_OBJECT,
-        "(objectClass=*)",
-        ["matchingRules"],
-    )
+    from bauble.suites._helpers import bind_admin, subschema_dn
+
+    bind_admin(session)
+    dn = subschema_dn(session)
+    if dn is None:
+        return Result(
+            "4517.4.2", Status.FAIL, detail="subschemaSubentry not advertised in root DSE"
+        )
+    outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["matchingRules"])
     if outcome.result_code != 0 or not entries:
         return Result(
             "4517.4.2", Status.FAIL, detail=f"subschema not found: {outcome.result_code}"

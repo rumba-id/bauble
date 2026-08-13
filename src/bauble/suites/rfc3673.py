@@ -5,7 +5,7 @@ from __future__ import annotations
 from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
-from bauble.suites._helpers import TEST_BASE
+from bauble.suites._helpers import TEST_BASE, bind_admin
 
 _CORE = frozenset({Profile.CORE})
 
@@ -28,6 +28,7 @@ _ALICE = f"uid=alice,{TEST_BASE}"
     strategy="Search an entry requesting ['+']; at least one operational attribute must be present.",
 )
 def plus_returns_operational(session: Session) -> Result:
+    bind_admin(session)
     outcome, entries = session.search(_ALICE, SCOPE_BASE_OBJECT, "(objectClass=*)", ["+"])
     if outcome.result_code != 0 or not entries:
         return Result("3673.2.1", Status.FAIL, detail=f"search failed: {outcome.result_code}")

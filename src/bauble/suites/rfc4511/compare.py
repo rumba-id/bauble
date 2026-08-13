@@ -5,6 +5,7 @@ from __future__ import annotations
 from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import Session
 from bauble.suites._base import assertion
+from bauble.suites._helpers import bind_admin
 
 _INTEROP = frozenset({Profile.INTEROP})
 _ALICE = "uid=alice,ou=people,dc=bauble,dc=test"
@@ -22,6 +23,7 @@ _ALICE = "uid=alice,ou=people,dc=bauble,dc=test"
     strategy="Compare uid=alice attribute uid with value alice; expect 6.",
 )
 def compare_true(session: Session) -> Result:
+    bind_admin(session)
     outcome = session.compare(_ALICE, "uid", "alice")
     return Result(
         "4511.4.10.1",

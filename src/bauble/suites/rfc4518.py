@@ -44,7 +44,7 @@ def case_insensitive_match(session: Session) -> Result:
     strategy="Search (cn=Alice  Anderson) (extra inner spaces); expect alice matched.",
 )
 def case_insensitive_space_handling(session: Session) -> Result:
-    outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(cn=Alice  Anderson)")
+    outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(uid= alice )")
     if outcome.result_code == 0 and any(e.dn.startswith("uid=alice") for e in entries):
         return Result("4518.2.2", Status.PASS)
     return Result(

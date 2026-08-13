@@ -24,6 +24,9 @@ _DEREF_ALWAYS = 3
     strategy="Search (uid=alice-alias) with derefAlways; expect alice entry returned.",
 )
 def alias_dereferenced_always(session: Session) -> Result:
+    from bauble.suites._helpers import bind_admin
+
+    bind_admin(session)
     # With derefNever, the alias entry matches (objectClass=alias).
     outcome_never, entries_never = session.search(
         "dc=bauble,dc=test",

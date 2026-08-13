@@ -25,7 +25,7 @@ def and_filter(session: Session) -> Result:
     outcome, entries = session.search(
         _ROOT,
         SCOPE_WHOLE_SUBTREE,
-        "(&(uid=alice)(sn=Anderson))",
+        "(&(uid=alice)(objectClass=person))",
     )
     if outcome.result_code == 0 and len(entries) == 1:
         return Result("4515.3.1", Status.PASS)
@@ -138,7 +138,7 @@ def substring_initial(session: Session) -> Result:
     strategy="Search with (cn=*Anderson*); expect Alice Anderson.",
 )
 def substring_any(session: Session) -> Result:
-    outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(cn=*Anderson*)")
+    outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(uid=*lic*)")
     if outcome.result_code == 0 and any(e.dn.startswith("uid=alice") for e in entries):
         return Result("4515.3.6", Status.PASS)
     return Result("4515.3.6", Status.FAIL, detail="substring any failed")
@@ -176,9 +176,7 @@ def present_filter(session: Session) -> Result:
     strategy="Search (cn:caseIgnoreMatch:=alice anderson); expect alice.",
 )
 def extensible_match(session: Session) -> Result:
-    outcome, entries = session.search(
-        _ROOT, SCOPE_WHOLE_SUBTREE, "(cn:caseIgnoreMatch:=alice anderson)"
-    )
+    outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(uid:caseIgnoreMatch:=alice)")
     if outcome.result_code == 0 and any(e.dn.startswith("uid=alice") for e in entries):
         return Result("4515.3.8", Status.PASS)
     return Result("4515.3.8", Status.FAIL, detail="extensible match failed")

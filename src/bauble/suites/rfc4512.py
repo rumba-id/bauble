@@ -45,12 +45,15 @@ def root_dse_accessible(session: Session) -> Result:
     strategy="Search cn=Subschema; verify objectClasses attribute has values.",
 )
 def subschema_has_object_classes(session: Session) -> Result:
-    outcome, entries = session.search(
-        _SUBSCHEMA,
-        SCOPE_BASE_OBJECT,
-        "(objectClass=*)",
-        ["objectClasses"],
-    )
+    from bauble.suites._helpers import bind_admin, subschema_dn
+
+    bind_admin(session)
+    dn = subschema_dn(session)
+    if dn is None:
+        return Result(
+            "4512.4.2", Status.FAIL, detail="subschemaSubentry not advertised in root DSE"
+        )
+    outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["objectClasses"])
     if outcome.result_code != 0 or not entries:
         return Result(
             "4512.4.2", Status.FAIL, detail=f"subschema not found: {outcome.result_code}"
@@ -73,12 +76,15 @@ def subschema_has_object_classes(session: Session) -> Result:
     strategy="Search cn=Subschema; verify attributeTypes attribute has values.",
 )
 def subschema_has_attribute_types(session: Session) -> Result:
-    outcome, entries = session.search(
-        _SUBSCHEMA,
-        SCOPE_BASE_OBJECT,
-        "(objectClass=*)",
-        ["attributeTypes"],
-    )
+    from bauble.suites._helpers import bind_admin, subschema_dn
+
+    bind_admin(session)
+    dn = subschema_dn(session)
+    if dn is None:
+        return Result(
+            "4512.4.3", Status.FAIL, detail="subschemaSubentry not advertised in root DSE"
+        )
+    outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["attributeTypes"])
     if outcome.result_code != 0 or not entries:
         return Result(
             "4512.4.3", Status.FAIL, detail=f"subschema not found: {outcome.result_code}"
