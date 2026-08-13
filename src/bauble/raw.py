@@ -574,8 +574,6 @@ def parse_search_response(data: bytes) -> tuple[int, list[dict[str, list[bytes]]
 # ---------------------------------------------------------------------------
 
 
-
-
 def build_search_request(
     message_id: int,
     base: str,
@@ -600,14 +598,7 @@ def build_search_request(
         filter_ber = b"\x87" + _encode_length(len(present)) + present
     attrs = _encode_sequence(b"".join(_encode_octet_string(a) for a in attributes))
     contents = (
-        base_ber
-        + scope_ber
-        + deref
-        + size_limit
-        + time_limit
-        + types_only
-        + filter_ber
-        + attrs
+        base_ber + scope_ber + deref + size_limit + time_limit + types_only + filter_ber + attrs
     )
     search_request = b"\x63" + _encode_length(len(contents)) + contents
     return _encode_sequence(_encode_integer(message_id) + search_request)
@@ -628,6 +619,7 @@ def build_extensible_match_filter(attribute: str, rule: str, value: str) -> byte
     value_ber = b"\x83" + _encode_length(len(value)) + value.encode()
     inner = rule_ber + type_ber + value_ber
     return b"\xa9" + _encode_length(len(inner)) + inner
+
 
 class RawSession:
     """A persistent raw LDAP connection for multi-step wire sequences.
@@ -685,6 +677,7 @@ class RawSession:
         mid = self._next_message_id
         self._next_message_id += 1
         return mid
+
 
 class RawConnection:
     """A bare TCP socket that sends and receives raw LDAP BER."""
