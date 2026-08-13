@@ -44,6 +44,7 @@ class JournalRecord:
     severity: str
     test_class: str
     profiles: tuple[str, ...]
+    layer: str = "semantic"
     detail: str | None = None
 
 
@@ -71,6 +72,7 @@ def to_records(results: list[Result], registry: Registry) -> list[JournalRecord]
                 severity=assertion.severity.value,
                 test_class=assertion.test_class.value,
                 profiles=tuple(p.value for p in sorted(assertion.profiles, key=lambda x: x.value)),
+                layer=assertion.layer.value,
                 detail=result.detail,
             )
         )
@@ -90,6 +92,7 @@ def journal_dumps(records: list[JournalRecord]) -> str:
                     "severity": record.severity,
                     "test_class": record.test_class,
                     "profiles": list(record.profiles),
+                    "layer": record.layer,
                     "detail": record.detail,
                 }
             )
@@ -129,6 +132,7 @@ def journal_loads(text: str) -> list[JournalRecord]:
                 severity=str(data.get("severity", "")),
                 test_class=str(data.get("test_class", "")),
                 profiles=profiles,
+                layer=str(data.get("layer", "semantic")),
                 detail=detail,
             )
         )
@@ -232,6 +236,21 @@ class SummaryReporter:
         total_untestable = sum(1 for r in records if r.status == "untestable")
         out.write(f"Overall: {overall}\n")
         out.write(f"UNTESTABLE: {total_untestable}\n")
+
+        out.write("Per layer:\n")
+        for layer in ("wire", "semantic", "capability"):
+            layer_records = [r for r in records if r.layer == layer]
+            if not layer_records:
+                continue
+            must_a = [r for r in layer_records if r.severity == "must" and r.test_class == "A"]
+            ok = sum(1 for r in must_a if r.status in ("pass", "not_applicable"))
+            fail = sum(1 for r in must_a if r.status == "fail")
+            na = sum(1 for r in must_a if r.status == "not_applicable")
+            untestable = sum(1 for r in layer_records if r.status == "untestable")
+            out.write(
+                f"  {layer:<11} must(A) {ok}/{len(must_a)}  "
+                f"fail={fail}  na={na}  untestable={untestable}\n"
+            )
 
 
 class JUnitReporter:

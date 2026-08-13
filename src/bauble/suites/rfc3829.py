@@ -4,7 +4,7 @@ ldap3 type stubs are incomplete for Connection.bind/rebind and response
 controls, producing unavoidable pyright warnings on known-good code.
 """  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import ADMIN_DN, ADMIN_PW
@@ -25,6 +25,7 @@ _AUTHZID_RESPONSE_OID = "2.16.840.1.113730.3.4.15"
     profiles=_CORE,
     text="Server SHOULD publish 2.16.840.1.113730.3.4.16/15 in supportedControl.",
     strategy="Read root DSE supportedControl and check for both OIDs.",
+    layer=Layer.CAPABILITY,
 )
 def authzid_controls_advertised(session: Session) -> Result:
     outcome, entries = session.search(

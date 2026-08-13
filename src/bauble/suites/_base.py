@@ -7,6 +7,7 @@ from collections.abc import Callable
 from bauble.model import (
     Assertion,
     Category,
+    Layer,
     Profile,
     Runner,
     Severity,
@@ -27,6 +28,7 @@ def assertion(
     test_class: TestClass,
     profiles: frozenset[Profile],
     text: str,
+    layer: Layer = Layer.SEMANTIC,
     strategy: str = "",
     requires: tuple[str, ...] = (),
     mutates: bool = False,
@@ -48,6 +50,7 @@ def assertion(
                 test_class=test_class,
                 profiles=profiles,
                 text=text,
+                layer=layer,
                 strategy=strategy,
                 requires=requires,
                 mutates=mutates,

@@ -8,7 +8,7 @@ on a bare socket. Credentials come from the Phase 2 base seed
 
 from __future__ import annotations
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.raw import RawConnection
 from bauble.session import Session
 from bauble.suites._base import assertion
@@ -120,6 +120,7 @@ def rebind(session: Session) -> Result:
     profiles=_INTEROP,
     text="Simple bind with non-empty name and empty password does not authenticate.",
     strategy="Raw BindRequest with a named DN and empty password; expect non-zero.",
+    layer=Layer.WIRE,
 )
 def empty_password_rejected(session: Session) -> Result:
     raw = RawConnection(session.host, session.port)
@@ -144,6 +145,7 @@ def empty_password_rejected(session: Session) -> Result:
     text="Successful simple-bind response carries no serverSaslCreds.",
     strategy="Raw simple-auth bind with valid creds; check serverSaslCreds is absent.",
     requires=("4511.4.2.2",),
+    layer=Layer.WIRE,
 )
 def no_server_sasl_creds(session: Session) -> Result:
     raw = RawConnection(session.host, session.port)
@@ -169,6 +171,7 @@ def no_server_sasl_creds(session: Session) -> Result:
     profiles=_INTEROP,
     text="Bind with unrecognized protocol version returns protocolError.",
     strategy="Raw BindRequest with version 99; expect result code 2.",
+    layer=Layer.WIRE,
 )
 def bad_protocol_version(session: Session) -> Result:
     raw = RawConnection(session.host, session.port)
@@ -190,6 +193,7 @@ def bad_protocol_version(session: Session) -> Result:
     profiles=_INTEROP,
     text="Malformed BindRequest PDU returns protocolError and disconnect.",
     strategy="Send garbage bytes; expect the server to disconnect (no response).",
+    layer=Layer.WIRE,
 )
 def malformed_pdu_disconnects(session: Session) -> Result:
     raw = RawConnection(session.host, session.port)

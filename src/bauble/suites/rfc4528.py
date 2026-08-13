@@ -1,6 +1,6 @@
 """RFC 4528 — Assertion Control."""
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import (
@@ -80,6 +80,7 @@ def _control_advertised(session: Session, oid: str) -> bool:
     profiles=_CORE,
     text="Server SHOULD publish 1.3.6.1.1.12 in supportedControl.",
     strategy="Read root DSE supportedControl; check for the OID.",
+    layer=Layer.CAPABILITY,
 )
 def assertion_control_advertised(session: Session) -> Result:
     if _control_advertised(session, _ASSERTION_CONTROL_OID):
@@ -121,6 +122,7 @@ def _build_modify_with_assertion(
     text="Operation with TRUE assertion filter proceeds normally.",
     strategy="Modify with TRUE assertion (present objectClass) on existing entry; expect success.",
     mutates=True,
+    layer=Layer.WIRE,
 )
 def assertion_true_proceeds(session: Session) -> Result:
     from bauble.raw import RawConnection
@@ -174,6 +176,7 @@ def assertion_true_proceeds(session: Session) -> Result:
         "The entry's description attribute is unchanged."
     ),
     mutates=True,
+    layer=Layer.WIRE,
 )
 def assertion_false_returns_122(session: Session) -> Result:
     from bauble.raw import RawConnection
@@ -215,6 +218,7 @@ def assertion_false_returns_122(session: Session) -> Result:
     text="Assertion control works with Delete operation.",
     strategy="Delete with TRUE assertion on temp entry; expect success.",
     mutates=True,
+    layer=Layer.WIRE,
 )
 def assertion_delete_true(session: Session) -> Result:
     from bauble.raw import RawConnection
@@ -261,6 +265,7 @@ def assertion_delete_true(session: Session) -> Result:
     profiles=_CORE,
     text="Search with FALSE assertion on baseObject returns assertionFailed.",
     strategy="Search with FALSE assertion on baseObject; expect 122.",
+    layer=Layer.WIRE,
 )
 def assertion_search_false(session: Session) -> Result:
     from bauble.raw import RawConnection

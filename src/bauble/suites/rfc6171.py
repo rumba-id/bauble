@@ -1,6 +1,6 @@
 """RFC 6171 — Don't Use Copy Control."""
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
 
@@ -19,6 +19,7 @@ _DONT_USE_COPY_OID = "1.3.6.1.1.22"
     profiles=_CORE,
     text="Server SHOULD publish 1.3.6.1.1.22 in supportedControl.",
     strategy="Read root DSE supportedControl and check for the OID.",
+    layer=Layer.CAPABILITY,
 )
 def dont_use_copy_advertised(session: Session) -> Result:
     outcome, entries = session.search(

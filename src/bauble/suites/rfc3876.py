@@ -1,6 +1,6 @@
 """RFC 3876 — Matched Values Control."""
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import (
@@ -53,6 +53,7 @@ def _ber_seq(c: bytes) -> bytes:
     profiles=_CORE,
     text="Server SHOULD publish 1.2.826.0.1.3344810.2.3 in supportedControl.",
     strategy="Read root DSE supportedControl and check for the OID.",
+    layer=Layer.CAPABILITY,
 )
 def matched_values_advertised(session: Session) -> Result:
     outcome, entries = session.search(

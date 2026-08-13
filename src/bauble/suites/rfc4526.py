@@ -2,7 +2,7 @@
 
 import socket
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import TEST_BASE
@@ -115,6 +115,7 @@ def _search_result_code(session: Session, filter_ber: bytes) -> int:
     profiles=_CORE,
     text="An 'and' filter with zero elements (&) SHALL evaluate to True.",
     strategy="Send raw SearchRequest with empty AND filter (a0 00); expect success (0).",
+    layer=Layer.WIRE,
 )
 def absolute_true_filter(session: Session) -> Result:
     # (&) = empty AND → a0 00 (implicit tag 0, zero-length SET)
@@ -134,6 +135,7 @@ def absolute_true_filter(session: Session) -> Result:
     profiles=_CORE,
     text="An 'or' filter with zero elements (|) SHALL evaluate to False.",
     strategy="Send raw SearchRequest with empty OR filter (a1 00); expect success (no entries).",
+    layer=Layer.WIRE,
 )
 def absolute_false_filter(session: Session) -> Result:
     # (|) = empty OR → a1 00 (implicit tag 1, zero-length SET)
@@ -153,6 +155,7 @@ def absolute_false_filter(session: Session) -> Result:
     profiles=_CORE,
     text="Server SHOULD publish 1.3.6.1.4.1.4203.1.5.3 in supportedFeatures.",
     strategy="Read root DSE supportedFeatures and check for the OID.",
+    layer=Layer.CAPABILITY,
 )
 def true_false_filters_advertised(session: Session) -> Result:
     from bauble.session import SCOPE_BASE_OBJECT
