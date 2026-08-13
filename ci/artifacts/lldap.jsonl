@@ -44,7 +44,7 @@
 {"assertion_id": "4526.2.1", "rfc": 4526, "status": "fail", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "wire", "oid": "1.3.6.1.4.1.4203.1.5.3", "detail": "(&) failed: resultCode=50"}
 {"assertion_id": "4526.2.2", "rfc": 4526, "status": "fail", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "wire", "oid": "1.3.6.1.4.1.4203.1.5.3", "detail": "(|) failed: resultCode=50"}
 {"assertion_id": "4526.2.3", "rfc": 4526, "status": "not_applicable", "severity": "should", "test_class": "A", "profiles": ["core"], "layer": "capability", "oid": "1.3.6.1.4.1.4203.1.5.3", "detail": "feature OID not advertised"}
-{"assertion_id": "4528.2.1", "rfc": 4528, "status": "untestable", "severity": "should", "test_class": "B", "profiles": ["core"], "layer": "capability", "oid": "1.3.6.1.1.12", "detail": "no portable test"}
+{"assertion_id": "4528.2.1", "rfc": 4528, "status": "not_applicable", "severity": "should", "test_class": "A", "profiles": ["core"], "layer": "capability", "oid": "1.3.6.1.1.12", "detail": "control not advertised"}
 {"assertion_id": "4528.3.1", "rfc": 4528, "status": "not_applicable", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "wire", "oid": "1.3.6.1.1.12", "detail": "server not writable"}
 {"assertion_id": "4528.3.2", "rfc": 4528, "status": "not_applicable", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "wire", "oid": "1.3.6.1.1.12", "detail": "server not writable"}
 {"assertion_id": "4528.3.3", "rfc": 4528, "status": "not_applicable", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "wire", "oid": "1.3.6.1.1.12", "detail": "server not writable"}
@@ -61,4 +61,4 @@
 {"assertion_id": "5020.2.2", "rfc": 5020, "status": "fail", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "", "detail": "entryDN missing"}
 {"assertion_id": "5020.2.3", "rfc": 5020, "status": "not_applicable", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "", "detail": "server not writable"}
 {"assertion_id": "5020.2.4", "rfc": 5020, "status": "fail", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "", "detail": "entryDN not in schema"}
-{"assertion_id": "6171.3.1", "rfc": 6171, "status": "untestable", "severity": "should", "test_class": "B", "profiles": ["core"], "layer": "capability", "oid": "1.3.6.1.1.22", "detail": "no portable test"}
+{"assertion_id": "6171.3.1", "rfc": 6171, "status": "not_applicable", "severity": "should", "test_class": "A", "profiles": ["core"], "layer": "capability", "oid": "1.3.6.1.1.22", "detail": "OID not advertised"}

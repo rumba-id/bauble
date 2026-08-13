@@ -76,20 +76,20 @@ def _control_advertised(session: Session, oid: str) -> bool:
     section="§2",
     category=Category.CONTROL,
     severity=Severity.SHOULD,
-    test_class=TestClass.B,
+    test_class=TestClass.A,
     profiles=_CORE,
     text="Server SHOULD publish 1.3.6.1.1.12 in supportedControl.",
     strategy="Read root DSE supportedControl; check for the OID.",
     preconditions="Root DSE is readable.",
     stimulus="Search the root DSE for the supportedControl attribute.",
-    expected_observables="Assertion control OID 1.3.6.1.1.12 present, or UNTESTABLE if not advertised.",
+    expected_observables="Assertion control OID 1.3.6.1.1.12 present, or NOT_APPLICABLE if not advertised.",
     layer=Layer.CAPABILITY,
     oid="1.3.6.1.1.12",
 )
 def assertion_control_advertised(session: Session) -> Result:
     if _control_advertised(session, _ASSERTION_CONTROL_OID):
         return Result("4528.2.1", Status.PASS)
-    return Result("4528.2.1", Status.UNTESTABLE, detail="control not advertised")
+    return Result("4528.2.1", Status.NOT_APPLICABLE, detail="control not advertised")
 
 
 def _build_modify_with_assertion(

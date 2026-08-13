@@ -61,7 +61,7 @@ text = "No entries are returned before the assertionFailed result."
 id = "4528:2:1"
 section = "3"
 severity = "should"
-test_class = "B"
+test_class = "A"
 text = "Servers implementing this control SHOULD publish 1.3.6.1.1.12 in supportedControl."
 covered_by = ["4528.2.1"]
 

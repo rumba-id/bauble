@@ -44,7 +44,7 @@
 4526.2.1	pass
 4526.2.2	pass
 4526.2.3	pass
-4528.2.1	untestable
+4528.2.1	pass
 4528.3.1	pass
 4528.3.2	pass
 4528.3.3	pass
@@ -63,4 +63,4 @@
 5020.2.2	pass
 5020.2.3	pass
 5020.2.4	pass
-6171.3.1	untestable
+6171.3.1	not_applicable

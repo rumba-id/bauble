@@ -15,7 +15,7 @@ _DONT_USE_COPY_OID = "1.3.6.1.1.22"
     section="§3",
     category=Category.CONTROL,
     severity=Severity.SHOULD,
-    test_class=TestClass.B,
+    test_class=TestClass.A,
     profiles=_CORE,
     text="Server SHOULD publish 1.3.6.1.1.22 in supportedControl.",
     strategy="Read root DSE supportedControl and check for the OID.",
@@ -27,8 +27,8 @@ def dont_use_copy_advertised(session: Session) -> Result:
         "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedControl"]
     )
     if outcome.result_code != 0 or not entries:
-        return Result("6171.3.1", Status.UNTESTABLE, detail="root DSE not readable")
+        return Result("6171.3.1", Status.NOT_APPLICABLE, detail="root DSE not readable")
     controls = entries[0].attributes.get("supportedControl", [])
     if _DONT_USE_COPY_OID in controls:
         return Result("6171.3.1", Status.PASS)
-    return Result("6171.3.1", Status.UNTESTABLE, detail="OID not advertised")
+    return Result("6171.3.1", Status.NOT_APPLICABLE, detail="OID not advertised")

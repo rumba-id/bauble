@@ -44,7 +44,7 @@
 4526.2.1	fail
 4526.2.2	fail
 4526.2.3	not_applicable
-4528.2.1	untestable
+4528.2.1	not_applicable
 4528.3.1	not_applicable
 4528.3.2	not_applicable
 4528.3.3	not_applicable
@@ -63,4 +63,4 @@
 5020.2.2	fail
 5020.2.3	not_applicable
 5020.2.4	fail
-6171.3.1	untestable
+6171.3.1	not_applicable
