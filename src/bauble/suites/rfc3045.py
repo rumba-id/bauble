@@ -17,6 +17,9 @@ _CORE = frozenset({Profile.CORE})
     profiles=_CORE,
     text="vendorName is SINGLE-VALUE and NO-USER-MODIFICATION if present in root DSE.",
     strategy="Read root DSE, check vendorName. If present, verify single value. NOT_APPLICABLE if absent.",
+    preconditions="Root DSE is readable.",
+    stimulus="Search the root DSE for the vendorName attribute.",
+    expected_observables="vendorName, if present, has exactly one value; NOT_APPLICABLE if absent.",
 )
 def vendor_name_single_value(session: Session) -> Result:
     outcome, entries = session.search("", SCOPE_BASE_OBJECT, "(objectClass=*)", ["vendorName"])
@@ -44,6 +47,9 @@ def vendor_name_single_value(session: Session) -> Result:
     profiles=_CORE,
     text="vendorVersion is SINGLE-VALUE and NO-USER-MODIFICATION if present in root DSE.",
     strategy="Read root DSE, check vendorVersion. If present, verify single value. NOT_APPLICABLE if absent.",
+    preconditions="Root DSE is readable.",
+    stimulus="Search the root DSE for the vendorVersion attribute.",
+    expected_observables="vendorVersion, if present, has exactly one value; NOT_APPLICABLE if absent.",
 )
 def vendor_version_single_value(session: Session) -> Result:
     outcome, entries = session.search("", SCOPE_BASE_OBJECT, "(objectClass=*)", ["vendorVersion"])

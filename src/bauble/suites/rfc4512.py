@@ -21,6 +21,9 @@ _SUBSCHEMA = "cn=Subschema"
     profiles=_INTEROP,
     text="The root DSE is accessible and returns entries.",
     strategy="Search the root DSE (base scope) with (objectClass=*); expect at least 1 entry.",
+    preconditions="None (the root DSE is always present).",
+    stimulus="Base-scope search of the root DSE.",
+    expected_observables="At least 1 entry returned with resultCode success.",
 )
 def root_dse_accessible(session: Session) -> Result:
     outcome, entries = session.search("", SCOPE_BASE_OBJECT, "(objectClass=*)")
@@ -43,6 +46,9 @@ def root_dse_accessible(session: Session) -> Result:
     profiles=_INTEROP,
     text="The subschema subentry is accessible and carries objectClasses.",
     strategy="Search cn=Subschema; verify objectClasses attribute has values.",
+    preconditions="Admin bound; the subschema subentry is advertised in the root DSE.",
+    stimulus="Base-scope search of the subschema subentry requesting objectClasses.",
+    expected_observables="The objectClasses attribute has at least one value.",
 )
 def subschema_has_object_classes(session: Session) -> Result:
     from bauble.suites._helpers import bind_admin, subschema_dn
@@ -74,6 +80,9 @@ def subschema_has_object_classes(session: Session) -> Result:
     profiles=_INTEROP,
     text="The subschema subentry carries attributeTypes.",
     strategy="Search cn=Subschema; verify attributeTypes attribute has values.",
+    preconditions="Admin bound; the subschema subentry is advertised in the root DSE.",
+    stimulus="Base-scope search of the subschema subentry requesting attributeTypes.",
+    expected_observables="The attributeTypes attribute has at least one value.",
 )
 def subschema_has_attribute_types(session: Session) -> Result:
     from bauble.suites._helpers import bind_admin, subschema_dn
@@ -105,6 +114,9 @@ def subschema_has_attribute_types(session: Session) -> Result:
     profiles=_INTEROP,
     text="Every searchable entry has an objectClass attribute.",
     strategy="Search the base DIT subtree; verify every entry has objectClass.",
+    preconditions="Seed base dc=bauble,dc=test exists.",
+    stimulus="Subtree search over the base requesting objectClass on every entry.",
+    expected_observables="Every returned entry carries the objectClass attribute.",
 )
 def entries_have_object_class(session: Session) -> Result:
     outcome, entries = session.search(
@@ -131,6 +143,9 @@ def entries_have_object_class(session: Session) -> Result:
     profiles=_INTEROP,
     text="An entry missing a MUST attribute is rejected.",
     strategy="Add inetOrgPerson without sn (surname); expect objectClassViolation (65).",
+    preconditions="Admin bound; target is writable.",
+    stimulus="AddRequest for an inetOrgPerson entry omitting the required sn attribute.",
+    expected_observables="AddResponse resultCode objectClassViolation (65).",
     mutates=True,
 )
 def must_attribute_enforced(session: Session) -> Result:
@@ -162,6 +177,9 @@ def must_attribute_enforced(session: Session) -> Result:
     profiles=_INTEROP,
     text="Attribute values are validated against their syntax.",
     strategy="Add posixAccount with non-numeric uidNumber; expect invalidAttributeSyntax (21).",
+    preconditions="Admin bound; target is writable; posixAccount schema available.",
+    stimulus="AddRequest for a posixAccount entry with a non-numeric uidNumber value.",
+    expected_observables="AddResponse resultCode invalidAttributeSyntax (21).",
     mutates=True,
 )
 def attribute_syntax_validated(session: Session) -> Result:
@@ -234,6 +252,9 @@ def attribute_syntax_validated(session: Session) -> Result:
     profiles=_INTEROP,
     text="The root DSE advertises supportedLDAPVersion including version 3.",
     strategy="Search the root DSE for supportedLDAPVersion; expect value 3.",
+    preconditions="Root DSE is readable.",
+    stimulus="Search the root DSE for the supportedLDAPVersion attribute.",
+    expected_observables="Version 3 is advertised among the supportedLDAPVersion values.",
 )
 def supported_ldap_version(session: Session) -> Result:
     outcome, entries = session.search(
