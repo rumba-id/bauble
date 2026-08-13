@@ -21,6 +21,9 @@ _INTEROP = frozenset({Profile.INTEROP})
     mutates=True,
     text="Delete an existing leaf entry returns success.",
     strategy="Add a test entry, then delete it; expect 0.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="Add a test entry, then DelRequest for it.",
+    expected_observables="DelResponse resultCode success (0).",
 )
 def delete_leaf(session: Session) -> Result:
     bind_admin(session)
@@ -44,6 +47,9 @@ def delete_leaf(session: Session) -> Result:
     profiles=_INTEROP,
     text="Delete a non-existent entry returns noSuchObject (32).",
     strategy="Delete a DN that does not exist; expect 32.",
+    preconditions="Admin bound.",
+    stimulus="DelRequest for a non-existent DN.",
+    expected_observables="DelResponse resultCode noSuchObject (32).",
 )
 def delete_nonexistent(session: Session) -> Result:
     bind_admin(session)
@@ -66,6 +72,9 @@ def delete_nonexistent(session: Session) -> Result:
     mutates=True,
     text="Delete an entry with subordinate entries fails.",
     strategy="Add a parent with a child, then try to delete the parent; expect 66.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="Add a parent OU with a subordinate entry, then DelRequest for the parent.",
+    expected_observables="DelResponse resultCode notAllowedOnNonLeaf (66); children removed in cleanup.",
 )
 def delete_with_children(session: Session) -> Result:
     bind_admin(session)
@@ -97,6 +106,9 @@ def delete_with_children(session: Session) -> Result:
     profiles=_INTEROP,
     text="The matchedDN field is set when a delete fails with noSuchObject (32).",
     strategy="Delete a non-existent DN; expect 32 with matchedDN containing the parent.",
+    preconditions="Admin bound.",
+    stimulus="DelRequest for a non-existent DN.",
+    expected_observables="DelResponse resultCode noSuchObject (32) with matchedDN naming the deepest existing ancestor.",
 )
 def delete_matched_dn(session: Session) -> Result:
     outcome = session.delete("uid=nobody,ou=people,dc=bauble,dc=test")

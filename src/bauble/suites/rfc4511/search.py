@@ -21,6 +21,9 @@ _PEOPLE = "ou=people,dc=bauble,dc=test"
     profiles=_INTEROP,
     text="Base-object search returns the base entry.",
     strategy="Search dc=bauble,dc=test with base scope; expect 1 entry, result 0.",
+    preconditions="Seed entry dc=bauble,dc=test exists.",
+    stimulus="SearchRequest with base dc=bauble,dc=test, baseObject scope, filter (objectClass=*).",
+    expected_observables="SearchResultDone resultCode success (0); exactly 1 entry returned.",
 )
 def search_base_scope(session: Session) -> Result:
     outcome, entries = session.search(_ROOT, SCOPE_BASE_OBJECT, "(objectClass=*)")
@@ -43,6 +46,9 @@ def search_base_scope(session: Session) -> Result:
     profiles=_INTEROP,
     text="Single-level search returns direct children.",
     strategy="Search ou=people with one-level scope; expect at least 2 entries (alice, bob).",
+    preconditions="Seed ou=people contains the uid=alice and uid=bob entries.",
+    stimulus="SearchRequest with base ou=people, singleLevel scope, filter (objectClass=*).",
+    expected_observables="SearchResultDone success (0); at least 2 entries (the direct children).",
 )
 def search_one_level(session: Session) -> Result:
     outcome, entries = session.search(_PEOPLE, SCOPE_SINGLE_LEVEL, "(objectClass=*)")
@@ -65,6 +71,9 @@ def search_one_level(session: Session) -> Result:
     profiles=_INTEROP,
     text="Subtree search with a filter returns matching entries.",
     strategy="Search dc=bauble,dc=test subtree for (uid=alice); expect exactly 1.",
+    preconditions="Seed entry uid=alice,ou=people,dc=bauble,dc=test exists.",
+    stimulus="SearchRequest with base dc=bauble,dc=test, wholeSubtree scope, filter (uid=alice).",
+    expected_observables="SearchResultDone success (0); exactly 1 entry returned.",
 )
 def search_subtree_filter(session: Session) -> Result:
     outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(uid=alice)")
@@ -87,6 +96,9 @@ def search_subtree_filter(session: Session) -> Result:
     profiles=_INTEROP,
     text="Search with a non-existent base returns noSuchObject (32).",
     strategy="Search a DN that does not exist; expect 32.",
+    preconditions="No seed requirement (any session state).",
+    stimulus="SearchRequest with base dc=nonexistent, baseObject scope.",
+    expected_observables="SearchResultDone resultCode noSuchObject (32).",
 )
 def search_no_such_object(session: Session) -> Result:
     outcome, _ = session.search("dc=nonexistent", SCOPE_BASE_OBJECT, "(objectClass=*)")
@@ -107,6 +119,9 @@ def search_no_such_object(session: Session) -> Result:
     profiles=_INTEROP,
     text="The matchedDN field is set when a search base does not exist (32).",
     strategy="Search a non-existent base; expect 32 with matchedDN.",
+    preconditions="No seed requirement (any session state).",
+    stimulus="SearchRequest with base ou=nonexistent,dc=bauble,dc=test, baseObject scope.",
+    expected_observables="SearchResultDone resultCode noSuchObject (32) with non-empty matchedDN.",
 )
 def search_matched_dn(session: Session) -> Result:
     outcome, _ = session.search(

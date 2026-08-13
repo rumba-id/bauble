@@ -167,6 +167,282 @@ test_class = "B"
 text = "A client MUST NOT send further PDUs between a BindRequest and its BindResponse."
 covered_by = []
 
+# §4.2 Bind — remaining assertions
+
+[[requirement]]
+id = "4511:4.2:8"
+section = "4.2"
+severity = "must"
+test_class = "A"
+text = "A simple bind with a non-empty name and an empty password must not authenticate."
+covered_by = ["4511.4.2.4"]
+
+[[requirement]]
+id = "4511:4.2:9"
+section = "4.2"
+severity = "must"
+test_class = "A"
+text = "Re-binding on an already-bound session establishes the new identity."
+covered_by = ["4511.4.2.6"]
+
+# §4.3 Unbind
+
+[[requirement]]
+id = "4511:4.3:1"
+section = "4.3"
+severity = "must"
+test_class = "A"
+text = "The Unbind operation terminates the LDAP session; the server returns no response."
+covered_by = ["4511.4.3.1"]
+
+# §4.5 Search
+
+[[requirement]]
+id = "4511:4.5:1"
+section = "4.5.1.2"
+severity = "must"
+test_class = "A"
+text = "A baseObject search returns the entry named by the base."
+covered_by = ["4511.4.5.1"]
+
+[[requirement]]
+id = "4511:4.5:2"
+section = "4.5.1.2"
+severity = "must"
+test_class = "A"
+text = "A singleLevel search returns the immediate subordinates of the base."
+covered_by = ["4511.4.5.2"]
+
+[[requirement]]
+id = "4511:4.5:3"
+section = "4.5.1.2"
+severity = "must"
+test_class = "A"
+text = "A wholeSubtree search returns the base and all its subordinates matching the filter."
+covered_by = ["4511.4.5.3"]
+
+[[requirement]]
+id = "4511:4.5:4"
+section = "4.5"
+severity = "must"
+test_class = "A"
+text = "A search whose base object does not exist returns noSuchObject (32)."
+covered_by = ["4511.4.5.4"]
+
+[[requirement]]
+id = "4511:4.5:5"
+section = "4.5"
+severity = "must"
+test_class = "A"
+text = "The matchedDN field is set when a search base does not exist."
+covered_by = ["4511.4.5.5"]
+
+[[requirement]]
+id = "4511:4.5:6"
+section = "4.5.1.3"
+severity = "must"
+test_class = "A"
+text = "derefAliases dereferences alias entries while searching."
+covered_by = ["4511.4.5.6"]
+
+[[requirement]]
+id = "4511:4.5:7"
+section = "4.5.3"
+severity = "must"
+test_class = "A"
+text = "A search that encounters a referral entry returns a continuation reference."
+covered_by = ["4511.4.5.7"]
+
+# §4.6 Modify
+
+[[requirement]]
+id = "4511:4.6:1"
+section = "4.6"
+severity = "must"
+test_class = "A"
+text = "A Modify replace change updates the attribute value."
+covered_by = ["4511.4.6.1"]
+
+[[requirement]]
+id = "4511:4.6:2"
+section = "4.6"
+severity = "must"
+test_class = "A"
+text = "A Modify add change adds a value to the attribute."
+covered_by = ["4511.4.6.2"]
+
+[[requirement]]
+id = "4511:4.6:3"
+section = "4.6"
+severity = "must"
+test_class = "A"
+text = "Modifying a non-existent entry returns noSuchObject (32)."
+covered_by = ["4511.4.6.3"]
+
+# §4.7 Add
+
+[[requirement]]
+id = "4511:4.7:1"
+section = "4.7"
+severity = "must"
+test_class = "A"
+text = "Adding a valid entry returns success."
+covered_by = ["4511.4.7.1"]
+
+[[requirement]]
+id = "4511:4.7:2"
+section = "4.7"
+severity = "must"
+test_class = "A"
+text = "Adding an entry whose DN already exists returns entryAlreadyExists (68)."
+covered_by = ["4511.4.7.2"]
+
+[[requirement]]
+id = "4511:4.7:3"
+section = "4.7"
+severity = "must"
+test_class = "A"
+text = "Adding an entry whose parent does not exist returns noSuchObject (32)."
+covered_by = ["4511.4.7.3"]
+
+[[requirement]]
+id = "4511:4.7:4"
+section = "4.7"
+severity = "must"
+test_class = "A"
+text = "Adding an entry that violates its object class returns objectClassViolation (65)."
+covered_by = ["4511.4.7.4"]
+
+[[requirement]]
+id = "4511:4.7:5"
+section = "4.7"
+severity = "must"
+test_class = "A"
+text = "The matchedDN field is set when an add fails with noSuchObject."
+covered_by = ["4511.4.7.5"]
+
+# §4.8 Delete
+
+[[requirement]]
+id = "4511:4.8:1"
+section = "4.8"
+severity = "must"
+test_class = "A"
+text = "Deleting an existing leaf entry returns success."
+covered_by = ["4511.4.8.1"]
+
+[[requirement]]
+id = "4511:4.8:2"
+section = "4.8"
+severity = "must"
+test_class = "A"
+text = "Deleting a non-existent entry returns noSuchObject (32)."
+covered_by = ["4511.4.8.2"]
+
+[[requirement]]
+id = "4511:4.8:3"
+section = "4.8"
+severity = "must"
+test_class = "A"
+text = "Deleting an entry with subordinate entries returns notAllowedOnNonLeaf (66)."
+covered_by = ["4511.4.8.3"]
+
+[[requirement]]
+id = "4511:4.8:4"
+section = "4.8"
+severity = "must"
+test_class = "A"
+text = "The matchedDN field is set when a delete fails with noSuchObject."
+covered_by = ["4511.4.8.4"]
+
+# §4.9 ModifyDN
+
+[[requirement]]
+id = "4511:4.9:1"
+section = "4.9"
+severity = "must"
+test_class = "A"
+text = "ModifyDN renaming the RDN of an entry succeeds."
+covered_by = ["4511.4.9.1"]
+
+[[requirement]]
+id = "4511:4.9:2"
+section = "4.9"
+severity = "must"
+test_class = "A"
+text = "ModifyDN to an existing DN returns entryAlreadyExists (68)."
+covered_by = ["4511.4.9.2"]
+
+[[requirement]]
+id = "4511:4.9:3"
+section = "4.9"
+severity = "must"
+test_class = "A"
+text = "ModifyDN with newSuperior moves the entry to a new parent."
+covered_by = ["4511.4.9.3"]
+
+# §4.10 Compare
+
+[[requirement]]
+id = "4511:4.10:1"
+section = "4.10"
+severity = "must"
+test_class = "A"
+text = "Comparing a value that matches returns compareTrue (6)."
+covered_by = ["4511.4.10.1"]
+
+[[requirement]]
+id = "4511:4.10:2"
+section = "4.10"
+severity = "must"
+test_class = "A"
+text = "Comparing a value that does not match returns compareFalse (5)."
+covered_by = ["4511.4.10.2"]
+
+[[requirement]]
+id = "4511:4.10:3"
+section = "4.10"
+severity = "must"
+test_class = "A"
+text = "Comparing a missing attribute returns noSuchAttribute (16)."
+covered_by = ["4511.4.10.3"]
+
+[[requirement]]
+id = "4511:4.10:4"
+section = "4.10"
+severity = "must"
+test_class = "A"
+text = "Comparing against a non-existent entry returns noSuchObject (32)."
+covered_by = ["4511.4.10.4"]
+
+# §4.11 Abandon (intrinsic timing — class B)
+
+[[requirement]]
+id = "4511:4.11:1"
+section = "4.11"
+severity = "must"
+test_class = "B"
+text = "Abandon of an in-progress operation ceases it and returns no response."
+covered_by = ["4511.4.11.1"]
+
+[[requirement]]
+id = "4511:4.11:2"
+section = "4.11"
+severity = "must"
+test_class = "B"
+text = "Abandon of an unknown messageID is silently discarded."
+covered_by = ["4511.4.11.2"]
+
+# §4.12 Extended operation
+
+[[requirement]]
+id = "4511:4.12:1"
+section = "4.12"
+severity = "must"
+test_class = "A"
+text = "An extended request with an unrecognized requestName returns protocolError."
+covered_by = ["4511.4.12.1"]
+
 [[requirement]]
 id = "4511:5.1:4"
 section = "5.1"

@@ -21,6 +21,9 @@ _INTEROP = frozenset({Profile.INTEROP})
     mutates=True,
     text="Add a valid entry returns success.",
     strategy="Add an inetOrgPerson under ou=people; expect 0; clean up.",
+    preconditions="Admin bound; ou=people exists; target is writable.",
+    stimulus="AddRequest for uid=test-add-1 under ou=people with inetOrgPerson attributes.",
+    expected_observables="AddResponse resultCode success (0); entry removed in cleanup.",
 )
 def add_valid(session: Session) -> Result:
     bind_admin(session)
@@ -46,6 +49,9 @@ def add_valid(session: Session) -> Result:
     mutates=True,
     text="Add a duplicate entry returns entryAlreadyExists (68).",
     strategy="Add an entry, then add it again; expect 68; clean up.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="AddRequest for the same DN twice in succession.",
+    expected_observables="Second AddResponse resultCode entryAlreadyExists (68).",
 )
 def add_duplicate(session: Session) -> Result:
     bind_admin(session)
@@ -73,6 +79,9 @@ def add_duplicate(session: Session) -> Result:
     mutates=True,
     text="Add with a missing parent returns noSuchObject (32).",
     strategy="Add under a non-existent branch; expect 32.",
+    preconditions="Admin bound.",
+    stimulus="AddRequest for uid=orphan under the non-existent branch ou=nonexistent.",
+    expected_observables="AddResponse resultCode noSuchObject (32).",
 )
 def add_missing_parent(session: Session) -> Result:
     bind_admin(session)
@@ -96,6 +105,9 @@ def add_missing_parent(session: Session) -> Result:
     mutates=True,
     text="Add violating schema (missing MUST attribute) returns objectClassViolation (65).",
     strategy="Add an inetOrgPerson without the required sn attribute; expect 65.",
+    preconditions="Admin bound; target is writable.",
+    stimulus="AddRequest for an inetOrgPerson entry omitting the required sn attribute.",
+    expected_observables="AddResponse resultCode objectClassViolation (65).",
 )
 def add_schema_violation(session: Session) -> Result:
     bind_admin(session)
@@ -125,6 +137,9 @@ def add_schema_violation(session: Session) -> Result:
     profiles=_INTEROP,
     text="The matchedDN field is set when an add fails with noSuchObject (32).",
     strategy="Add under a non-existent parent; expect matchedDN contains the grandparent.",
+    preconditions="Admin bound.",
+    stimulus="AddRequest for uid=orphan under the non-existent branch ou=nonexistent.",
+    expected_observables="AddResponse resultCode noSuchObject (32) with matchedDN naming the deepest existing ancestor.",
 )
 def add_matched_dn(session: Session) -> Result:
     bind_admin(session)
