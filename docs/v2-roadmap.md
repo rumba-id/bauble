@@ -71,21 +71,29 @@ model so new assertions gate correctly.
    Sequenced after 2.1 so the obligation split is grounded in the audit.
 2. **Coverage growth.** Eight SHOULD-advertise requirements are testable via
    the existing advertise-check pattern (2696, 2891, 3062, 3866, 4512, 4527,
-   4529, 4532). Then investigate the 389 DS-specific
-   unimplemented entryDN, matching-rule and language-range behavior) and
-   decide per finding whether to document or assert.
-3. **Capability model completion.** The capability file currently gates
-   `writable`, `resettable`, `alt_server`, `naming_context`,
-   `supported_extension:<oid>`, `supported_control:<oid>`. Missing:
+   4529, 4532) — done, all eight land with capability-layer assertions.
+   Remaining: investigate the 389 DS-specific findings (RFC 4526 empty
+   filters, unknown-auth-choice `protocolError`, unimplemented entryDN,
+   matching-rule and language-range behavior) and decide per finding whether
+   to document or assert.
+3. **Capability model completion.** The capability file gains
    `supported_sasl_mechanisms` (deferred from Phase 7, never landed) and
-   `supported_features:<oid>` — the advertise checks read the root DSE
-   directly instead of through the capability model. Completing this makes
-   applicability a first-class, declared input as the pre-2.0 review
-   described.
+   `supported_features:<oid>` — done. The completion also fixed a real
+   gating bug: the RFC 4525 increment assertions passed bare OIDs to
+   `requires_features`, which the capability never matched, so they were
+   permanently NOT_APPLICABLE since v2.0.0 and had never run live; they now
+   run and pass on OpenLDAP. Both fixtures ship capability statements
+   declared from live root-DSE probes, and `bauble run --target` loads the
+   fixture's statement by default.
 
 Done when: `bauble coverage` reports the three coverage states; the advertise
 assertions land and pass on both targets; SASL/feature applicability is
 capability-gated.
+
+Status: items 1 and 3 done; item 2's advertise half done (the 389 DS
+finding-investigation half remains). Coverage reports the three states.
+The PARTIALLY_COVERED obligations (11 requirements) are recorded in
+`docs/v2.1-fidelity-review.md` and rendered by `bauble coverage`.
 
 ## v2.3 — Continuous verification
 
