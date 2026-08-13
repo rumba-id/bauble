@@ -8,8 +8,8 @@ on a bare socket. Credentials come from the Phase 2 base seed
 
 from __future__ import annotations
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
-from bauble.raw import RawConnection
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
+from bauble.raw import RawConnection, build_bind_request_auth, build_sasl_bind_request
 from bauble.session import Session
 from bauble.suites._base import assertion
 
@@ -120,6 +120,7 @@ def rebind(session: Session) -> Result:
     profiles=_INTEROP,
     text="Simple bind with non-empty name and empty password does not authenticate.",
     strategy="Raw BindRequest with a named DN and empty password; expect non-zero.",
+    layer=Layer.WIRE,
 )
 def empty_password_rejected(session: Session) -> Result:
     raw = RawConnection(session.host, session.port)
@@ -144,6 +145,7 @@ def empty_password_rejected(session: Session) -> Result:
     text="Successful simple-bind response carries no serverSaslCreds.",
     strategy="Raw simple-auth bind with valid creds; check serverSaslCreds is absent.",
     requires=("4511.4.2.2",),
+    layer=Layer.WIRE,
 )
 def no_server_sasl_creds(session: Session) -> Result:
     raw = RawConnection(session.host, session.port)
@@ -169,6 +171,7 @@ def no_server_sasl_creds(session: Session) -> Result:
     profiles=_INTEROP,
     text="Bind with unrecognized protocol version returns protocolError.",
     strategy="Raw BindRequest with version 99; expect result code 2.",
+    layer=Layer.WIRE,
 )
 def bad_protocol_version(session: Session) -> Result:
     raw = RawConnection(session.host, session.port)
@@ -190,6 +193,7 @@ def bad_protocol_version(session: Session) -> Result:
     profiles=_INTEROP,
     text="Malformed BindRequest PDU returns protocolError and disconnect.",
     strategy="Send garbage bytes; expect the server to disconnect (no response).",
+    layer=Layer.WIRE,
 )
 def malformed_pdu_disconnects(session: Session) -> Result:
     raw = RawConnection(session.host, session.port)
@@ -197,3 +201,51 @@ def malformed_pdu_disconnects(session: Session) -> Result:
     if response is None:
         return Result("4511.4.2.8", Status.PASS)
     return Result("4511.4.2.8", Status.FAIL, detail="expected disconnect, got a response")
+
+
+@assertion(
+    id="4511.4.2.9",
+    rfc=4511,
+    section="§4.2",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    layer=Layer.WIRE,
+    text="A BindRequest with an empty SASL mechanism returns authMethodNotSupported (7).",
+    strategy="Raw SASL BindRequest with mechanism=''; expect result code 7.",
+)
+def empty_sasl_mechanism_rejected(session: Session) -> Result:
+    raw = RawConnection(session.host, session.port)
+    outcome = raw.raw_send(build_sasl_bind_request(1, 3, "", ""))
+    if outcome.result_code == 7:
+        return Result("4511.4.2.9", Status.PASS)
+    return Result(
+        "4511.4.2.9",
+        Status.FAIL,
+        detail=f"expected 7 (authMethodNotSupported), got {outcome.result_code}",
+    )
+
+
+@assertion(
+    id="4511.4.2.10",
+    rfc=4511,
+    section="§4.2",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    layer=Layer.WIRE,
+    text="A BindRequest with an unsupported authentication choice returns authMethodNotSupported (7).",
+    strategy="Raw BindRequest with an unrecognized auth CHOICE tag [5]; expect result code 7.",
+)
+def unsupported_auth_choice_rejected(session: Session) -> Result:
+    raw = RawConnection(session.host, session.port)
+    outcome = raw.raw_send(build_bind_request_auth(1, 3, "", b"\xa5\x01\x00"))
+    if outcome.result_code == 7:
+        return Result("4511.4.2.10", Status.PASS)
+    return Result(
+        "4511.4.2.10",
+        Status.FAIL,
+        detail=f"expected 7 (authMethodNotSupported), got {outcome.result_code}",
+    )

@@ -84,6 +84,7 @@ class Session(Protocol):
         filter_: str,
         attributes: list[str] | None = None,
         controls: tuple[Control, ...] = (),
+        deref_aliases: int = 0,
     ) -> tuple[Outcome, list[Entry]]: ...
 
     def add(self, dn: str, attributes: dict[str, list[str | bytes]]) -> Outcome: ...

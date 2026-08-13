@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Control, Session
 from bauble.suites._base import assertion
 
@@ -42,6 +42,7 @@ def unknown_critical_control(session: Session) -> Result:
     profiles=_INTEROP,
     text="An unknown non-critical control is ignored and the operation succeeds.",
     strategy="Search with a fake OID control NOT marked critical; expect success.",
+    layer=Layer.WIRE,
 )
 def unknown_non_critical_control(session: Session) -> Result:
     outcome, _ = session.search(

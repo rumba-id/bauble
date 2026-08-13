@@ -12,12 +12,13 @@ _SUBSCHEMA = "cn=Subschema"
 
 def _has_advertised(session: Session, attribute: str, expected: str) -> tuple[bool, str]:
     """Check that ``attribute`` on the subschema contains ``expected``."""
-    outcome, entries = session.search(
-        _SUBSCHEMA,
-        SCOPE_BASE_OBJECT,
-        "(objectClass=*)",
-        [attribute],
-    )
+    from bauble.suites._helpers import bind_admin, subschema_dn
+
+    bind_admin(session)
+    dn = subschema_dn(session)
+    if dn is None:
+        return False, "subschemaSubentry not advertised in root DSE"
+    outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", [attribute])
     if outcome.result_code != 0 or not entries:
         return False, f"subschema not found: {outcome.result_code}"
     values = entries[0].attributes.get(attribute, [])

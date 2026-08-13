@@ -1,0 +1,26 @@
+rfc = 3829
+title = "LDAP: Authorization Identity Request and Response Controls"
+
+[[requirement]]
+id = "3829:2:1"
+section = "2"
+severity = "should"
+test_class = "B"
+text = "Servers supporting these controls publish 2.16.840.1.113730.3.4.16/.15 in supportedControl."
+covered_by = ["3829.2.1"]
+
+[[requirement]]
+id = "3829:4:1"
+section = "4"
+severity = "must"
+test_class = "A"
+text = "A successful bind with the Authorization Identity Request control returns the response control with the authzId (empty for anonymous)."
+covered_by = ["3829.4.1"]
+
+[[requirement]]
+id = "3829:4:2"
+section = "4"
+severity = "must"
+test_class = "A"
+text = "The Authorization Identity Response control is included only when the bind resultCode is success."
+covered_by = ["3829.4.2"]

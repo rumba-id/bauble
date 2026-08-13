@@ -1,0 +1,34 @@
+rfc = 3876
+title = "LDAP: Returning Matched Values Control"
+
+[[requirement]]
+id = "3876:2:1"
+section = "2"
+severity = "must"
+test_class = "A"
+text = "A Search with the valuesReturnFilter control returns only attribute values matching the filter (non-matching attributes returned empty)."
+covered_by = ["3876.2.1"]
+
+[[requirement]]
+id = "3876:2:2"
+section = "2"
+severity = "must"
+test_class = "A"
+text = "A critical valuesReturnFilter control on a non-Search operation returns unavailableCriticalExtension."
+covered_by = ["3876.2.2"]
+
+[[requirement]]
+id = "3876:2:3"
+section = "2"
+severity = "must"
+test_class = "A"
+text = "A non-critical valuesReturnFilter control on a non-Search operation is ignored."
+covered_by = ["3876.2.3"]
+
+[[requirement]]
+id = "3876:7:1"
+section = "2"
+severity = "should"
+test_class = "B"
+text = "Servers SHOULD publish 1.2.826.0.1.3344810.2.3 in supportedControl."
+covered_by = ["3876.7.1"]

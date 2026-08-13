@@ -1,0 +1,26 @@
+rfc = 4519
+title = "LDAP: Schema for User Applications"
+
+[[requirement]]
+id = "4519:3:1"
+section = "3"
+severity = "should"
+test_class = "A"
+text = "Servers recognize the inetOrgPerson object class (RFC 2798, referenced here) in the subschema."
+covered_by = ["4519.2.1"]
+
+[[requirement]]
+id = "4519:3:2"
+section = "3.11"
+severity = "should"
+test_class = "A"
+text = "Servers recognize the organizationalUnit object class (MUST ou) in the subschema."
+covered_by = ["4519.2.2"]
+
+[[requirement]]
+id = "4519:2:1"
+section = "2.4"
+severity = "should"
+test_class = "A"
+text = "Servers recognize the dc (domainComponent) attribute type in the subschema."
+covered_by = ["4519.2.3"]

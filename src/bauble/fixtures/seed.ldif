@@ -22,3 +22,17 @@ cn: Bob Brown
 sn: Brown
 uid: bob
 userPassword: bob-secret
+
+dn: uid=alice-alias,ou=people,dc=bauble,dc=test
+objectClass: top
+objectClass: alias
+objectClass: extensibleObject
+uid: alice-alias
+aliasedObjectName: uid=alice,ou=people,dc=bauble,dc=test
+
+dn: ou=remote,dc=bauble,dc=test
+objectClass: top
+objectClass: referral
+objectClass: extensibleObject
+ou: remote
+ref: ldap://127.0.0.1:3890/dc=bauble,dc=test

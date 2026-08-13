@@ -1,0 +1,112 @@
+rfc = 4515
+title = "LDAP: String Representation of Search Filters"
+
+# §3 filter evaluation — covered types
+
+[[requirement]]
+id = "4515:3:1"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "An AND filter (&(f1)(f2)) evaluates as the intersection of its components."
+covered_by = ["4515.3.1"]
+
+[[requirement]]
+id = "4515:3:2"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "An OR filter (|(f1)(f2)) evaluates as the union of its components."
+covered_by = ["4515.3.2"]
+
+[[requirement]]
+id = "4515:3:3"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "A NOT filter (!(f)) evaluates as the negation of its component."
+covered_by = ["4515.3.3"]
+
+[[requirement]]
+id = "4515:3:4"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "An equality filter (attr=value) matches entries with an equivalent value."
+covered_by = ["4515.3.4"]
+
+[[requirement]]
+id = "4515:3:5"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "A substring filter with an initial component (attr=foo*) matches leading substrings."
+covered_by = ["4515.3.5"]
+
+[[requirement]]
+id = "4515:3:6"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "A substring filter with an any component (attr=*foo*) matches interior substrings."
+covered_by = ["4515.3.6"]
+
+[[requirement]]
+id = "4515:3:7"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "A present filter (attr=*) matches entries where the attribute is present."
+covered_by = ["4515.3.7"]
+
+[[requirement]]
+id = "4515:3:8"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "An extensible match filter (attr:rule:=value) applies the named matching rule."
+covered_by = ["4515.3.8"]
+
+# §3 filter types not yet tested — surfaced gaps
+
+[[requirement]]
+id = "4515:3:9"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "A substring filter with a final component (attr=*foo) matches trailing substrings."
+covered_by = ["4515.3.9"]
+
+[[requirement]]
+id = "4515:3:10"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "A greaterOrEqual filter (attr>=value) matches entries with values >= the assertion."
+covered_by = ["4515.3.10"]
+
+[[requirement]]
+id = "4515:3:11"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "A lessOrEqual filter (attr<=value) matches entries with values <= the assertion."
+covered_by = ["4515.3.11"]
+
+[[requirement]]
+id = "4515:3:12"
+section = "3"
+severity = "may"
+test_class = "A"
+text = "An approxMatch filter (attr~=value) matches entries per the server's approximate rule."
+covered_by = ["4515.3.12"]
+
+# §3 escaping (client-side generation)
+
+[[requirement]]
+id = "4515:3:13"
+section = "3"
+severity = "must"
+test_class = "B"
+text = "Implementations MUST escape octets >0x7F not part of valid UTF-8 when generating a filter string."
+covered_by = []

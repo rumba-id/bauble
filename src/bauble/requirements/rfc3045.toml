@@ -1,0 +1,18 @@
+rfc = 3045
+title = "Storing Vendor Information in the LDAP root DSE"
+
+[[requirement]]
+id = "3045:2:1"
+section = "2.1"
+severity = "must"
+test_class = "A"
+text = "vendorName, when present, is SINGLE-VALUE and NO-USER-MODIFICATION."
+covered_by = ["3045.2.1"]
+
+[[requirement]]
+id = "3045:2:2"
+section = "2.2"
+severity = "must"
+test_class = "A"
+text = "vendorVersion, when present, is SINGLE-VALUE and NO-USER-MODIFICATION."
+covered_by = ["3045.2.2"]

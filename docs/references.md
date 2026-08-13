@@ -1,6 +1,9 @@
 # LDAP RFC References
 
-Complete list of LDAP-related RFCs from the IETF RFC Editor search, organized by dependency.
+A broad reference tree of LDAP-related RFCs from the IETF RFC Editor, organized by
+dependency. This is reference material, not the conformance scope: only the RFCs
+listed under Scope in the README are tested by bauble. Run `bauble coverage` for the
+current per-RFC requirement coverage.
 
 ## Core Protocol Stack
 
@@ -478,5 +481,5 @@ RFC 4510 (umbrella)
 
 - RFCs marked as "replaced by" are historic and superseded by their modern equivalents.
 - The core protocol stack (RFC 4510–4519) represents the minimum set for LDAPv3 conformance.
-- Extended operations and controls are optional but recommended for Standard Profile conformance.
+- Extended operations and controls are optional but recommended for Core profile conformance.
 - Schema RFCs define object classes and attribute types that may be required by specific profiles.

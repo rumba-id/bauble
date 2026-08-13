@@ -1,6 +1,6 @@
 """RFC 3876 — Matched Values Control."""
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import (
@@ -53,6 +53,8 @@ def _ber_seq(c: bytes) -> bytes:
     profiles=_CORE,
     text="Server SHOULD publish 1.2.826.0.1.3344810.2.3 in supportedControl.",
     strategy="Read root DSE supportedControl and check for the OID.",
+    layer=Layer.CAPABILITY,
+    oid="1.2.826.0.1.3344810.2.3",
 )
 def matched_values_advertised(session: Session) -> Result:
     outcome, entries = session.search(
@@ -77,6 +79,7 @@ def matched_values_advertised(session: Session) -> Result:
     text="Search with valuesReturnFilter returns only matching values.",
     strategy="Search with attributes=description, valuesReturnFilter=(description=*). Verify.",
     mutates=True,
+    oid="1.2.826.0.1.3344810.2.3",
 )
 def matched_values_filter_returns_subset(session: Session) -> Result:
     from bauble.raw import RawConnection
@@ -142,3 +145,83 @@ def matched_values_filter_returns_subset(session: Session) -> Result:
         )
     finally:
         cleanup(session, dn)
+
+
+def _build_values_return_filter(attr: str, value: str) -> bytes:
+    """A minimal ValuesReturnFilter with one equalityMatch item."""
+    inner = _ber_seq(_ber_octet(attr) + _ber_octet(value))
+    eq_filter = b"\xa3" + _ber_len(len(inner)) + inner
+    return _ber_seq(eq_filter)
+
+
+def _compare_with_matched_values(dn: str, attr: str, value: str, critical: bool) -> bytes:
+    """Build a CompareRequest carrying the matched-values control."""
+    vrf = _build_values_return_filter(attr, value)
+    cv = b"\x04" + _ber_len(len(vrf)) + vrf
+    oid = _ber_octet(_MATCHED_VALUES_OID)
+    criticality = b"\x01\x01\xff" if critical else b"\x01\x01\x00"
+    control = _ber_seq(oid + criticality + cv)
+    controls = _ber_seq(control)
+    controls_tagged = b"\xa0" + _ber_len(len(controls)) + controls
+    ava = _ber_seq(_ber_octet(attr) + _ber_octet(value))
+    entry = _ber_octet(dn)
+    compare_request = b"\x6e" + _ber_len(len(entry + ava)) + entry + ava
+    return _ber_seq(_ber_int(1) + compare_request + controls_tagged)
+
+
+_ALICE = "uid=alice,ou=people,dc=bauble,dc=test"
+
+
+@assertion(
+    id="3876.2.2",
+    rfc=3876,
+    section="§2",
+    category=Category.CONTROL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    layer=Layer.WIRE,
+    text="A critical valuesReturnFilter control on a non-Search operation returns unavailableCriticalExtension.",
+    strategy="Attach a critical matched-values control to a Compare; expect result code 12.",
+    oid="1.2.826.0.1.3344810.2.3",
+)
+def matched_values_critical_on_compare(session: Session) -> Result:
+    from bauble.raw import RawConnection
+
+    payload = _compare_with_matched_values(_ALICE, "uid", "alice", critical=True)
+    outcome = RawConnection(session.host, session.port).bind_then_send(payload, ADMIN_DN, ADMIN_PW)
+    if outcome.result_code == 12:
+        return Result("3876.2.2", Status.PASS)
+    return Result(
+        "3876.2.2",
+        Status.FAIL,
+        detail=f"expected 12 (unavailableCriticalExtension), got {outcome.result_code}",
+    )
+
+
+@assertion(
+    id="3876.2.3",
+    rfc=3876,
+    section="§2",
+    category=Category.CONTROL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    layer=Layer.WIRE,
+    text="A non-critical valuesReturnFilter control on a non-Search operation is ignored.",
+    strategy="Attach a non-critical matched-values control to a Compare; expect the compare to proceed.",
+    oid="1.2.826.0.1.3344810.2.3",
+)
+def matched_values_noncritical_on_compare(session: Session) -> Result:
+    from bauble.raw import RawConnection
+
+    payload = _compare_with_matched_values(_ALICE, "uid", "alice", critical=False)
+    outcome = RawConnection(session.host, session.port).bind_then_send(payload, ADMIN_DN, ADMIN_PW)
+    # Control ignored: the compare runs normally -> compareTrue (6) or compareFalse (5).
+    if outcome.result_code in (5, 6):
+        return Result("3876.2.3", Status.PASS)
+    return Result(
+        "3876.2.3",
+        Status.FAIL,
+        detail=f"expected compare result (5/6), got {outcome.result_code}",
+    )

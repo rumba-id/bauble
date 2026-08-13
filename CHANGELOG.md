@@ -1,120 +1,63 @@
 # Changelog
 
+All notable changes to bauble. Entries describe what changed; they do not
+restate coverage totals. Run `bauble coverage` for current figures.
+
+## v2.0.0 — 2026-08-13
+
+Three-layer conformance architecture. Each assertion is classified by the
+kind of conformance it establishes: Wire (protocol-unit correctness),
+Semantic (operation meaning), or Capability (advertised vs. behavior). The
+`Layer` field flows through the model, the journal record, and the summary
+reporter, which gains a per-layer rollup and a per-OID capability table.
+
+A stdlib-only raw BER+socket wire layer reaches protocol-unit edges that
+ldap3 cannot construct or parse: malformed BER, indefinite-length encoding,
+messageID semantics. RFC 4511 gained wire and semantic assertions —
+messageID echo, indefinite-length rejection, malformed-filter handling,
+filter evaluation, matching-rule behavior, DN attribute-name case,
+ModifyDN newSuperior, alias dereferencing, referral handling.
+
+Honest `UNTESTABLE` records replaced placeholder behavior for requirements
+with no portable test.
+
+Coverage figures now live only in `bauble coverage`, not in committed docs.
+
+## v1.4.0 — 2026-08-12
+
+389 Directory Server test target. The same seed DIT loads into a second
+implementation, enabling cross-implementation comparison. The runner gains
+`--target-type 389ds`.
+
+## v1.3.0 — 2026-08-12
+
+RFC 4513 StartTLS security assertions. The runner gains `--starttls`.
+
+## v1.2.0 — 2026-08-12
+
+Formal assertion record: `preconditions`, `stimulus`, and
+`expected_observables` fields on every assertion, tying each test to the
+observable it verifies. Renamed `AUTO_PASS` to `NOT_APPLICABLE` and
+reorganized profiles into Interop, Core, and Extended tiers.
+
 ## v1.1.0 — 2026-08-12
 
-v1.1 extends conformance coverage with 13 additional RFCs from the Group A
-(testable with current infrastructure) subset. 38 new assertions added,
-bringing the total to 97 (90 class A, 7 class B). The test suite now covers
-**27 RFCs**.
-
-### New RFC suites
-
-| RFC | Description | Assertions | PASS |
-|-----|------------|-----------|------|
-| 3045 | Vendor Information in root DSE | 2 | NOT_APPLICABLE |
-| 3829 | Authorization Identity Controls | 2 | NOT_APPLICABLE / UNTESTABLE |
-| 3866 | Language Tags and Ranges | 5 | 5/5 |
-| 3876 | Matched Values Control | 2 | 1/1 testable |
-| 4513 §4.1 | Authorization State | 2 | 2/2 |
-| 4525 | Modify-Increment Extension | 4 | NOT_APPLICABLE |
-| 4526 | Absolute True/False Filters | 3 | 2/2 testable |
-| 4527 | Read Entry Controls (Pre/Post-Read) | 2 | 2/2 |
-| 4528 | Assertion Control | 5 | 2 PASS, 2 FAIL, 1 UNTESTABLE |
-| 4529 | Attributes by Object Class | 2 | 2/2 |
-| 4530 | entryUUID Operational Attribute | 4 | 4/4 |
-| 5020 | entryDN Operational Attribute | 4 | 4/4 |
-| 6171 | Don't Use Copy Control | 1 | UNTESTABLE |
-
-### Honest conformance
-
-Feature gates on `MUST`/`SHALL` requirements were removed. Assertions
-no longer NOT_APPLICABLE when a server fails to advertise a feature — they
-report FAIL with detail like "assertion control advertised but not
-processed; expected assertionFailed (122), got 0." This surfaced
-two OpenLDAP bugs where the assertion control (1.3.6.1.1.12) is
-advertised in `supportedControl` but ignored at runtime.
-
-NOT_APPLICABLE now only fires when the server genuinely does not claim
-support for an optional feature (e.g., modify-increment, vendor
-attributes).
-
-### Advertise-then-test pattern
-
-Behavioral assertions for controls and extensions now check the
-server's advertisement (`supportedControl`, `supportedExtension`)
-before running the test. If the server doesn't claim support,
-the assertion NOT_APPLICABLE. If it claims support but fails, the
-FAIL detail names the gap explicitly.
-
-### Raw wire layer additions
-
-- `RawConnection.bind_then_send()` — bind then send on one socket
-- `RawConnection.modify_increment()` — Modify-Increment PDU (RFC 4525)
-- `RawConnection.raw_send()` — send arbitrary PDU, parse LDAPResult
-- `_parse_ldap_result()` — generic LDAPResult parser
-- BER helpers: assertion control, matched values control, pre/post-read
-
-Several assertions now use the raw wire layer to bypass ldap3
-client-side validation that rejects valid-but-edge-case PDUs (empty
-`(&)`/`(|)` filters, `@objectClass` attribute descriptions).
-
-### Standards conformance on OpenLDAP
-
-| Profile | MUST(A) | SHOULD(B) | Verdict |
-|---------|---------|-----------|---------|
-| Interop | 55/55 | — | CONFORMANT |
-| Core | 24 PASS, 2 FAIL, 7 NOT_APPLICABLE, 4 UNTESTABLE | — | **2 gaps** |
-
-The 2 Core MUST(A) FAILs are the assertion control bugs
-(4528.3.2, 4528.3.4). All other MUST(A) assertions pass or are
-honest NOT_APPLICABLE.
+Extended conformance coverage across additional RFCs. Feature gates on
+`MUST`/`SHALL` requirements were removed: an advertised feature that fails
+at runtime now reports `FAIL` with detail instead of `NOT_APPLICABLE`,
+which surfaced real server gaps. The advertise-then-test pattern drives
+`NOT_APPLICABLE` only when the server genuinely does not claim support.
+Added raw wire helpers (assertion, matched-values, pre/post-read control
+BER) and `RawConnection` methods (`bind_then_send`, `modify_increment`,
+`raw_send`).
 
 ## v1.0.0 — 2026-08-12
 
-Initial release. An open-source, implementation-independent LDAP RFC
-conformance test suite.
-
-### Conformance coverage
-
-- **14 RFCs** covered (4511, 4512, 4514–4519, 2696, 2891, 3062, 4532)
-- **59 assertions** — 57 testable (all PASS on OpenLDAP), 2 UNTESTABLE
-  (abandon — intrinsic timing dependence)
-- Interop profile: must(A) 53/53 CONFORMANT
-- Core profile: must(A) 4/4 CONFORMANT
-
-### Core architecture
-
-- Assertion-driven model with severity/testability split. A `MUST` with no
-  portable test is surfaced as `UNTESTABLE`, not silently dropped.
-- Registry-based auto-discovery: add an RFC suite by dropping a module.
-- Profiles and scenarios are selections over the registry, not separate code.
-- Capability declaration drives NOT_APPLICABLE for unsupported features.
-
-### Client layers
-
-- High-level `ldap3`-backed Session for positive-path and most negative-path
-  assertions (constructible controls, readable result codes/matchedDN/
-  referrals).
-- Raw wire-layer Session (stdlib-only BER + socket, zero additional
-  dependencies) for assertions the high-level client cannot reach: unknown
-  protocol versions, empty-password binds, malformed PDUs, control-value BER.
-
-### Test target
-
-- Podman container with OpenLDAP, deterministic seed DIT preloaded via
-  `slapadd` at build time. Long-lived container with self-cleaning mutations;
-  fresh-per-run is opt-in.
-
-### Reporting
-
-- Four output formats: text (stdout), journal (JSON lines — source of truth),
-  summary (per-RFC + per-profile verdict), junit (CI XML).
-- Conformance verdict: conformant iff every MUST class-A assertion is PASS
-  or NOT_APPLICABLE.
-
-### CLI
-
-```bash
-uv run bauble run --profile base --target --reporter summary
-uv run bauble run --rfc 4511 --server ldap://host:389 --reporter journal
-```
+Initial release. Assertion-driven conformance model with a
+severity/testability split; registry-based auto-discovery (one RFC = one
+self-registering module); profiles and scenarios as selections over the
+registry; capability-driven `NOT_APPLICABLE`. A high-level ldap3-backed
+`Session` for positive and most negative paths, and a raw stdlib BER+socket
+layer for protocol-unit edges. Podman OpenLDAP target with a deterministic
+seed DIT. Reporters: text, journal (JSON lines, source of truth), summary,
+junit.

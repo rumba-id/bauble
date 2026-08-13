@@ -2,7 +2,7 @@
 
 import os
 
-from bauble.session import Session
+from bauble.session import SCOPE_BASE_OBJECT, Session
 
 __all__ = [
     "ADMIN_DN",
@@ -10,6 +10,7 @@ __all__ = [
     "TEST_BASE",
     "bind_admin",
     "cleanup",
+    "subschema_dn",
     "test_entry_attrs",
 ]
 
@@ -40,3 +41,22 @@ def test_entry_attrs(uid: str, cn: str = "Test", sn: str = "Test") -> dict[str, 
         "uid": [uid],
         "userPassword": ["x"],
     }
+
+
+def subschema_dn(session: Session) -> str | None:
+    """The subschema subentry DN advertised in the root DSE, or None.
+
+    RFC 4512 §4.2: the subschema location is published via the entry's
+    ``subschemaSubentry`` attribute; it is not fixed at ``cn=Subschema``
+    (OpenLDAP uses cn=Subschema, 389 DS uses cn=schema).
+    """
+    outcome, entries = session.search(
+        "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["subschemaSubentry"]
+    )
+    if outcome.result_code != 0 or not entries:
+        return None
+    vals = entries[0].attributes.get("subschemaSubentry")
+    if not vals:
+        return None
+    v = vals[0]
+    return v if isinstance(v, str) else None

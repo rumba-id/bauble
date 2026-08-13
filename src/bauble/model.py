@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 __all__ = [
     "Assertion",
     "Category",
+    "Layer",
     "Profile",
     "Result",
     "Runner",
@@ -94,6 +95,20 @@ class Profile(Enum):
     NONE = "none"
 
 
+class Layer(Enum):
+    """The conformance layer an assertion establishes.
+
+    Members:
+        WIRE: protocol-unit correctness (BER, PDU structure, result codes).
+        SEMANTIC: operation meaning (DIT state, matching, schema constraints).
+        CAPABILITY: advertised-feature implementation (advertised vs. behavior).
+    """
+
+    WIRE = "wire"
+    SEMANTIC = "semantic"
+    CAPABILITY = "capability"
+
+
 class Category(Enum):
     """The surface an assertion exercises."""
 
@@ -137,6 +152,12 @@ class Assertion:
 
     text: str
     """The requirement in plain language."""
+
+    layer: Layer = Layer.SEMANTIC
+    """Conformance layer this assertion establishes."""
+
+    oid: str = ""
+    """Feature OID this assertion verifies (capability layer only)."""
 
     strategy: str = ""
     """How the test is realized (PROCEDURE/INPUT/EXPECTED where useful)."""

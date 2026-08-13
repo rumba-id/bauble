@@ -108,6 +108,7 @@ class LdapSession:
         filter_: str,
         attributes: list[str] | None = None,
         controls: tuple[Control, ...] = (),
+        deref_aliases: int = 0,
     ) -> tuple[Outcome, list[Entry]]:
         self._ensure_open()
         self._connection.search(
@@ -116,10 +117,19 @@ class LdapSession:
             search_scope=_SCOPE[scope],
             attributes=attributes or ["*"],
             controls=[(c.oid, c.criticality, c.value) for c in controls],
+            dereference_aliases=deref_aliases,
         )
         raw_response: list[Any] = list(self._connection.response or [])
         entries: list[Entry] = []
+        referral_uris: list[str] = []
         for item in raw_response:
+            if item.get("type") == "searchResRef":
+                raw_uri: Any = item.get("uri")
+                if isinstance(raw_uri, list):
+                    referral_uris.extend(str(u) for u in raw_uri)  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
+                elif raw_uri:
+                    referral_uris.append(str(raw_uri))
+                continue
             if item.get("type") != "searchResEntry":
                 continue
             raw_attrs: Any = item.get("attributes") or {}
@@ -130,7 +140,15 @@ class LdapSession:
                 else:
                     attribute_map[str(key)] = [val]
             entries.append(Entry(dn=str(item.get("dn", "")), attributes=attribute_map))
-        return outcome_from_result(self._connection.result), entries
+        outcome = outcome_from_result(self._connection.result)
+        if referral_uris and not outcome.referrals:
+            outcome = Outcome(
+                result_code=outcome.result_code,
+                matched_dn=outcome.matched_dn,
+                referrals=tuple(referral_uris),
+                message=outcome.message,
+            )
+        return outcome, entries
 
     def add(self, dn: str, attributes: dict[str, list[str | bytes]]) -> Outcome:
         self._ensure_open()

@@ -22,6 +22,7 @@ _PAGED_OID = "1.2.840.113556.1.4.319"
     profiles=_CORE,
     text="A search with the paged-results control (size=2) is accepted.",
     strategy="Search the base DIT with paged-results control, page size 2; expect code 0.",
+    oid="1.2.840.113556.1.4.319",
 )
 def paged_results_accepted(session: Session) -> Result:
     outcome, _ = session.search(
@@ -39,3 +40,58 @@ def paged_results_accepted(session: Session) -> Result:
     if outcome.result_code == 0:
         return Result("2696.2.1", Status.PASS)
     return Result("2696.2.1", Status.FAIL, detail=f"expected 0, got {outcome.result_code}")
+
+
+@assertion(
+    id="2696.2.2",
+    rfc=2696,
+    section="§3",
+    category=Category.CONTROL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    text="The paged-results cookie is non-empty while pages remain and empty when exhausted.",
+    strategy="Page ou=people (size=1); expect a non-empty cookie then an empty one.",
+    oid="1.2.840.113556.1.4.319",
+)
+def paged_results_cookie_exhausts(session: Session) -> Result:
+    from bauble.harness import LdapSession, ServerConfig
+    from bauble.suites._helpers import ADMIN_DN, ADMIN_PW
+
+    cfg = ServerConfig(session.host, session.port)
+    raw_session = LdapSession(cfg)
+    raw_session._ensure_open()  # type: ignore[reportPrivateUsage]
+    conn = raw_session._connection  # type: ignore[reportPrivateUsage]
+    conn.rebind(  # type: ignore[reportUnknownMemberType]
+        user=ADMIN_DN,  # type: ignore[reportCallIssue]
+        password=ADMIN_PW,  # type: ignore[reportCallIssue]
+    )
+
+    cookie: bytes | None = None
+    saw_nonempty = False
+    exhausted = False
+    for _ in range(10):
+        conn.search(  # type: ignore[reportUnknownMemberType]
+            "ou=people,dc=bauble,dc=test",
+            "(objectClass=*)",
+            search_scope="SUBTREE",
+            attributes=["uid"],
+            paged_size=1,
+            paged_cookie=cookie,
+        )
+        ctrl = conn.result.get("controls", {}).get(_PAGED_OID)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        if not ctrl:
+            return Result("2696.2.2", Status.FAIL, detail="no paged-response control")
+        cookie = ctrl["value"]["cookie"]  # type: ignore[reportUnknownVariableType, reportUnknownArgumentType]
+        if cookie:
+            saw_nonempty = True
+        else:
+            exhausted = True
+            break
+    if saw_nonempty and exhausted:
+        return Result("2696.2.2", Status.PASS)
+    return Result(
+        "2696.2.2",
+        Status.FAIL,
+        detail=f"cookie did not exhaust (saw_nonempty={saw_nonempty}, exhausted={exhausted})",
+    )

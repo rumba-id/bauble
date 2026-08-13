@@ -1,0 +1,50 @@
+rfc = 3866
+title = "LDAP: Language Tags and Ranges"
+
+[[requirement]]
+id = "3866:2:1"
+section = "2.2"
+severity = "must"
+test_class = "A"
+text = "A search filter with a language tag option matches only attributes with the same tag."
+covered_by = ["3866.2.2.1"]
+
+[[requirement]]
+id = "3866:2:2"
+section = "2.5"
+severity = "must"
+test_class = "A"
+text = "The server accepts an add with language-tagged attribute values."
+covered_by = ["3866.2.5.1"]
+
+[[requirement]]
+id = "3866:3:1"
+section = "3.1"
+severity = "must"
+test_class = "A"
+text = "A language range option matches all language tags with a matching prefix."
+covered_by = ["3866.3.1.1"]
+
+[[requirement]]
+id = "3866:3:2"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "The 'lang-' range matches all language-tagged values."
+covered_by = ["3866.3.1.2"]
+
+[[requirement]]
+id = "3866:3:3"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "An add or update with a language RANGE option SHALL be rejected (ranges are not tagging options)."
+covered_by = ["3866.3.3"]
+
+[[requirement]]
+id = "3866:4:1"
+section = "4"
+severity = "should"
+test_class = "B"
+text = "Servers SHOULD publish 1.3.6.1.4.1.4203.1.5.4 (tags) and .5 (ranges) in supportedFeatures."
+covered_by = []

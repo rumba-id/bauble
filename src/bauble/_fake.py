@@ -48,6 +48,7 @@ class FakeSession:
         filter_: str,
         attributes: list[str] | None = None,
         controls: tuple[Control, ...] = (),
+        deref_aliases: int = 0,
     ) -> tuple[Outcome, list[Entry]]:
         outcome = self._respond(
             "search",

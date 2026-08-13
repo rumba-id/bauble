@@ -2,7 +2,7 @@
 
 import re
 
-from bauble.model import Category, Profile, Result, Severity, Status, TestClass
+from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, SCOPE_WHOLE_SUBTREE, Session
 from bauble.suites._base import assertion
 from bauble.suites._helpers import TEST_BASE, bind_admin, cleanup, test_entry_attrs
@@ -145,3 +145,38 @@ def entry_uuid_immutable(session: Session) -> Result:
     if uuid1 != uuid2:
         return Result("4530.2.4.3", Status.FAIL, detail="entryUUID changed across reads")
     return Result("4530.2.4.3", Status.PASS)
+
+
+@assertion(
+    id="4530.2.2.1",
+    rfc=4530,
+    section="§2.2",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    layer=Layer.SEMANTIC,
+    text="uuidMatch locates an entry by its entryUUID value.",
+    strategy="Read alice's entryUUID, then subtree-search with (entryUUID=<value>); expect alice.",
+)
+def entry_uuid_searchable(session: Session) -> Result:
+    dn = f"uid=alice,{TEST_BASE}"
+    outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["+"])
+    if outcome.result_code != 0 or not entries:
+        return Result("4530.2.2.1", Status.FAIL, detail="could not read entryUUID")
+    uuid_vals = entries[0].attributes.get("entryUUID")
+    if not uuid_vals or not isinstance(uuid_vals[0], str):
+        return Result("4530.2.2.1", Status.FAIL, detail="entryUUID missing or non-string")
+    uuid_value = uuid_vals[0]
+    outcome2, entries2 = session.search(
+        TEST_BASE, SCOPE_WHOLE_SUBTREE, f"(entryUUID={uuid_value})"
+    )
+    if outcome2.result_code != 0:
+        return Result("4530.2.2.1", Status.FAIL, detail=f"search failed: {outcome2.result_code}")
+    if not any(e.dn == dn for e in entries2):
+        return Result(
+            "4530.2.2.1",
+            Status.FAIL,
+            detail=f"(entryUUID={uuid_value}) did not return {dn}",
+        )
+    return Result("4530.2.2.1", Status.PASS)
