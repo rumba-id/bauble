@@ -20,6 +20,9 @@ _ROOT = "dc=bauble,dc=test"
     profiles=_INTEROP,
     text="A case-insensitive match on uid ignores casing differences.",
     strategy="Search for (uid=ALICE); expect alice is returned (caseIgnoreMatch).",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Subtree search with the filter (uid=ALICE).",
+    expected_observables="uid=alice is returned.",
 )
 def case_insensitive_match(session: Session) -> Result:
     outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(uid=ALICE)")
@@ -42,6 +45,9 @@ def case_insensitive_match(session: Session) -> Result:
     profiles=_INTEROP,
     text="caseIgnoreMatch treats leading/trailing/multiple consecutive spaces as insignificant.",
     strategy="Search (cn=Alice  Anderson) (extra inner spaces); expect alice matched.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Subtree search with the filter (uid= alice ) (surrounding spaces).",
+    expected_observables="uid=alice is returned (spaces are insignificant).",
 )
 def case_insensitive_space_handling(session: Session) -> Result:
     outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(uid= alice )")

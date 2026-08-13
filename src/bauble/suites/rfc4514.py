@@ -19,6 +19,9 @@ _INTEROP = frozenset({Profile.INTEROP})
     profiles=_INTEROP,
     text="A simple DN (cn=Alice Anderson,...) is correctly parsed by the server.",
     strategy="Search for uid=alice with base scope and verify the returned DN is correct.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Base-scope search for uid=alice requesting cn.",
+    expected_observables="The returned entry's DN matches the queried DN.",
 )
 def simple_dn_parsing(session: Session) -> Result:
     dn = "uid=alice,ou=people,dc=bauble,dc=test"
@@ -40,6 +43,9 @@ def simple_dn_parsing(session: Session) -> Result:
     profiles=_INTEROP,
     text="DNs in search results are case-preserving for attribute values.",
     strategy="Search for alice; verify the returned DN preserves the case of the uid value.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Base-scope search for uid=alice requesting uid.",
+    expected_observables="The returned DN contains the expected components.",
 )
 def dn_case_preservation(session: Session) -> Result:
     outcome, entries = session.search(
@@ -67,6 +73,9 @@ def dn_case_preservation(session: Session) -> Result:
     profiles=_INTEROP,
     text="DN attribute types are case-insensitive (UID=alice matches uid=alice).",
     strategy="Search with UID=alice,ou=people,dc=bauble,dc=test; expect the entry.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Base-scope search using UID=alice,OU=People,DC=bauble,DC=test.",
+    expected_observables="The entry is returned (attribute types matched case-insensitively).",
 )
 def dn_attribute_name_case_insensitive(session: Session) -> Result:
     dn = "UID=alice,OU=People,DC=bauble,DC=test"
@@ -90,6 +99,9 @@ def dn_attribute_name_case_insensitive(session: Session) -> Result:
     profiles=_INTEROP,
     text="DN attribute values match per the attribute's matching rule (caseIgnore for uid).",
     strategy="Search uid=ALICE (uppercase value); expect the uid=alice entry.",
+    preconditions="Seed entry uid=alice exists.",
+    stimulus="Base-scope search using uid=ALICE.",
+    expected_observables="The entry is returned (caseIgnore value matching).",
 )
 def dn_value_matching_rule(session: Session) -> Result:
     dn = "uid=ALICE,ou=people,dc=bauble,dc=test"

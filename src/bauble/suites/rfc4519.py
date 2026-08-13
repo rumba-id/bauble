@@ -38,6 +38,9 @@ def _has_advertised(session: Session, attribute: str, expected: str) -> tuple[bo
     profiles=_INTEROP,
     text="The inetOrgPerson object class is advertised in the subschema.",
     strategy="Search cn=Subschema for objectClasses containing 'inetOrgPerson'.",
+    preconditions="Admin bound; the subschema subentry is readable.",
+    stimulus="Search the subschema for objectClasses containing 'inetOrgPerson'.",
+    expected_observables="inetOrgPerson is advertised in the subschema.",
 )
 def inet_org_person_advertised(session: Session) -> Result:
     ok, detail = _has_advertised(session, "objectClasses", "inetOrgPerson")
@@ -54,6 +57,9 @@ def inet_org_person_advertised(session: Session) -> Result:
     profiles=_INTEROP,
     text="The organizationalUnit object class is advertised in the subschema.",
     strategy="Search cn=Subschema for objectClasses containing 'organizationalUnit'.",
+    preconditions="Admin bound; the subschema subentry is readable.",
+    stimulus="Search the subschema for objectClasses containing 'organizationalUnit'.",
+    expected_observables="organizationalUnit is advertised in the subschema.",
 )
 def organizational_unit_advertised(session: Session) -> Result:
     ok, detail = _has_advertised(session, "objectClasses", "organizationalUnit")
@@ -70,6 +76,9 @@ def organizational_unit_advertised(session: Session) -> Result:
     profiles=_INTEROP,
     text="The dc (domainComponent) attribute type is advertised in the subschema.",
     strategy="Search cn=Subschema for attributeTypes containing 'dc'.",
+    preconditions="Admin bound; the subschema subentry is readable.",
+    stimulus="Search the subschema for attributeTypes containing 'dc'.",
+    expected_observables="The dc attribute type is advertised in the subschema.",
 )
 def domain_component_advertised(session: Session) -> Result:
     ok, detail = _has_advertised(session, "attributeTypes", "dc")
