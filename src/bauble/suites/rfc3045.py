@@ -22,19 +22,25 @@ _CORE = frozenset({Profile.CORE})
     expected_observables="vendorName, if present, has exactly one value; NOT_APPLICABLE if absent.",
 )
 def vendor_name_single_value(session: Session) -> Result:
-    outcome, entries = session.search("", SCOPE_BASE_OBJECT, "(objectClass=*)", ["vendorName"])
+    return _check_single_value_no_user_mod(session, "vendorName", "3045.2.1")
+
+
+def _check_single_value_no_user_mod(session: Session, attr: str, aid: str) -> Result:
+    from bauble.session import MOD_REPLACE, Modification
+
+    outcome, entries = session.search("", SCOPE_BASE_OBJECT, "(objectClass=*)", [attr])
     if outcome.result_code != 0 or not entries:
-        return Result("3045.2.1", Status.NOT_APPLICABLE, detail="root DSE not readable")
-    vendor_name = entries[0].attributes.get("vendorName")
-    if not vendor_name:
-        return Result("3045.2.1", Status.NOT_APPLICABLE, detail="vendorName not present")
-    if len(vendor_name) != 1:
-        return Result(
-            "3045.2.1",
-            Status.FAIL,
-            detail=f"expected single vendorName, got {len(vendor_name)}",
-        )
-    return Result("3045.2.1", Status.PASS)
+        return Result(aid, Status.NOT_APPLICABLE, detail="root DSE not readable")
+    values = entries[0].attributes.get(attr)
+    if not values:
+        return Result(aid, Status.NOT_APPLICABLE, detail=f"{attr} not present")
+    if len(values) != 1:
+        return Result(aid, Status.FAIL, detail=f"expected single {attr}, got {len(values)}")
+    # NO-USER-MODIFICATION: a client modify of the attribute must be rejected.
+    mod = session.modify("", [Modification(MOD_REPLACE, attr, ["bauble-test"])])
+    if mod.result_code == 0:
+        return Result(aid, Status.FAIL, detail=f"{attr} is user-modifiable")
+    return Result(aid, Status.PASS)
 
 
 @assertion(
@@ -52,16 +58,4 @@ def vendor_name_single_value(session: Session) -> Result:
     expected_observables="vendorVersion, if present, has exactly one value; NOT_APPLICABLE if absent.",
 )
 def vendor_version_single_value(session: Session) -> Result:
-    outcome, entries = session.search("", SCOPE_BASE_OBJECT, "(objectClass=*)", ["vendorVersion"])
-    if outcome.result_code != 0 or not entries:
-        return Result("3045.2.2", Status.NOT_APPLICABLE, detail="root DSE not readable")
-    vendor_version = entries[0].attributes.get("vendorVersion")
-    if not vendor_version:
-        return Result("3045.2.2", Status.NOT_APPLICABLE, detail="vendorVersion not present")
-    if len(vendor_version) != 1:
-        return Result(
-            "3045.2.2",
-            Status.FAIL,
-            detail=f"expected single vendorVersion, got {len(vendor_version)}",
-        )
-    return Result("3045.2.2", Status.PASS)
+    return _check_single_value_no_user_mod(session, "vendorVersion", "3045.2.2")

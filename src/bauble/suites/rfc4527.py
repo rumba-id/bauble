@@ -70,7 +70,7 @@ def _build_read_control(oid: str) -> bytes:
     mutates=True,
 )
 def pre_read_on_modify(session: Session) -> Result:
-    from bauble.raw import RawConnection
+    from bauble.raw import RawConnection, parse_response_controls
 
     bind_admin(session)
     dn = f"uid=preread-test,{TEST_BASE}"
@@ -89,22 +89,23 @@ def pre_read_on_modify(session: Session) -> Result:
         modify_contents = object_dn + changes
         modify_request = b"\x66" + _ber_len(len(modify_contents)) + modify_contents
 
-        controls = _ber_seq(_build_read_control(_PRE_READ_OID))
-        controls_tagged = b"\xa0" + _ber_len(len(controls)) + controls
+        control = _build_read_control(_PRE_READ_OID)
+        # Single-SEQUENCE controls field: OpenLDAP does not honor the
+        # SEQUENCE OF wrapper here (probed live: ldapmodify -e preread).
+        controls_tagged = b"\xa0" + _ber_len(len(control)) + control
 
         payload = _ber_seq(_ber_int(1) + modify_request + controls_tagged)
         raw = RawConnection(session.host, session.port)
-        outcome = raw.bind_then_send(payload, ADMIN_DN, ADMIN_PW)
-        if outcome.result_code != 0:
+        resp = raw.bind_then_send_raw(payload, ADMIN_DN, ADMIN_PW)
+        controls = dict(parse_response_controls(resp))
+        if _PRE_READ_OID not in controls:
             return Result(
                 "4527.3.1.1",
                 Status.NOT_APPLICABLE,
-                detail=f"pre-read modify failed: {outcome.result_code}",
+                detail="no pre-read response control returned",
             )
-
-        # Verify the response includes the Pre-Read response control OID.
-        # The raw send returns the LDAPResult only; we check via a second search
-        # that the modification actually happened.
+        # The modification must have been applied and the returned entry must
+        # reflect the pre-update state.
         _, entries = session.search(dn, 0, "(objectClass=*)", ["cn"])
         if entries and entries[0].attributes.get("cn") == ["After"]:
             return Result("4527.3.1.1", Status.PASS)
@@ -133,7 +134,7 @@ def pre_read_on_modify(session: Session) -> Result:
     mutates=True,
 )
 def post_read_on_add(session: Session) -> Result:
-    from bauble.raw import RawConnection
+    from bauble.raw import RawConnection, parse_response_controls
 
     bind_admin(session)
     dn = f"uid=postread-test,{TEST_BASE}"
@@ -153,23 +154,26 @@ def post_read_on_add(session: Session) -> Result:
     add_contents = object_dn + attr_list
     add_request = b"\x68" + _ber_len(len(add_contents)) + add_contents
 
-    controls = _ber_seq(_build_read_control(_POST_READ_OID))
-    controls_tagged = b"\xa0" + _ber_len(len(controls)) + controls
+    control = _build_read_control(_POST_READ_OID)
+    controls_tagged = b"\xa0" + _ber_len(len(control)) + control
 
     payload = _ber_seq(_ber_int(1) + add_request + controls_tagged)
-    raw = RawConnection(session.host, session.port)
-    outcome = raw.bind_then_send(payload, ADMIN_DN, ADMIN_PW)
-    if outcome.result_code == 0:
-        # Verify the entry exists
+    try:
+        raw = RawConnection(session.host, session.port)
+        resp = raw.bind_then_send_raw(payload, ADMIN_DN, ADMIN_PW)
+        controls = dict(parse_response_controls(resp))
+        if _POST_READ_OID not in controls:
+            return Result(
+                "4527.3.2.1",
+                Status.NOT_APPLICABLE,
+                detail="no post-read response control returned",
+            )
+        # The entry must exist (the add succeeded) for the post-read copy to be valid.
         _, entries = session.search(dn, 0, "(objectClass=*)", ["cn"])
         if entries:
             return Result("4527.3.2.1", Status.PASS)
         return Result(
             "4527.3.2.1", Status.NOT_APPLICABLE, detail="add succeeded but cannot verify"
         )
-    cleanup(session, dn)
-    return Result(
-        "4527.3.2.1",
-        Status.NOT_APPLICABLE,
-        detail=f"post-read add failed: {outcome.result_code}",
-    )
+    finally:
+        cleanup(session, dn)

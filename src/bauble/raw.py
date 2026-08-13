@@ -434,6 +434,103 @@ def parse_paged_cookie(control_value: bytes) -> bytes:
     return control_value[pos : pos + ck_len]
 
 
+def _split_messages(data: bytes) -> list[bytes]:
+    """Split raw response bytes into complete LDAPMessage PDUs (definite length)."""
+    messages: list[bytes] = []
+    pos = 0
+    while pos < len(data):
+        if data[pos] != 0x30:
+            break
+        m_len, next_pos = _parse_length(data, pos + 1)
+        end = next_pos + m_len
+        if end > len(data):
+            break
+        messages.append(data[pos:end])
+        pos = end
+    return messages
+
+
+def parse_search_entries(data: bytes) -> list[dict[str, list[bytes]]]:
+    """Extract attribute dicts from SearchResultEntry PDUs in raw response bytes.
+
+    ``SearchResultEntry ::= [APPLICATION 4] SEQUENCE { objectName LDAPDN,
+    attributes PartialAttributeList }`` where each attribute is
+    ``SEQUENCE { type OCTET STRING, vals SET OF OCTET STRING }``.
+    """
+    entries: list[dict[str, list[bytes]]] = []
+    for msg in _split_messages(data):
+        if len(msg) < 2 or msg[0] != 0x30:
+            continue
+        pos = 1
+        _, pos = _parse_length(msg, pos)
+        if pos >= len(msg) or msg[pos] != 0x02:  # messageID INTEGER
+            continue
+        pos += 1
+        mi_len, pos = _parse_length(msg, pos)
+        pos += mi_len
+        if pos >= len(msg) or msg[pos] != 0x64:  # [APPLICATION 4]
+            continue
+        pos += 1
+        entry_len, pos = _parse_length(msg, pos)
+        end = pos + entry_len
+        # objectName LDAPDN (OCTET STRING)
+        if pos >= end or msg[pos] != 0x04:
+            continue
+        pos += 1
+        dn_len, pos = _parse_length(msg, pos)
+        pos += dn_len
+        # PartialAttributeList (SEQUENCE OF)
+        if pos >= end or msg[pos] != 0x30:
+            continue
+        pos += 1
+        attrs_len, pos = _parse_length(msg, pos)
+        attrs_end = min(pos + attrs_len, end)
+        result: dict[str, list[bytes]] = {}
+        while pos + 1 < len(msg) and pos + 1 <= attrs_end:
+            if msg[pos] != 0x30:  # each attribute is a SEQUENCE
+                break
+            pos += 1
+            a_len, pos = _parse_length(msg, pos)
+            a_end = min(pos + a_len, attrs_end)
+            if pos >= a_end or msg[pos] != 0x04:  # type OCTET STRING
+                break
+            pos += 1
+            t_len, pos = _parse_length(msg, pos)
+            attr_type = msg[pos : pos + t_len].decode("utf-8", errors="replace")
+            pos += t_len
+            values: list[bytes] = []
+            if pos < a_end and msg[pos] == 0x31:  # vals SET OF
+                pos += 1
+                set_len, pos = _parse_length(msg, pos)
+                set_end = min(pos + set_len, a_end)
+                while pos + 1 <= set_end and pos + 1 < len(msg):
+                    if msg[pos] != 0x04:
+                        break
+                    pos += 1
+                    v_len, pos = _parse_length(msg, pos)
+                    values.append(msg[pos : pos + v_len])
+                    pos += v_len
+            result[attr_type] = values
+            pos = a_end
+        entries.append(result)
+    return entries
+
+
+def parse_search_response(data: bytes) -> tuple[int, list[dict[str, list[bytes]]]]:
+    """Parse a raw search response stream.
+
+    Returns ``(resultCode, entries)`` where ``resultCode`` comes from the
+    SearchResultDone PDU and ``entries`` are the parsed SearchResultEntry
+    attribute dicts.
+    """
+    result_code = -1
+    for msg in _split_messages(data):
+        outcome = _parse_ldap_result(msg)
+        if outcome is not None:
+            result_code = outcome.result_code
+    return result_code, parse_search_entries(data)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------

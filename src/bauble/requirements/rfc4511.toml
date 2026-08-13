@@ -26,7 +26,7 @@ section = "4.1.1"
 severity = "must"
 test_class = "A"
 text = "A parseable but otherwise invalid LDAP PDU MUST return a response with resultCode protocolError."
-covered_by = ["4511.4.2.8"]
+covered_by = ["4511.4.2.8", "4511.4.2.7"]
 
 [[requirement]]
 id = "4511:4.1.1.1:1"

@@ -34,17 +34,25 @@ def password_modify_accepted(session: Session) -> Result:
     outcome = session.extended(
         _PWMOD_OID, password_modify_request_value("bob-new-secret", _BOB_DN)
     )
-    # Restore original password
-    session.extended(_PWMOD_OID, password_modify_request_value(_BOB_PW, _BOB_DN))
     if outcome.result_code == 13:
         return Result(
             "3062.2.1",
             Status.NOT_APPLICABLE,
             detail="server requires confidentiality (TLS) for Password Modify",
         )
-    if outcome.result_code == 0:
-        return Result("3062.2.1", Status.PASS)
-    return Result("3062.2.1", Status.FAIL, detail=f"expected 0, got {outcome.result_code}")
+    if outcome.result_code != 0:
+        return Result("3062.2.1", Status.FAIL, detail=f"expected 0, got {outcome.result_code}")
+    # The password must actually have changed: rebind as bob with the new one.
+    changed = session.bind(_BOB_DN, "bob-new-secret")
+    if changed.result_code != 0:
+        return Result(
+            "3062.2.1",
+            Status.FAIL,
+            detail=f"password change not effective: rebind with new password got {changed.result_code}",
+        )
+    # Restore the original password.
+    session.extended(_PWMOD_OID, password_modify_request_value(_BOB_PW, _BOB_DN))
+    return Result("3062.2.1", Status.PASS)
 
 
 @assertion(

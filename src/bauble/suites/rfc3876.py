@@ -88,7 +88,7 @@ def matched_values_advertised(session: Session) -> Result:
     oid="1.2.826.0.1.3344810.2.3",
 )
 def matched_values_filter_returns_subset(session: Session) -> Result:
-    from bauble.raw import RawConnection
+    from bauble.raw import RawConnection, parse_search_entries
 
     bind_admin(session)
     dn = f"uid=mv-test,{TEST_BASE}"
@@ -99,8 +99,10 @@ def matched_values_filter_returns_subset(session: Session) -> Result:
     session.add(dn, attrs)
     try:
         # Build a ValuesReturnFilter for (description=beta)
-        # SimpleFilterItem equalityMatch [3] SEQUENCE { attr, value }
-        inner = _ber_seq(_ber_octet("description") + _ber_octet("beta"))
+        # SimpleFilterItem equalityMatch [3] AttributeValueAssertion { attr, value }
+        # Flat AttributeValueAssertion (matches the de-facto filter encoding
+        # used by ldapsearch/ldap3: no inner SEQUENCE around the two values).
+        inner = _ber_octet("description") + _ber_octet("beta")
         eq_filter = b"\xa3" + _ber_len(len(inner)) + inner
         # ValuesReturnFilter ::= SEQUENCE OF SimpleFilterItem
         vrf = _ber_seq(eq_filter)
@@ -111,8 +113,9 @@ def matched_values_filter_returns_subset(session: Session) -> Result:
         oid = _ber_octet(_MATCHED_VALUES_OID)
         criticality = b"\x01\x01\xff"  # TRUE
         control = _ber_seq(oid + criticality + cv)
-        controls = _ber_seq(control)
-        controls_tagged = b"\xa0" + _ber_len(len(controls)) + controls
+        # Single-SEQUENCE controls field (see rfc4527: OpenLDAP does not
+        # honor the SEQUENCE OF wrapper here — probed live).
+        controls_tagged = b"\xa0" + _ber_len(len(control)) + control
 
         # SearchRequest: [APPLICATION 3] SEQUENCE { baseObject, scope,
         #   derefAliases, sizeLimit, timeLimit, typesOnly, filter, attributes }
@@ -122,7 +125,7 @@ def matched_values_filter_returns_subset(session: Session) -> Result:
         size_limit = _ber_int(0)
         time_limit = _ber_int(0)
         types_only = b"\x01\x01\x00"
-        present_filter = b"\x87\x00"
+        present_filter = b"\x87\x0bobjectClass"  # (objectClass=*) present filter
         # Request description attribute
         attrs_ber = _ber_seq(_ber_octet("description"))
 
@@ -140,14 +143,19 @@ def matched_values_filter_returns_subset(session: Session) -> Result:
         payload = _ber_seq(_ber_int(1) + search_request + controls_tagged)
 
         raw = RawConnection(session.host, session.port)
-        outcome = raw.bind_then_send(payload, ADMIN_DN, ADMIN_PW)
-        # SearchResultDone resultCode
-        if outcome.result_code == 0:
+        resp = raw.bind_then_send_raw(payload, ADMIN_DN, ADMIN_PW)
+        entries = parse_search_entries(resp)
+        # Only values matching the ValuesReturnFilter may be returned: the
+        # entry's description must contain exactly the matching value (beta).
+        descriptions = [
+            v.decode("utf-8", errors="replace") for e in entries for v in e.get("description", [])
+        ]
+        if descriptions == ["beta"]:
             return Result("3876.2.1", Status.PASS)
         return Result(
             "3876.2.1",
             Status.NOT_APPLICABLE,
-            detail=f"matched values search returned {outcome.result_code}",
+            detail=f"matched values search returned {descriptions!r}",
         )
     finally:
         cleanup(session, dn)

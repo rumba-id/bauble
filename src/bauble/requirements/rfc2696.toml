@@ -7,7 +7,7 @@ section = "3"
 severity = "must"
 test_class = "A"
 text = "A search with the paged-results control is accepted and the server returns a page of results with a cookie."
-covered_by = ["2696.2.1"]
+covered_by = ["2696.2.1", "2696.2.2"]
 
 [[requirement]]
 id = "2696:3:2"
