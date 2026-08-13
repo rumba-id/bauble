@@ -14,6 +14,7 @@ _CORE = frozenset({Profile.CORE})
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
+    mutates=True,
     profiles=_CORE,
     text="vendorName is SINGLE-VALUE and NO-USER-MODIFICATION if present in root DSE.",
     strategy="Read root DSE, check vendorName. If present, verify single value. NOT_APPLICABLE if absent.",
@@ -26,8 +27,6 @@ def vendor_name_single_value(session: Session) -> Result:
 
 
 def _check_single_value_no_user_mod(session: Session, attr: str, aid: str) -> Result:
-    from bauble.session import MOD_REPLACE, Modification
-
     outcome, entries = session.search("", SCOPE_BASE_OBJECT, "(objectClass=*)", [attr])
     if outcome.result_code != 0 or not entries:
         return Result(aid, Status.NOT_APPLICABLE, detail="root DSE not readable")
@@ -37,7 +36,13 @@ def _check_single_value_no_user_mod(session: Session, attr: str, aid: str) -> Re
     if len(values) != 1:
         return Result(aid, Status.FAIL, detail=f"expected single {attr}, got {len(values)}")
     # NO-USER-MODIFICATION: a client modify of the attribute must be rejected.
-    mod = session.modify("", [Modification(MOD_REPLACE, attr, ["bauble-test"])])
+    # The root DSE (empty DN) is addressed via the raw layer: ldap3's client
+    # refuses empty DNs for modify.
+    from bauble.raw import RawConnection, build_modify_request
+    from bauble.suites._helpers import ADMIN_DN, ADMIN_PW
+
+    payload = build_modify_request(1, "", attr, ["bauble-test"])
+    mod = RawConnection(session.host, session.port).bind_then_send(payload, ADMIN_DN, ADMIN_PW)
     if mod.result_code == 0:
         return Result(aid, Status.FAIL, detail=f"{attr} is user-modifiable")
     return Result(aid, Status.PASS)
@@ -50,6 +55,7 @@ def _check_single_value_no_user_mod(session: Session, attr: str, aid: str) -> Re
     category=Category.DATA_MODEL,
     severity=Severity.MUST,
     test_class=TestClass.A,
+    mutates=True,
     profiles=_CORE,
     text="vendorVersion is SINGLE-VALUE and NO-USER-MODIFICATION if present in root DSE.",
     strategy="Read root DSE, check vendorVersion. If present, verify single value. NOT_APPLICABLE if absent.",

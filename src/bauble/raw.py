@@ -255,6 +255,31 @@ def _build_modify_increment(message_id: int, dn: str, attribute: str, increment_
     return _encode_sequence(_encode_integer(message_id) + modify_request)
 
 
+def build_modify_request(
+    message_id: int,
+    dn: str,
+    attribute: str,
+    values: list[str],
+    operation: int = 2,
+) -> bytes:
+    """Build an LDAPMessage containing a ModifyRequest with one change.
+
+    ``operation`` is the ModifyRequest change operation: replace (2), add (0),
+    delete (1). Unlike the ldap3 Session.modify, this accepts an empty DN
+    (the root DSE), which client libraries refuse to address.
+    """
+    val_ber = b"".join(_encode_octet_string(v) for v in values)
+    attr_set = b"\x31" + _encode_length(len(val_ber)) + val_ber
+    mod = _encode_sequence(_encode_octet_string(attribute) + attr_set)
+    op_enum = b"\x0a\x01" + bytes([operation])
+    change = _encode_sequence(op_enum + mod)
+    changes = _encode_sequence(change)
+    object_dn = _encode_octet_string(dn)
+    modify_contents = object_dn + changes
+    modify_request = b"\x66" + _encode_length(len(modify_contents)) + modify_contents
+    return _encode_sequence(_encode_integer(message_id) + modify_request)
+
+
 def _parse_ldap_result(data: bytes) -> Outcome | None:
     """Parse a generic LDAPResult from a raw LDAP message.
 

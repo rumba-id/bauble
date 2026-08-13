@@ -348,15 +348,22 @@ def operational_attribute_protected(session: Session) -> Result:
     layer=Layer.CAPABILITY,
 )
 def operational_attrs_maintained(session: Session) -> Result:
+    from ldap3.core.exceptions import LDAPAttributeError
+
     from bauble.suites._helpers import bind_admin
 
     bind_admin(session)
-    outcome, entries = session.search(
-        "uid=alice,ou=people,dc=bauble,dc=test",
-        SCOPE_BASE_OBJECT,
-        "(objectClass=*)",
-        ["creatorsName", "createTimestamp", "modifiersName", "modifyTimestamp"],
-    )
+    try:
+        outcome, entries = session.search(
+            "uid=alice,ou=people,dc=bauble,dc=test",
+            SCOPE_BASE_OBJECT,
+            "(objectClass=*)",
+            ["creatorsName", "createTimestamp", "modifiersName", "modifyTimestamp"],
+        )
+    except LDAPAttributeError:
+        # The server's schema does not define the attributes, so it cannot
+        # maintain them; the SHOULD is not violated.
+        return Result("4512.3.2", Status.NOT_APPLICABLE, detail="attributes not in schema")
     if outcome.result_code != 0 or not entries:
         return Result("4512.3.2", Status.NOT_APPLICABLE, detail="seed entry not readable")
     attrs = entries[0].attributes

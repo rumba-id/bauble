@@ -25,7 +25,7 @@ delivers a prerequisite for the next.
 |---|---|---|
 | 2.1 | Fidelity & auditability | assertion-requirement fidelity audit; auditable assertion metadata; intrinsic-gap reasons | **shipped in v2.1.0** |
 | 2.2 | Coverage & capability | PARTIALLY_COVERED ontology; advertise-check coverage growth; capability model completion | **shipped in v2.2.0** |
-| 2.3 | Continuous verification | full-suite CI against both targets |
+| 2.3 | Continuous verification | full-suite CI against all targets; verdict-regression gate; journal artifacts | **done on feat/v2.3-continuous-verification** |
 | 2.4 | Broad applicability | third test target; seed-DIT portability | third target + portability shipped in v2.2.0's cycle |
 | 2.5 | Wire completeness (conditional) | raw `Session` if the wire-UNTESTABLE count justifies it |
 
@@ -110,8 +110,17 @@ target.
 2. Emit and archive the journals/summaries as build artifacts so every commit
    has an auditable conformance report attached.
 
-Done when: CI is green only if both targets' full reports match the expected
+Done when: CI is green only if all targets' full reports match the expected
 verdict set.
+
+Status: done. The four live CI jobs (one per target) run the smoke test
+plus the verdict-regression gate: the full core profile's assertion ->
+status set must equal `ci/golden/<target>.txt`. Journals are uploaded as
+build artifacts per target. Goldens regenerate intentionally with
+`BAUBLE_UPDATE_GOLDEN=1`; drift detection caught and fixed a real bug on
+the way in (RFC 4528's assertion control used the double-SEQUENCE wire
+form OpenLDAP does not honor, so FALSE assertions silently succeeded on
+OpenLDAP and OpenDJ).
 
 ## v2.4 — Broad applicability
 

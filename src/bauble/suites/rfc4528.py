@@ -110,8 +110,8 @@ def _build_modify_with_assertion(
     object_dn = _ber_octet(dn)
     modify_contents = object_dn + changes
     modify_request = b"\x66" + _ber_len(len(modify_contents)) + modify_contents
-    controls = _ber_seq(_build_assertion_control(filter_ber))
-    controls_tagged = b"\xa0" + _ber_len(len(controls)) + controls
+    control = _build_assertion_control(filter_ber)
+    controls_tagged = b"\xa0" + _ber_len(len(control)) + control
     return _ber_seq(_ber_int(message_id) + modify_request + controls_tagged)
 
 
@@ -251,8 +251,8 @@ def assertion_delete_true(session: Session) -> Result:
         dn_bytes = dn.encode()
         del_request = b"\x4a" + _ber_len(len(dn_bytes)) + dn_bytes
 
-        controls = _ber_seq(_build_assertion_control(_TRUE_FILTER))
-        controls_tagged = b"\xa0" + _ber_len(len(controls)) + controls
+        control = _build_assertion_control(_TRUE_FILTER)
+        controls_tagged = b"\xa0" + _ber_len(len(control)) + control
 
         payload = _ber_seq(_ber_int(1) + del_request + controls_tagged)
         raw = RawConnection(session.host, session.port)
@@ -291,8 +291,8 @@ def assertion_search_false(session: Session) -> Result:
         return Result("4528.3.4", Status.NOT_APPLICABLE, detail="assertion control not advertised")
     dn = f"uid=alice,{TEST_BASE}"
 
-    controls = _ber_seq(_build_assertion_control(_FALSE_FILTER))
-    controls_tagged = b"\xa0" + _ber_len(len(controls)) + controls
+    control = _build_assertion_control(_FALSE_FILTER)
+    controls_tagged = b"\xa0" + _ber_len(len(control)) + control
 
     # Build SearchRequest (base scope, no limits, typesOnly=FALSE)
     base = _ber_octet(dn)

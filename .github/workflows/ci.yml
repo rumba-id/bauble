@@ -24,21 +24,30 @@ jobs:
       github.ref == 'refs/heads/main' ||
       github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: openldap
+            smoke: tests/test_live.py
+          - target: 389ds
+            smoke: tests/test_live_389ds.py
+          - target: opendj
+            smoke: tests/test_live_opendj.py
+          - target: lldap
+            smoke: tests/test_live_lldap.py
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: sudo apt-get update && sudo apt-get install -y podman
       - run: uv sync
-      - run: BAUBLE_LIVE=1 uv run pytest tests/test_live.py
-
-  live-389ds:
-    if: >
-      github.ref == 'refs/heads/main' ||
-      github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - run: sudo apt-get update && sudo apt-get install -y podman
-      - run: uv sync
-      - run: BAUBLE_LIVE=1 uv run pytest tests/test_live_389ds.py
+      - run: BAUBLE_LIVE=1 uv run pytest ${{ matrix.smoke }}
+      - name: Verdict regression gate (full core profile vs golden)
+        run: |
+          BAUBLE_LIVE=1 uv run pytest \
+            tests/test_verdict_golden.py -k ${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conformance-journal-${{ matrix.target }}
+          path: ci/artifacts/*.jsonl
