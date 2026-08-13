@@ -85,3 +85,80 @@ def not_filter(session: Session) -> Result:
     return Result(
         "4515.3.3", Status.FAIL, detail="alice unexpectedly present in NOT-filter results"
     )
+
+
+@assertion(
+    id="4515.3.4",
+    rfc=4515,
+    section="§3",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="An equality filter matches the exact attribute value.",
+    strategy="Search with (uid=alice); expect exactly alice.",
+)
+def equality_filter(session: Session) -> Result:
+    outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(uid=alice)")
+    if outcome.result_code == 0 and len(entries) == 1 and entries[0].dn.startswith("uid=alice"):
+        return Result("4515.3.4", Status.PASS)
+    return Result("4515.3.4", Status.FAIL, detail=f"expected alice, got {len(entries)} entries")
+
+
+@assertion(
+    id="4515.3.5",
+    rfc=4515,
+    section="§3",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="A substring filter with initial component matches leading substrings.",
+    strategy="Search with (cn=Alice*); expect Alice Anderson.",
+)
+def substring_initial(session: Session) -> Result:
+    outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(cn=Alice*)")
+    dns = {e.dn for e in entries}
+    if outcome.result_code == 0 and any("uid=alice" in dn for dn in dns):
+        return Result("4515.3.5", Status.PASS)
+    return Result(
+        "4515.3.5", Status.FAIL, detail=f"substring initial failed: {len(entries)} entries"
+    )
+
+
+@assertion(
+    id="4515.3.6",
+    rfc=4515,
+    section="§3",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="A substring filter with any component matches interior substrings.",
+    strategy="Search with (cn=*Anderson*); expect Alice Anderson.",
+)
+def substring_any(session: Session) -> Result:
+    outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(cn=*Anderson*)")
+    if outcome.result_code == 0 and any(e.dn.startswith("uid=alice") for e in entries):
+        return Result("4515.3.6", Status.PASS)
+    return Result("4515.3.6", Status.FAIL, detail="substring any failed")
+
+
+@assertion(
+    id="4515.3.7",
+    rfc=4515,
+    section="§3",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="A present filter matches entries where the attribute exists.",
+    strategy="Search with (cn=*); expect entries with cn present.",
+)
+def present_filter(session: Session) -> Result:
+    outcome, entries = session.search(_ROOT, SCOPE_WHOLE_SUBTREE, "(cn=*)")
+    if outcome.result_code == 0 and len(entries) >= 2:
+        return Result("4515.3.7", Status.PASS)
+    return Result(
+        "4515.3.7", Status.FAIL, detail=f"present filter expected >=2, got {len(entries)}"
+    )

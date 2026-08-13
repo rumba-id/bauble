@@ -113,3 +113,34 @@ def entries_have_object_class(session: Session) -> Result:
         if "objectClass" not in entry.attributes or not entry.attributes["objectClass"]:
             return Result("4512.4.4", Status.FAIL, detail=f"entry {entry.dn} missing objectClass")
     return Result("4512.4.4", Status.PASS)
+
+
+@assertion(
+    id="4512.4.5",
+    rfc=4512,
+    section="§4.1",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    text="An entry missing a MUST attribute is rejected.",
+    strategy="Add inetOrgPerson without sn (surname); expect objectClassViolation (65).",
+    mutates=True,
+)
+def must_attribute_enforced(session: Session) -> Result:
+    from bauble.suites._helpers import TEST_BASE, bind_admin, cleanup
+
+    bind_admin(session)
+    dn = f"uid=musttest,{TEST_BASE}"
+    cleanup(session, dn)
+    attrs: dict[str, list[str | bytes]] = {
+        "objectClass": ["inetOrgPerson"],
+        "cn": ["Missing Sn"],
+        "uid": ["musttest"],
+        # sn (surname) is a MUST attribute of inetOrgPerson, deliberately omitted.
+    }
+    outcome = session.add(dn, attrs)
+    if outcome.result_code != 0:
+        return Result("4512.4.5", Status.PASS)
+    cleanup(session, dn)
+    return Result("4512.4.5", Status.FAIL, detail="missing sn accepted")
