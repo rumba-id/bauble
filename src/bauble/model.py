@@ -156,6 +156,9 @@ class Assertion:
     layer: Layer = Layer.SEMANTIC
     """Conformance layer this assertion establishes."""
 
+    oid: str = ""
+    """Feature OID this assertion verifies (capability layer only)."""
+
     strategy: str = ""
     """How the test is realized (PROCEDURE/INPUT/EXPECTED where useful)."""
 

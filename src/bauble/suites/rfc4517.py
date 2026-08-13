@@ -151,3 +151,22 @@ def generalized_time_match(session: Session) -> Result:
     if outcome.result_code == 0 and len(entries) >= 2:
         return Result("4517.4.5", Status.PASS)
     return Result("4517.4.5", Status.FAIL, detail="generalizedTimeMatch failed")
+
+
+@assertion(
+    id="4517.4.6",
+    rfc=4517,
+    section="§4.2",
+    category=Category.SCHEMA,
+    severity=Severity.MUST,
+    test_class=TestClass.B,
+    profiles=_INTEROP,
+    text="caseExactMatch compares attribute values case-sensitively.",
+    strategy="Requires a user-modifiable case-exact attribute; the base RFC 4519 schema has none.",
+)
+def case_exact_match(session: Session) -> Result:
+    return Result(
+        "4517.4.6",
+        Status.UNTESTABLE,
+        detail="no case-exact attribute in base schema (caseExactMatch is on operational/config attrs)",
+    )

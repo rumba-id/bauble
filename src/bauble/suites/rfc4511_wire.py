@@ -154,3 +154,51 @@ def indefinite_length_rejected(session: Session) -> Result:
             pass
     # Either an error response or a clean disconnect is acceptable.
     return Result("4511.5.1.1", Status.PASS)
+
+
+@assertion(
+    id="4511.4.1.1.3",
+    rfc=4511,
+    section="§4.1.1.1",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.B,
+    profiles=_CORE,
+    layer=Layer.WIRE,
+    text="The messageID of a request MUST be unique within the LDAP session.",
+    strategy="Client-side requirement; the server cannot be tested for it portably.",
+)
+def message_id_uniqueness(session: Session) -> Result:
+    return Result("4511.4.1.1.3", Status.UNTESTABLE, detail="client-side requirement")
+
+
+@assertion(
+    id="4511.5.1.2",
+    rfc=4511,
+    section="§5.1",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.B,
+    profiles=_CORE,
+    layer=Layer.WIRE,
+    text="BER BOOLEAN values are encoded 0xFF (TRUE) or 0x00 (FALSE).",
+    strategy="Client-side encoding restriction; not observable from the server side.",
+)
+def boolean_encoding(session: Session) -> Result:
+    return Result("4511.5.1.2", Status.UNTESTABLE, detail="client-side encoding restriction")
+
+
+@assertion(
+    id="4511.4.1.11.1",
+    rfc=4511,
+    section="§4.1.11",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.B,
+    profiles=_CORE,
+    layer=Layer.WIRE,
+    text="The controls field, when present, appears after the protocolOp.",
+    strategy="Structural BER requirement; correct by construction in valid PDUs.",
+)
+def controls_position(session: Session) -> Result:
+    return Result("4511.4.1.11.1", Status.UNTESTABLE, detail="structural requirement")

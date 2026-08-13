@@ -62,3 +62,35 @@ def rename_to_existing(session: Session) -> Result:
         Status.PASS if outcome.result_code == 68 else Status.FAIL,
         detail=None if outcome.result_code == 68 else f"expected 68, got {outcome.result_code}",
     )
+
+
+@assertion(
+    id="4511.4.9.3",
+    rfc=4511,
+    section="§4.9",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    mutates=True,
+    text="ModifyDN with newSuperior moves an entry to a new parent.",
+    strategy="Move an entry from ou=people to dc=bauble,dc=test; expect 0.",
+)
+def rename_with_new_superior(session: Session) -> Result:
+    bind_admin(session)
+    dn = "uid=test-move,ou=people,dc=bauble,dc=test"
+    new_dn = "uid=test-move,dc=bauble,dc=test"
+    session.add(dn, test_entry_attrs("test-move"))
+    outcome = session.modify_dn(
+        dn,
+        "uid=test-move",
+        delete_old_rdn=False,
+        new_superior="dc=bauble,dc=test",
+    )
+    cleanup(session, new_dn)
+    cleanup(session, dn)
+    return Result(
+        "4511.4.9.3",
+        Status.PASS if outcome.result_code == 0 else Status.FAIL,
+        detail=None if outcome.result_code == 0 else f"expected 0, got {outcome.result_code}",
+    )
