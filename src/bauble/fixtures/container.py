@@ -52,6 +52,8 @@ class OpenLDAPTarget:
         self.host_port = host_port
         self.ldaps_port = ldaps_port
         self.image = image
+        self.admin_dn = "cn=admin,dc=bauble,dc=test"
+        self.admin_pw = "bauble-admin"
         self.capability_path = _capability_path("capability-openldap.toml")
 
     def build(self) -> None:

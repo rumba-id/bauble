@@ -1,0 +1,19 @@
+# Capability statement for the podman LLDAP fixture.
+# Declared from a live probe of the fixture's root DSE (2026-08-13).
+# LLDAP is a minimal LDAPv3 interface over its own user store: no
+# request controls, no SASL, and the DIT is not client-writable.
+[server]
+writable = false
+resettable = false
+
+[features]
+naming_context = true
+alt_server = false
+supported_extension = [
+    "1.3.6.1.4.1.4203.1.11.1",
+    "1.3.6.1.4.1.4203.1.11.3",
+]
+supported_features = [
+    "1.3.6.1.4.1.4203.1.5.1",
+]
+supported_sasl_mechanisms = []

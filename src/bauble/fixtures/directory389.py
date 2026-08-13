@@ -47,6 +47,8 @@ class Directory389Target:
         self.name = name
         self.host_port = host_port
         self.image = image
+        self.admin_dn = "cn=Directory Manager"
+        self.admin_pw = "bauble-admin"
         self.capability_path = _capability_path("capability-389ds.toml")
 
     def build(self) -> None:

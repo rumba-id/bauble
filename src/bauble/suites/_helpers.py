@@ -60,3 +60,18 @@ def subschema_dn(session: Session) -> str | None:
         return None
     v = vals[0]
     return v if isinstance(v, str) else None
+
+
+def attribute_value(entry: object, name: str) -> list[str | bytes] | None:
+    """Case-insensitive attribute lookup (attribute-type names are case-insensitive).
+
+    ldap3 returns attributes under the server's canonical name; OpenLDAP and
+    389 DS expose ``entryDN``/``entryUUID`` mixed-case, LLDAP exposes them
+    lowercased (``entrydn``/``entryuuid``).
+    """
+    attrs: dict[str, list[str | bytes]] = getattr(entry, "attributes", {})
+    lowered = name.lower()
+    for key, value in attrs.items():
+        if key.lower() == lowered:
+            return value
+    return None

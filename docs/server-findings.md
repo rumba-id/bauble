@@ -28,6 +28,39 @@ that the investigation resolved as a suite bug instead.
 | Does not advertise the server-side sort control OIDs | 1.2.840.113556.1.4.473/.474 absent from supportedControl, though the sort operation itself works. | `2891.2.2` NOT_APPLICABLE |
 | Requires a non-empty AttributeSelection in Pre/Post-Read controls | An empty selection yields strongAuthRequired rather than a response control (probed against `ldapmodify -e preread`). | `4527.3.1.1`/`4527.3.2.1` behavior note |
 
+## OpenDJ
+
+| Finding | Evidence | Verdict |
+|---|---|---|
+| Anonymous Who-Am-I returns `dn:` instead of an empty response field | RFC 4532 §3: the anonymous response field "is present but empty"; OpenDJ returns the authzId `dn:` (empty DN). | `4532.1.1` FAIL |
+| Accepts a language RANGE option on add | RFC 3866 §3 SHALL reject; OpenDJ accepts. Same deviation as 389 DS. | `3866.3.3` FAIL |
+| Critical matched-values control on a non-search operation is processed, not rejected | RFC 4511 §4.1.11: not appropriate for the operation + critical -> unavailableCriticalExtension; OpenDJ returns compareTrue (6). | `3876.2.2` FAIL |
+| Increment with multiple values returns noSuchObject instead of protocolError | RFC 4525: protocolError. OpenDJ returns 32. | `4525.2.3` FAIL |
+| Increment on a non-incrementable attribute returns invalidAttributeSyntax instead of constraintViolation | RFC 4525: constraintViolation or another appropriate error; 21 is arguably appropriate — flag for review. | `4525.2.4` FAIL |
+| Assertion control advertised but FALSE assertions not honored | OpenDJ advertises 1.3.6.1.1.12; a FALSE assertion filter returns success (0) instead of assertionFailed (122). | `4528.3.2`, `4528.3.4` FAIL |
+| AuthzId response control not implemented | 2.16.840.1.113730.3.4.16 advertised, .15 (response) not; no response control returned. | `3829.2.1`, `3829.4.1` NOT_APPLICABLE |
+| Language ranges not implemented | `description;lang-en-` echoes the literal option (SHOULD-level, allowed). | `3866.3.1.1`, `3866.3.1.2` NOT_APPLICABLE |
+| Maintains 2 of the 4 operational attributes on the seed entry | creatorsName/createTimestamp yes; modifiersName/modifyTimestamp absent. | `4512.3.2` NOT_APPLICABLE |
+
+## LLDAP
+
+The minimal end of the spectrum: an LDAPv3 interface over an identity
+store, read-mostly, no request controls, no SASL. Full-profile verdicts:
+most write-path assertions are NOT_APPLICABLE (the interface is not
+client-writable), the wire basics pass, and the gaps below are the
+interface's actual limits.
+
+| Finding | Evidence | Verdict |
+|---|---|---|
+| Rejects anonymous binds | RFC 4513: anonymous bind is a valid request; LLDAP returns inappropriateAuthentication (48). | `4511.4.2.1` FAIL |
+| Unrecognized extended request returns unwillingToPerform, not protocolError | RFC 4511 §4.12: protocolError. LLDAP returns 53. | `4511.4.12.1` FAIL |
+| Who-Am-I returns an empty response even for an authenticated user | RFC 4532: the authzId of the bound identity; LLDAP returns empty for alice. | `4532.1.1` FAIL |
+| `+` selector returns no operational attributes | RFC 3673: '+' MUST return all operational attributes; LLDAP returns none. entryUUID is only exposed under '*'. | `3673.2.1`, `4530.2.4.1` FAIL |
+| No entryDN attribute | RFC 5020: entryDN is not provided at all. | `5020.2.1`, `5020.2.2`, `5020.2.4` FAIL |
+| Empty AND/OR filters not evaluated | RFC 4526 SHALL allow; LLDAP denies the search (50). | `4526.2.1`, `4526.2.2` FAIL |
+| Critical control on a compare closes the connection | RFC 4511 §4.1.11: unavailableCriticalExtension; LLDAP terminates instead of responding. | `3876.2.2`, `3876.2.3` FAIL |
+| `@objectclass` raw searches denied | The @person attribute selection is not honored (50). | `4529.3.1`, `4529.3.2` FAIL |
+
 ## Investigated and resolved as suite bugs (not findings)
 
 - **389 DS "missing entryDN"** — 389 DS implements entryDN under its

@@ -117,8 +117,11 @@ verdict set.
 Demonstrate the "any LDAPv3 implementation" claim beyond two servers, and
 make the seed a portable input rather than a harness-only convention.
 
-1. **Third test target** — ApacheDS or LLDAP, following the OpenLDAP / 389 DS
-   fixture pattern (Containerfile, seed, live test, CI job).
+1. **Third test target** — OpenDJ and LLDAP landed as podman fixtures
+   (fixtures/opendj.py, fixtures/lldap.py, capability statements, live
+   tests, `--target-type opendj|lldap`). OpenDJ is the enterprise Java
+   endpoint; LLDAP is the minimal read-mostly interface. Both surfaced
+   new findings recorded in docs/server-findings.md.
 2. **Seed-DIT portability** — the base seed is a bauble convention; real
    servers differ (ACL policy, subschema location, schema). Document how an
    operator loads the seed and adjusts for these; the capability file is the
