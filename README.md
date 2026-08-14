@@ -14,6 +14,7 @@ for any modern LDAPv3 implementation.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.13+](https://img.shields.io/badge/Python-3.13+-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![Version: 2.3.0](https://img.shields.io/badge/version-2.3.0-3776AB.svg?style=flat)](CHANGELOG.md)
 </div>
 
 ---
@@ -26,10 +27,14 @@ for any modern LDAPv3 implementation.
 - [v2.x roadmap](docs/v2-roadmap.md)
 - [Server findings](docs/server-findings.md)
 - [Operator guide](docs/operator-guide.md)
+- [v2.1 fidelity review](docs/v2.1-fidelity-review.md)
+- [v2.0 plan](docs/v2.0-plan.md)
+- [v1.1 plan](docs/v1.1-plan.md)
 
 Current coverage facts are never committed to the docs. Run `bauble coverage`
 to print them live from the registry and requirements corpus — per-RFC
-requirement coverage, not just assertion counts. See the
+requirement coverage (COVERED / PARTIALLY_COVERED / UNCOVERED), not just
+assertion counts. See the
 [design notes](docs/design-notes.md).
 
 ## Goal
@@ -134,11 +139,18 @@ Use `--fresh-target` to force a fresh container (opt-in, slower).
 
 ### Additional targets
 
-The OpenLDAP target is the default. A 389 Directory Server target is also
-available for cross-implementation checks:
+The OpenLDAP target is the default. Additional targets are available for
+cross-implementation checks:
 
 ```bash
+# 389 Directory Server
 uv run bauble run --target --target-type 389ds
+
+# OpenDJ
+uv run bauble run --target --target-type opendj
+
+# LLDAP
+uv run bauble run --target --target-type lldap
 ```
 
 Its admin DN differs (`cn=Directory Manager`). Override credentials and the
