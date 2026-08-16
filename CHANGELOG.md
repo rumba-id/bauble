@@ -3,6 +3,18 @@
 All notable changes to bauble. Entries describe what changed; they do not
 restate coverage totals. Run `bauble coverage` for current figures.
 
+## v2.3.1 — 2026-08-16
+
+Version-field and documentation reconciliation. No code changes. The v2.x
+releases advanced the architecture but never bumped the packaging metadata:
+`pyproject.toml` still declared 2.0.0 (last bumped for the v2.0.0 tag) and
+`bauble.__version__` still declared 1.0.0. Both now match this tag, `uv.lock`
+is regenerated, and the README version badge is corrected.
+
+The README refresh that landed on main after v2.3.0 — documentation index,
+operator-guide and server-findings links, current badge, target examples —
+is folded into this release.
+
 ## v2.3.0 — 2026-08-13
 
 Continuous verification. The full core profile's verdict set is now a

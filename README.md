@@ -14,7 +14,7 @@ for any modern LDAPv3 implementation.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.13+](https://img.shields.io/badge/Python-3.13+-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
-[![Version: 2.3.0](https://img.shields.io/badge/version-2.3.0-3776AB.svg?style=flat)](CHANGELOG.md)
+[![Version: 2.3.1](https://img.shields.io/badge/version-2.3.1-3776AB.svg?style=flat)](CHANGELOG.md)
 </div>
 
 ---
