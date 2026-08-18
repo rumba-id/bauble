@@ -14,7 +14,7 @@ assertion. Each assertion carries:
 - **Severity** — the requirement strength from RFC 2119.
 - **Profile** — which capability tier the assertion belongs to.
 - **Text** — the requirement, stated in plain language.
-- **Ref** — the RFC section the assertion verifies.
+- **Section** — the RFC section the assertion verifies.
 - **Strategy** — how the test is realized, including a
   `PROCEDURE / INPUT / EXPECTED` block where useful.
 
@@ -59,35 +59,34 @@ honestly what was actually verified.
 
 ## Coverage boundary
 
-bauble drives the server under test through a high-level LDAP client. That
-choice buys portability and a small dependency surface, but the edge it sets
-is narrower than it first appears. Most negative paths are reachable, because
-an error can usually be triggered with a *valid operation on bad data*:
-binding with wrong credentials (`invalidCredentials`), adding a duplicate
-entry (`entryAlreadyExists`), comparing a missing attribute
-(`noSuchAttribute`), or attaching an unknown-critical control (the client
-lets you build a control with any OID and criticality and attach it to a
-search, exercising `unavailableCriticalExtension`). Result codes, the
-`matchedDN` field, and referral fields are all readable on the response.
+bauble drives the server under test through a high-level LDAP client for
+most operations. That choice buys portability and a small dependency
+surface. Most negative paths are reachable, because an error can usually
+be triggered with a *valid operation on bad data*: binding with wrong
+credentials (`invalidCredentials`), adding a duplicate entry
+(`entryAlreadyExists`), comparing a missing attribute (`noSuchAttribute`),
+or attaching an unknown-critical control (the client lets you build a
+control with any OID and criticality and attach it to a search,
+exercising `unavailableCriticalExtension`). Result codes, the `matchedDN`
+field, and referral fields are all readable on the response.
 
-What the client genuinely cannot do is send a *structurally invalid*
-protocol unit: a malformed BER encoding, an unrecognized message structure,
-or some protocol-version edges. It validates and builds protocol units on the
-caller's behalf and raises before anything non-conformant reaches the wire.
-Only that narrow class — wire-format malformation, concentrated in RFC 4511
-§4.1 PDU handling and a few bind edges — is beyond reach. A further slice of
-assertions is untestable for *intrinsic* reasons no client can fix (server
-timing, internal state, unsolicited notifications, "every entry…"
-exhaustiveness); a raw sender would not help those either.
+What the client library genuinely cannot do is send a *structurally
+invalid* protocol unit. For that class bauble ships a stdlib-only raw
+BER+socket layer (`bauble.raw`, added in v2.0.0): malformed BER,
+indefinite-length encodings, arbitrary protocol versions, empty-DN
+modifies, control-carrying PDUs ldap3 will not construct, and multi-step
+wire sequences (bind + abandon on one session). Wire-format malformation
+is therefore testable, and the wire assertions carry `layer = WIRE`.
+
+The remaining `UNTESTABLE` records are *intrinsic* — requirements no
+client can verify portably because they are client-side statements,
+exhaustiveness claims over all entries, or unobservable server-internal
+behavior (see the corpus `note` fields for the recorded reasons). A raw
+sender would not help those either.
 
 Unreachable requirements are not silently dropped. Each is recorded as
 `UNTESTABLE` with the reason, and reporters surface the `UNTESTABLE` count
-per RFC so the boundary is visible in every report. The `Session` contract is
-the seam that keeps the option open: a raw-protocol `Session` could later be
-added to reach the wire-format class. Whether that earns its keep is a
-data-driven call, made at the end of Phase 5 once we can count exactly how
-many assertions land `UNTESTABLE` for wire-format reasons versus intrinsic
-ones.
+per profile and per layer so the boundary is visible in every report.
 
 ## Profiles
 
@@ -119,8 +118,11 @@ features the target server implements.
 
 When a feature is declared unsupported, its presence test auto-passes. The
 server genuinely does not implement the feature, so its absence is
-conformant, not a failure. The capability statement also lets bauble target
-extended-operation tests at OIDs the server actually supports.
+conformant, not a failure. Assertions declare their applicability with
+`requires_features` (currently the RFC 4525 increment assertions gate on
+the advertised feature OID); a bare `--server` run starts from a
+non-writable statement so mutations require `--allow-mutation` or an
+explicit `writable = true`.
 
 ## Execution model: prerequisites and blocked propagation
 
@@ -174,43 +176,46 @@ Safety boundary: bauble never seeds or wipes a server it does not own.
 
 - **PASS** — assertion holds.
 - **FAIL** — assertion violated.
-- **NOT_APPLICABLE** — requirement does not apply (feature declared unsupported).
+- **NOT_APPLICABLE** — requirement conditional on an unimplemented
+  optional feature the server does not claim to support.
 - **SKIP** — excluded by the operator's selection.
 - **BLOCKED** — a prerequisite failed.
 - **UNTESTABLE** — no portable test exists.
-- **NA** — server feature not advertised.
 
 A conformance verdict for a profile: every mandatory, testable assertion in
 the profile is `PASS` or `NOT_APPLICABLE`, with no `FAIL`. Optional (`SHOULD`/
 `MAY`) failures are reported as warnings, not conformance failures.
-
 ## Reporting
 
-bauble emits two outputs:
+bauble emits four reporters over one record format:
 
-- A **journal** — the raw, machine-readable record of every assertion and
-  its result. This is the source of truth and is suitable for archival and
-  for diffing results across runs or server versions.
-- A **summary** — a human-readable rollup: per-assertion, per-RFC, and
-  per-profile, ending in an overall conformance verdict.
+- A **journal** — JSON lines, the raw machine-readable record of every
+  assertion and its result, denormalized so it is self-contained. This is
+  the source of truth, suitable for archival and for diffing results
+  across runs or server versions.
+- A **summary** — human rollup: per-RFC and per-profile verdicts, a
+  per-layer rollup, a per-OID capability table, and an overall verdict.
+- **text** — per-assertion lines plus a status count.
+- **junit** — JUnit XML for CI integration.
 
-The journal is primary; the summary is derived from it.
+The journal is primary; the summary is derived from it. CI gates verdicts
+against per-target goldens (`ci/golden/`), so a verdict change requires an
+intentional, reviewed golden update.
 
 ## Core-profile fixtures
 
-Core-profile assertions need a richer directory than Interop:
+Core-profile assertions need a richer directory than Interop. The base
+seed (`src/bauble/fixtures/seed.ldif`) provides it:
 
-- **Schema extensions** beyond the core — additional attribute and object
-  classes so schema-handling assertions have something to exercise.
-- **Referral entries** the server returns for naming contexts it does not
-  manage. The client inspects the returned URL but does not follow it.
-- **Continuation references**, which require a second server holding a
-  subordinate branch configured as a knowledge reference. Again the client
-  inspects the reference without following it.
+- An **alias entry** (`uid=alice-alias` → `uid=alice`) for the
+  derefAliases assertions.
+- A **referral entry** (`ou=remote`, pointing at a URL the server does
+  not manage) for the continuation-reference assertion — the client
+  inspects the returned reference and does not follow it.
 
-bauble's harness seeds these fixtures and documents the optional
-second-server setup so an operator can run the Core profile without
-guessing at the DIT shape.
+No second server is required: the referral target is never contacted.
+The seed is a bauble convention (RFCs define no minimal DIT);
+`docs/operator-guide.md` covers loading it into a non-fixture server.
 
 ## Requirements corpus and coverage
 

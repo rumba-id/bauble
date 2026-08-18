@@ -98,10 +98,16 @@ uv run bauble run --server ldap://host:389 --capability capability.toml \
 ```
 
 `writable = false` makes every mutating assertion NOT_APPLICABLE instead
-of failing against a read-only server. `supported_features` / 
-`supported_control` / `supported_extension` gate the feature checks and
-the advertise assertions. `supported_sasl_mechanisms` is available for
-SASL-gated assertions.
+of failing against a read-only server — and a bare `--server` run
+without a capability file starts non-writable, so mutations need
+`writable = true` in the file or the `--allow-mutation` flag.
+`supported_features` gates the feature-dependent assertions (the
+RFC 4525 increment pair). The advertise assertions (for example
+`2891.2.2`, `3062.3.2`) probe the server's live root DSE directly and
+report NOT_APPLICABLE when the OID is absent; `supported_control`,
+`supported_extension`, and `supported_sasl_mechanisms` are declaration
+fields for the runner's applicability model — no current assertion gates
+on them.
 
 ## Adjustments the suite makes for you
 
@@ -116,11 +122,13 @@ These were the 389 DS lessons, now built into the suite:
 - **Attribute-name case.** Attribute types are case-insensitive; servers
   return them under different casing (LLDAP lowercases `entryUUID` to
   `entryuuid`). The suite's attribute lookup is case-insensitive.
-- **Schema gaps.** The seed uses `inetOrgPerson` and (for the
-  integerMatch assertion) `posixAccount`. If your schema lacks them,
-  either add the schema or exclude the affected assertions. 389 DS's
-  `uidNumber` lacks the ordering rule, so greaterOrEqual on it matches
-  nothing; the integerMatch assertion tests numeric equality instead.
+- **Schema gaps.** Several mutating assertions create temporary entries
+  using `inetOrgPerson` and, for the increment / integer-syntax checks,
+  `posixAccount` — the seed itself does not contain posixAccount entries.
+  If your schema lacks them, either add the schema or exclude the
+  affected assertions. 389 DS's `uidNumber` lacks the ordering rule, so
+  greaterOrEqual on it matches nothing; the integerMatch assertion tests
+  numeric equality instead.
 - **Admin DN.** `BAUBLE_ADMIN_DN` defaults to OpenLDAP's admin; set it
   to your server's admin (e.g. `cn=Directory Manager`).
 

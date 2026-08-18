@@ -8,6 +8,15 @@ phases. Each phase ends with a green test suite, a clean commit, and a
 working slice of the full path
 (`uv run python -m bauble run ... -> journal + summary`).
 
+> **Status:** executed through Phase 8 plus the v1.x/v2.x series. This is
+> a historical planning record; the README, the design notes, and
+> `bauble coverage` describe the shipped state. Notable deviations from
+> the plan: the raw wire layer (`bauble.raw`) arrived with v2.0.0 rather
+> than as the Phase-5 optional `Session`; the requirements corpus landed
+> in v2.0.0; profile names Interop/Core/Extended replaced Base/Standard/
+> Advanced in v1.2.0; four test targets ship, not one; RFC 4516 has no
+> suite (its URL-format assertion was folded into RFC 4512 in v2.0.0).
+
 ## Design principles
 
 1. **Assertions are the atomic unit.** Every test maps to one normative

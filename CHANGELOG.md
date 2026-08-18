@@ -3,6 +3,48 @@
 All notable changes to bauble. Entries describe what changed; they do not
 restate coverage totals. Run `bauble coverage` for current figures.
 
+## Unreleased
+
+Three suite defects whose FAILs were committed as golden contracts, plus
+the read-only default for bare `--server` runs. No goldens change without
+review: all four were regenerated after live verification.
+
+- The RFC 2891 unknown-sort-attribute assertion (`2891.2.3`) sent an empty
+  present filter inside a double-SEQUENCE controls wrapper — the search
+  failed on every target, so the sort control was never exercised and the
+  assertion could only FAIL. Valid filter, single-SEQUENCE encoding, and
+  advertise-gating. OpenDJ now passes; 389 DS surfaces a genuine deviation
+  (sortResult 53 instead of 16), recorded in `docs/server-findings.md`.
+- The RFC 3876 compare assertions (`3876.2.2`/`.2.3`) used the same
+  double-SEQUENCE wrapper (the bug class fixed for 4527/4528 earlier):
+  servers could not see the control, so the documented "critical control
+  processed, not rejected" findings on OpenLDAP, 389 DS, and OpenDJ were
+  encoding artifacts. All three now correctly return
+  `unavailableCriticalExtension`. The finding rows are removed; LLDAP's
+  genuine criticality-ignored deviation remains.
+- `LdapSession.bind(None, None)` delegated to ldap3's
+  `rebind(user=None)`, which re-sends the previous identity's
+  credentials; a mid-run "anonymous" rebind stayed authenticated. State is
+  now cleared explicitly, and the anonymous Password Modify assertion
+  (`3062.3.4`) checks the bind result — a server that rejects anonymous
+  binds is vacuously conformant. The false "Password Modify succeeds
+  anonymously" LLDAP finding is removed.
+- The RFC 3062 assertions left `uid=bob`'s seed password mutated when a
+  server accepted an operation it should reject, or when the self-restore
+  was rejected (OpenLDAP). Restores now run as the directory admin, and
+  violations restore before failing. Full runs leave the seed intact on
+  all four targets.
+- A bare `bauble run --server ...` invocation no longer assumes a writable
+  server: mutations require `--allow-mutation` or a capability file
+  declaring `writable = true`, matching the documented isolation model.
+
+Documentation reconciled with the code in the same pass: RFC 4516 removed
+from the README scope (no suite or corpus exists for it), the design
+notes' coverage-boundary and fixtures sections updated to the shipped
+raw-wire reality, the never-emitted `NA` status dropped, the operator
+guide's capability-gating description corrected, and the v2.1 fidelity
+review's committed requirement count annotated as historical.
+
 ## v2.3.1 — 2026-08-16
 
 Version-field and documentation reconciliation. No code changes. The v2.x

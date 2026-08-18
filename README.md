@@ -55,7 +55,6 @@ Targets the LDAPv3 RFC series and extensions:
 - **RFC 4513** — Authentication Methods and Security Mechanisms
 - **RFC 4514** — String Representation of Distinguished Names
 - **RFC 4515** — String Representation of Search Filters
-- **RFC 4516** — Uniform Resource Locator
 - **RFC 4517** — Syntaxes and Matching Rules
 - **RFC 4518** — Internationalized String Preparation
 - **RFC 4519** — Schema for User Applications
@@ -97,10 +96,12 @@ Three tiers. A profile is a selection of assertions, not separate code:
 Every test is an assertion tied to one RFC requirement. Severity (RFC 2119
 `MUST`/`SHOULD`/`MAY`) and testability (ISO 1003.3 class A/B/C/D) are
 tracked independently: a `MUST` with no portable test is reported
-`UNTESTABLE`, not silently dropped. Controls and extension assertions
-follow the advertise-then-test pattern: if the server doesn't claim
-support, `NOT_APPLICABLE`; if it claims support but fails, `FAIL` with
-detail. See the [design notes](docs/design-notes.md).
+`UNTESTABLE`, not silently dropped. Feature-specific assertions follow
+the advertise-then-test pattern: if the server doesn't claim support,
+`NOT_APPLICABLE`; if it claims support but fails, `FAIL` with detail.
+Behavioral assertions that any conformant server must satisfy regardless
+of advertisement (for example, RFC 4511 §4.1.11 criticality handling) run
+unconditionally. See the [design notes](docs/design-notes.md).
 
 Each assertion is also classified by the kind of conformance it establishes
 — Wire (protocol-unit correctness), Semantic (operation meaning), or

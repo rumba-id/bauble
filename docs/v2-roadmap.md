@@ -136,15 +136,12 @@ make the seed a portable input rather than a harness-only convention.
    (docs/operator-guide.md) covers loading the seed into a non-fixture
    server, the capability statement as the declared lever, and the
    per-server adjustments (admin DN, anonymous-read policy, schema
-   gaps, subschema discovery).
-2. **Seed-DIT portability** — the base seed is a bauble convention; real
-   servers differ (ACL policy, subschema location, schema). Document how an
-   operator loads the seed and adjusts for these; the capability file is the
-   declared lever, and the 389 DS work (anonymous-read, subschema discovery)
-   is the template.
+   gaps, subschema discovery). The base seed is a bauble convention; real
+   servers differ (ACL policy, subschema location, schema), and the
+   389 DS work (anonymous-read, subschema discovery) is the template.
 
-Done when: three targets run the full suite in CI; an operator guide covers
-loading the seed into a non-fixture server.
+Done when: the four targets run the full suite in CI; an operator guide
+covers loading the seed into a non-fixture server.
 
 ## v2.5 — Wire completeness (conditional)
 
