@@ -91,26 +91,44 @@ def _ber_seq(c: bytes) -> bytes:
     strategy="Sort a search by an unknown attribute; parse the sort-response control; expect 16.",
     preconditions="Admin credentials available.",
     stimulus="SearchRequest with a sort control on an unrecognized attribute.",
-    expected_observables="Sort-response control with sortResult noSuchAttribute (16), or the deviation the server reports.",
+    expected_observables="Sort-response control with sortResult noSuchAttribute (16).",
     oid="1.2.840.113556.1.4.473",
 )
 def sort_unknown_attribute(session: Session) -> Result:
     from bauble.raw import RawConnection, parse_response_controls, parse_sort_result
+    from bauble.session import SCOPE_BASE_OBJECT
     from bauble.suites._helpers import ADMIN_DN, ADMIN_PW
+
+    # Advertise-then-test: a server that does not claim the sort control is
+    # not non-conformant for not processing it.
+    outcome, entries = session.search(
+        "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedControl"]
+    )
+    if outcome.result_code != 0 or not entries:
+        return Result("2891.2.3", Status.NOT_APPLICABLE, detail="root DSE not readable")
+    if _SORT_OID not in entries[0].attributes.get("supportedControl", []):
+        return Result("2891.2.3", Status.NOT_APPLICABLE, detail="sort control not advertised")
 
     # Sort control value over an attribute the server does not know.
     sort_val = sort_control_value(["zzzNoSuchAttr"])
     oid = _ber_oct(_SORT_OID)
     criticality = b"\x01\x01\x00"  # FALSE
     cv = b"\x04" + _ber_len(len(sort_val)) + sort_val
-    controls = _ber_seq(_ber_seq(oid + criticality + cv))
-    controls_tagged = b"\xa0" + _ber_len(len(controls)) + controls
+    # Single-SEQUENCE controls field: the SEQUENCE-OF wrapper is not honored
+    # consistently (same bug class as the 4527/4528 fixes in the changelog).
+    control = _ber_seq(oid + criticality + cv)
+    controls_tagged = b"\xa0" + _ber_len(len(control)) + control
 
     base = _ber_oct("ou=people,dc=bauble,dc=test")
     scope = b"\x0a\x01\x01"  # singleLevel
     deref = b"\x0a\x01\x00"
     types_only = b"\x01\x01\x00"
-    present = b"\x87\x00"
+    # A present filter over a real attribute. The previous b"\x87\x00"
+    # (empty attribute description) made the request un-answerable: every
+    # server failed the search itself, so the sort control was never
+    # exercised and the assertion could only FAIL.
+    attr = b"objectClass"
+    present = b"\x87" + _ber_len(len(attr)) + attr
     attrs = _ber_seq(b"")
     contents = base + scope + deref + _ber_int(0) + _ber_int(0) + types_only + present + attrs
     search_request = b"\x63" + _ber_len(len(contents)) + contents

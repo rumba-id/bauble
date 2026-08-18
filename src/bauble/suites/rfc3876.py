@@ -175,8 +175,10 @@ def _compare_with_matched_values(dn: str, attr: str, value: str, critical: bool)
     oid = _ber_octet(_MATCHED_VALUES_OID)
     criticality = b"\x01\x01\xff" if critical else b"\x01\x01\x00"
     control = _ber_seq(oid + criticality + cv)
-    controls = _ber_seq(control)
-    controls_tagged = b"\xa0" + _ber_len(len(controls)) + controls
+    # Single-SEQUENCE controls field (SEQUENCE-OF wrapper not honored —
+    # same bug class as the 4527/4528 fixes; this is what produced the
+    # spurious "processed, not rejected" 3876.2.2 findings).
+    controls_tagged = b"\xa0" + _ber_len(len(control)) + control
     ava = _ber_seq(_ber_octet(attr) + _ber_octet(value))
     entry = _ber_octet(dn)
     compare_request = b"\x6e" + _ber_len(len(entry + ava)) + entry + ava

@@ -24,8 +24,8 @@
 3866.3.3	fail
 3866.4.1	not_applicable
 3876.2.1	not_applicable
-3876.2.2	fail
-3876.2.3	fail
+3876.2.2	pass
+3876.2.3	pass
 3876.7.1	not_applicable
 4511.4.1.1.1	pass
 4511.4.1.1.2	pass

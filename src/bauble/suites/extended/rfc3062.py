@@ -51,7 +51,17 @@ def password_modify_accepted(session: Session) -> Result:
             detail=f"password change not effective: rebind with new password got {changed.result_code}",
         )
     # Restore the original password.
-    session.extended(_PWMOD_OID, password_modify_request_value(_BOB_PW, _BOB_DN))
+    # Restore as the directory admin: a self Password Modify that names
+    # another identity is rejected by some servers (OpenLDAP: 50), which
+    # previously left the seed password mutated after full runs.
+    bind_admin(session)
+    restored = session.extended(_PWMOD_OID, password_modify_request_value(_BOB_PW, _BOB_DN))
+    if restored.result_code != 0:
+        return Result(
+            "3062.2.1",
+            Status.PASS,
+            detail=f"passed but password restore failed ({restored.result_code}); seed left mutated",
+        )
     return Result("3062.2.1", Status.PASS)
 
 
@@ -78,10 +88,13 @@ def password_modify_wrong_old_passwd(session: Session) -> Result:
     )
     if outcome.result_code != 0:
         return Result("3062.3.3", Status.PASS)
+    # Genuine violation: the seed password changed; restore it as admin.
+    bind_admin(session)
+    session.extended(_PWMOD_OID, password_modify_request_value(_BOB_PW, _BOB_DN))
     return Result(
         "3062.3.3",
         Status.FAIL,
-        detail="password changed despite a wrong oldPasswd",
+        detail="password changed despite a wrong oldPasswd (restored)",
     )
 
 
@@ -101,16 +114,29 @@ def password_modify_wrong_old_passwd(session: Session) -> Result:
     oid="1.3.6.1.4.1.4203.1.11.1",
 )
 def password_modify_anonymous_rejected(session: Session) -> Result:
-    session.bind(None, None)
+    bound = session.bind(None, None)
+    if bound.result_code != 0:
+        # The server refuses anonymous binds outright, so no anonymous
+        # session can exist and the operation cannot be used anonymously.
+        # (A failed bind must not be read as success: some servers keep the
+        # previous identity on the association.)
+        return Result(
+            "3062.3.4",
+            Status.PASS,
+            detail=f"server rejects anonymous binds ({bound.result_code}); no anonymous session exists",
+        )
     outcome = session.extended(
         _PWMOD_OID, password_modify_request_value("bob-should-not-set", _BOB_DN)
     )
     if outcome.result_code != 0:
         return Result("3062.3.4", Status.PASS)
+    # Genuine violation: restore the seed password as admin.
+    bind_admin(session)
+    session.extended(_PWMOD_OID, password_modify_request_value(_BOB_PW, _BOB_DN))
     return Result(
         "3062.3.4",
         Status.FAIL,
-        detail="anonymous password modify succeeded",
+        detail="anonymous password modify succeeded (password restored)",
     )
 
 

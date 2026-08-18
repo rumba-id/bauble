@@ -2,7 +2,7 @@
 {"assertion_id": "2696.2.2", "rfc": 2696, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "1.2.840.113556.1.4.319", "detail": null}
 {"assertion_id": "2696.3.3", "rfc": 2696, "status": "pass", "severity": "should", "test_class": "A", "profiles": ["core"], "layer": "capability", "oid": "1.2.840.113556.1.4.319", "detail": null}
 {"assertion_id": "2891.2.1", "rfc": 2891, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "1.2.840.113556.1.4.473", "detail": null}
-{"assertion_id": "2891.2.3", "rfc": 2891, "status": "fail", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "wire", "oid": "1.2.840.113556.1.4.473", "detail": "no sort-response control returned"}
+{"assertion_id": "2891.2.3", "rfc": 2891, "status": "fail", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "wire", "oid": "1.2.840.113556.1.4.473", "detail": "expected sortResult 16 (noSuchAttribute), got 53"}
 {"assertion_id": "2891.2.2", "rfc": 2891, "status": "not_applicable", "severity": "should", "test_class": "A", "profiles": ["core"], "layer": "capability", "oid": "1.2.840.113556.1.4.473", "detail": "sort OIDs not advertised"}
 {"assertion_id": "3062.2.1", "rfc": 3062, "status": "not_applicable", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "1.3.6.1.4.1.4203.1.11.1", "detail": "server requires confidentiality (TLS) for Password Modify"}
 {"assertion_id": "3062.3.3", "rfc": 3062, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "1.3.6.1.4.1.4203.1.11.1", "detail": null}
@@ -25,8 +25,8 @@
 {"assertion_id": "3866.4.1", "rfc": 3866, "status": "not_applicable", "severity": "should", "test_class": "A", "profiles": ["core"], "layer": "capability", "oid": "1.3.6.1.4.1.4203.1.5.4", "detail": "language feature OIDs not advertised"}
 {"assertion_id": "3876.7.1", "rfc": 3876, "status": "not_applicable", "severity": "should", "test_class": "A", "profiles": ["core"], "layer": "capability", "oid": "1.2.826.0.1.3344810.2.3", "detail": "OID not advertised"}
 {"assertion_id": "3876.2.1", "rfc": 3876, "status": "not_applicable", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "1.2.826.0.1.3344810.2.3", "detail": "matched values search returned []"}
-{"assertion_id": "3876.2.2", "rfc": 3876, "status": "fail", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "wire", "oid": "1.2.826.0.1.3344810.2.3", "detail": "expected 12 (unavailableCriticalExtension), got 6"}
-{"assertion_id": "3876.2.3", "rfc": 3876, "status": "fail", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "wire", "oid": "1.2.826.0.1.3344810.2.3", "detail": "expected compare result (5/6), got 2"}
+{"assertion_id": "3876.2.2", "rfc": 3876, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "wire", "oid": "1.2.826.0.1.3344810.2.3", "detail": null}
+{"assertion_id": "3876.2.3", "rfc": 3876, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "wire", "oid": "1.2.826.0.1.3344810.2.3", "detail": null}
 {"assertion_id": "4511.4.1.1.1", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "wire", "oid": "", "detail": null}
 {"assertion_id": "4511.4.1.1.2", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "wire", "oid": "", "detail": null}
 {"assertion_id": "4511.5.1.1", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "wire", "oid": "", "detail": null}

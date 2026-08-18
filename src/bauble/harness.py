@@ -98,7 +98,17 @@ class LdapSession:
 
     def bind(self, dn: str | None, password: str | None) -> Outcome:
         self._ensure_open()
-        self._connection.rebind(user=dn, password=password)
+        if dn is None:
+            # Anonymous (re)bind. ldap3's rebind(user=None) skips its
+            # `if user:` guard and silently re-sends the PREVIOUS identity's
+            # credentials; clear the state explicitly so an empty BindRequest
+            # goes out (bind_operation also rejects ANONYMOUS + leftover name).
+            self._connection.user = None
+            self._connection.password = None
+            self._connection.authentication = ldap3.ANONYMOUS
+            self._connection.rebind(authentication=ldap3.ANONYMOUS)
+        else:
+            self._connection.rebind(user=dn, password=password)
         return outcome_from_result(self._connection.result)
 
     def search(

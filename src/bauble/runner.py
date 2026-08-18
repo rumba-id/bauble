@@ -24,7 +24,7 @@ from bauble.reporter import get_reporter, to_records
 from bauble.selector import Selector
 from bauble.session import Session
 
-__all__ = ["main", "run"]
+__all__ = ["main", "resolve_capability", "run"]
 
 
 def run(
@@ -124,7 +124,7 @@ def _apply_target_admin(target: FixtureTarget) -> None:
     os.environ["BAUBLE_ADMIN_PW"] = target.admin_pw
 
 
-def _resolve_capability(
+def resolve_capability(
     args: argparse.Namespace, target: FixtureTarget | None = None
 ) -> Capability:
     """The operator's capability statement, or the fixture target's default."""
@@ -134,7 +134,10 @@ def _resolve_capability(
         if target is None:
             target = _make_target(args)
         return load_capability(target.capability_path)
-    return Capability()
+    # A bare --server run targets a server we do not own: mutations stay
+    # off unless the operator opts in with --allow-mutation or declares a
+    # writable capability file (design-notes "Test isolation").
+    return Capability(writable=bool(args.allow_mutation))
 
 
 def _topo_sort(assertions: list[Assertion]) -> list[Assertion]:
@@ -184,7 +187,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.target or args.fresh_target:
         fixture_target = _make_target(args)
         _apply_target_admin(fixture_target)
-    capability = _resolve_capability(args, fixture_target)
+    capability = resolve_capability(args, fixture_target)
     # Importing the suites package registers assertions; discover() is idempotent.
     from bauble.suites import discover
 

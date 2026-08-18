@@ -114,3 +114,22 @@ def test_broken_fake_drives_fail_verdict() -> None:
 
     healthy = FakeSession(responder=lambda op, args: Outcome(result_code=0))
     assert _statuses(run(Selector(), registry, Capability(), healthy))["1.0.0.1"] is Status.PASS
+
+
+def test_server_run_defaults_to_read_only() -> None:
+    """A bare --server run must not mutate: the default capability is not
+    writable unless the operator opts in with --allow-mutation."""
+    import argparse
+
+    from bauble.runner import resolve_capability
+
+    def _args(**kw: object) -> argparse.Namespace:
+        return argparse.Namespace(
+            capability=None,
+            target=False,
+            fresh_target=False,
+            **kw,  # type: ignore[arg-type]
+        )
+
+    assert resolve_capability(_args(allow_mutation=False)).writable is False
+    assert resolve_capability(_args(allow_mutation=True)).writable is True

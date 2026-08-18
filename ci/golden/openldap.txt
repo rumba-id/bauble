@@ -5,7 +5,7 @@
 2696.3.3	pass
 2891.2.1	pass
 2891.2.2	not_applicable
-2891.2.3	fail
+2891.2.3	not_applicable
 3045.2.1	not_applicable
 3045.2.2	not_applicable
 3062.2.1	pass
@@ -24,7 +24,7 @@
 3866.3.3	pass
 3866.4.1	pass
 3876.2.1	pass
-3876.2.2	fail
+3876.2.2	pass
 3876.2.3	pass
 3876.7.1	pass
 4511.4.1.1.1	pass
