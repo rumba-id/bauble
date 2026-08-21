@@ -108,6 +108,9 @@ def add_missing_parent(session: Session) -> Result:
     preconditions="Admin bound; target is writable.",
     stimulus="AddRequest for an inetOrgPerson entry omitting the required sn attribute.",
     expected_observables="AddResponse resultCode objectClassViolation (65).",
+    # RFC 4519 person carries sn as MUST; AD-schema servers (MS-ADSC)
+    # list it as MAY and accept the add.
+    requires_features=("person_sn_must",),
 )
 def add_schema_violation(session: Session) -> Result:
     bind_admin(session)

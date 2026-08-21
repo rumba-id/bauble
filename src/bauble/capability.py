@@ -27,13 +27,25 @@ class Capability:
     supported_control: frozenset[str] = frozenset()
     supported_features: frozenset[str] = frozenset()
     supported_sasl_mechanisms: frozenset[str] = frozenset()
+    # Schema/data-model capabilities that no root-DSE OID expresses.
+    # ``alias_entries``: the RFC 4512 alias objectClass exists and
+    # dereferencing is implemented.
+    alias_entries: bool = False
+    # ``referral_entries``: the RFC 3296 referral objectClass exists;
+    # subordinate referrals / continuation references are returned.
+    referral_entries: bool = False
+    # ``person_sn_must``: person carries sn as MUST per RFC 4519 §3.
+    # AD-schema directories list sn as MAY (MS-ADSC) and accept
+    # person/inetOrgPerson entries without it.
+    person_sn_must: bool = True
     extended_operation: str | None = None
 
     def supports(self, feature: str) -> bool:
         """Whether the server supports a named feature.
 
         Names: ``writable``, ``resettable``, ``alt_server``,
-        ``naming_context``, ``extended_operation`` (any), or OID-scoped
+        ``naming_context``, ``alias_entries``, ``referral_entries``,
+        ``person_sn_must``, ``extended_operation`` (any), or OID-scoped
         ``supported_extension:<oid>`` / ``supported_control:<oid>`` /
         ``supported_features:<oid>``, or mechanism-scoped
         ``supported_sasl_mechanisms:<mech>``. A bare OID is treated as a
@@ -50,6 +62,13 @@ class Capability:
             case "naming_context":
                 return self.naming_context
             case "extended_operation":
+                return self.extended_operation is not None
+            case "alias_entries":
+                return self.alias_entries
+            case "referral_entries":
+                return self.referral_entries
+            case "person_sn_must":
+                return self.person_sn_must
                 return self.extended_operation is not None
             case _:
                 if feature.startswith("supported_extension:"):
@@ -96,6 +115,9 @@ def _from_mapping(data: dict[str, object]) -> Capability:
         supported_control=frozenset(_str_list(features.get("supported_control"))),
         supported_features=frozenset(_str_list(features.get("supported_features"))),
         supported_sasl_mechanisms=frozenset(_str_list(features.get("supported_sasl_mechanisms"))),
+        alias_entries=bool(features.get("alias_entries", False)),
+        referral_entries=bool(features.get("referral_entries", False)),
+        person_sn_must=bool(features.get("person_sn_must", True)),
         extended_operation=extended if isinstance(extended, str) else None,
     )
 

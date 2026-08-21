@@ -7,6 +7,9 @@ writable = false
 resettable = false
 
 [features]
+# Verified against the live fixture by suite runs (2026-08-21).
+alias_entries = false
+referral_entries = false
 naming_context = true
 alt_server = false
 supported_extension = [

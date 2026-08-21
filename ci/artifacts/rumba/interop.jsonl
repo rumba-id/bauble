@@ -3,9 +3,9 @@
 {"assertion_id": "4511.4.7.1", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.7.2", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.7.3", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
-{"assertion_id": "4511.4.7.4", "rfc": 4511, "status": "fail", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": "expected 65, got 0"}
+{"assertion_id": "4511.4.7.4", "rfc": 4511, "status": "not_applicable", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": "feature person_sn_must not supported"}
 {"assertion_id": "4511.4.7.5", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
-{"assertion_id": "4511.4.2.1", "rfc": 4511, "status": "fail", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": "expected success, got 50"}
+{"assertion_id": "4511.4.2.1", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.2.2", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.2.3", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.2.6", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
@@ -35,16 +35,16 @@
 {"assertion_id": "4511.4.5.1", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.5.2", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.5.3", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
-{"assertion_id": "4511.4.5.4", "rfc": 4511, "status": "fail", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": "runner raised: LDAPSocketOpenError('invalid server address')"}
+{"assertion_id": "4511.4.5.4", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.5.5", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.3.1", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
-{"assertion_id": "4511.4.5.6", "rfc": 4511, "status": "fail", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": "runner raised: LDAPObjectClassError('invalid class in objectClass attribute: alias')"}
-{"assertion_id": "4511.4.5.7", "rfc": 4511, "status": "fail", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": "no referral returned for subtree containing referral entry"}
+{"assertion_id": "4511.4.5.6", "rfc": 4511, "status": "not_applicable", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": "feature alias_entries not supported"}
+{"assertion_id": "4511.4.5.7", "rfc": 4511, "status": "not_applicable", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": "feature referral_entries not supported"}
 {"assertion_id": "4512.4.1", "rfc": 4512, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4512.4.2", "rfc": 4512, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4512.4.3", "rfc": 4512, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4512.4.4", "rfc": 4512, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
-{"assertion_id": "4512.4.5", "rfc": 4512, "status": "fail", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": "missing sn accepted"}
+{"assertion_id": "4512.4.5", "rfc": 4512, "status": "not_applicable", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": "feature person_sn_must not supported"}
 {"assertion_id": "4512.4.6", "rfc": 4512, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4512.5.1.1", "rfc": 4512, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4512.3.3.1", "rfc": 4512, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}

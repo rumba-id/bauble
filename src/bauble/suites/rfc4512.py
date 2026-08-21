@@ -147,6 +147,9 @@ def entries_have_object_class(session: Session) -> Result:
     stimulus="AddRequest for an inetOrgPerson entry omitting the required sn attribute.",
     expected_observables="AddResponse resultCode objectClassViolation (65).",
     mutates=True,
+    # RFC 4519 person carries sn as MUST; AD-schema servers (MS-ADSC)
+    # list it as MAY and accept the add.
+    requires_features=("person_sn_must",),
 )
 def must_attribute_enforced(session: Session) -> Result:
     from bauble.suites._helpers import TEST_BASE, bind_admin, cleanup

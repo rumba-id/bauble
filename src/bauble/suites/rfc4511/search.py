@@ -97,11 +97,17 @@ def search_subtree_filter(session: Session) -> Result:
     text="Search with a non-existent base returns noSuchObject (32).",
     strategy="Search a DN that does not exist; expect 32.",
     preconditions="No seed requirement (any session state).",
-    stimulus="SearchRequest with base dc=nonexistent, baseObject scope.",
+    stimulus="SearchRequest with a base that does not exist inside the test naming context.",
     expected_observables="SearchResultDone resultCode noSuchObject (32).",
 )
 def search_no_such_object(session: Session) -> Result:
-    outcome, _ = session.search("dc=nonexistent", SCOPE_BASE_OBJECT, "(objectClass=*)")
+    # The base must be INSIDE the server's naming context: an out-of-NC
+    # base legitimately yields a referral (result 10) on AD-style
+    # servers that route such DNs elsewhere, which is not what this
+    # assertion is about.
+    outcome, _ = session.search(
+        "ou=nonexistent,ou=people,dc=bauble,dc=test", SCOPE_BASE_OBJECT, "(objectClass=*)"
+    )
     return Result(
         "4511.4.5.4",
         Status.PASS if outcome.result_code == 32 else Status.FAIL,
