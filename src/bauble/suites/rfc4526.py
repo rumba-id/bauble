@@ -5,7 +5,7 @@ import socket
 from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import Session
 from bauble.suites._base import assertion
-from bauble.suites._helpers import TEST_BASE
+from bauble.suites._helpers import ADMIN_DN, ADMIN_PW, TEST_BASE
 
 _CORE = frozenset({Profile.CORE})
 
@@ -62,11 +62,21 @@ def _search_result_code(session: Session, filter_ber: bytes) -> int:
         base_ber + scope_ber + deref + size_limit + time_limit + types_only + filter_ber + attrs
     )
     search_request = b"\x63" + _ber_len(len(search_contents)) + search_contents
-    payload = _ber_seq(_ber_int(1) + search_request)
+    # Filter semantics are under test, not anonymous access; AD-style
+    # servers hide the DIT from unauthenticated sessions (noSuchObject
+    # per MS-ADTS), so bind as admin first.
+    auth = b"\x80" + _ber_len(len(ADMIN_PW.encode())) + ADMIN_PW.encode()
+    bind_contents = _ber_int(3) + _ber_octet(ADMIN_DN) + auth
+    bind_request = b"\x60" + _ber_len(len(bind_contents)) + bind_contents
+    bind_payload = _ber_seq(_ber_int(1) + bind_request)
+
+    payload = _ber_seq(_ber_int(2) + search_request)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.settimeout(5.0)
         sock.connect((session.host, session.port))
+        sock.sendall(bind_payload)
+        sock.recv(1024)
         sock.sendall(payload)
         buf = b""
         while True:

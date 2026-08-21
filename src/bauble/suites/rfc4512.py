@@ -369,10 +369,12 @@ def operational_attrs_maintained(session: Session) -> Result:
         return Result("4512.3.2", Status.NOT_APPLICABLE, detail="attributes not in schema")
     if outcome.result_code != 0 or not entries:
         return Result("4512.3.2", Status.NOT_APPLICABLE, detail="seed entry not readable")
-    attrs = entries[0].attributes
+    # Attribute names are case-insensitive (RFC 4512 §2.5); servers
+    # return them under different casings.
+    attrs = {name.lower(): vals for name, vals in entries[0].attributes.items()}
     maintained = [
         a
-        for a in ("creatorsName", "createTimestamp", "modifiersName", "modifyTimestamp")
+        for a in ("creatorsname", "createtimestamp", "modifiersname", "modifytimestamp")
         if attrs.get(a)
     ]
     if len(maintained) == 4:

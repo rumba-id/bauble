@@ -12,6 +12,13 @@ _CORE = frozenset({Profile.CORE})
 # Operational attributes commonly returned for "+"; at least one must appear.
 _OPERATIONAL = ("entryUUID", "createTimestamp", "modifyTimestamp", "creatorsName")
 
+
+def _has_operational(attrs: dict[str, list[str | bytes]]) -> bool:
+    """Case-insensitive: servers return attribute names under different
+    casings (AD: createTimeStamp; RFC: createTimestamp)."""
+    lowered = {name.lower() for name in attrs}
+    return any(name.lower() in lowered for name in _OPERATIONAL)
+
 _ALICE = f"uid=alice,{TEST_BASE}"
 
 
@@ -36,7 +43,7 @@ def plus_returns_operational(session: Session) -> Result:
     if outcome.result_code != 0 or not entries:
         return Result("3673.2.1", Status.FAIL, detail=f"search failed: {outcome.result_code}")
     attrs = entries[0].attributes
-    if not any(name in attrs for name in _OPERATIONAL):
+    if not _has_operational(attrs):
         return Result(
             "3673.2.1",
             Status.FAIL,
@@ -65,13 +72,13 @@ def star_plus_returns_both(session: Session) -> Result:
     if outcome.result_code != 0 or not entries:
         return Result("3673.2.2", Status.FAIL, detail=f"search failed: {outcome.result_code}")
     attrs = entries[0].attributes
-    if "cn" not in attrs:
+    if "cn" not in {name.lower() for name in attrs}:
         return Result(
             "3673.2.2",
             Status.FAIL,
             detail=f"user attribute 'cn' missing: keys={sorted(attrs)}",
         )
-    if not any(name in attrs for name in _OPERATIONAL):
+    if not _has_operational(attrs):
         return Result(
             "3673.2.2",
             Status.FAIL,

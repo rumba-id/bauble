@@ -197,7 +197,9 @@ def entry_uuid_searchable(session: Session) -> Result:
     )
     if outcome2.result_code != 0:
         return Result("4530.2.2.1", Status.FAIL, detail=f"search failed: {outcome2.result_code}")
-    if not any(e.dn == dn for e in entries2):
+    # DN case is not significant (RFC 4514); AD-style servers return
+    # canonical casing.
+    if not any(e.dn.lower() == dn.lower() for e in entries2):
         return Result(
             "4530.2.2.1",
             Status.FAIL,

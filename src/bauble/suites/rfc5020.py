@@ -59,7 +59,9 @@ def entry_dn_equals_dn(session: Session) -> Result:
     entry_dn_val = _attr_lookup(entry, "entryDN")
     if entry_dn_val is None:
         return Result("5020.2.2", Status.FAIL, detail="entryDN missing")
-    if len(entry_dn_val) != 1 or entry_dn_val[0] != dn:
+    # DN case is not significant (RFC 4514); AD-style servers return
+    # canonical casing regardless of the case used in the request.
+    if len(entry_dn_val) != 1 or entry_dn_val[0].lower() != dn.lower():
         return Result(
             "5020.2.2",
             Status.FAIL,

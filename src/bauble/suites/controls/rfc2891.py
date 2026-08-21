@@ -28,6 +28,11 @@ _SORT_OID = "1.2.840.113556.1.4.473"
     oid="1.2.840.113556.1.4.473",
 )
 def sort_control_returns_sorted(session: Session) -> Result:
+    from bauble.suites._helpers import bind_admin
+
+    # Sort semantics are under test, not anonymous access; AD-style
+    # servers hide the DIT from anonymous sessions.
+    bind_admin(session)
     outcome, results = session.search(
         "ou=people,dc=bauble,dc=test",
         SCOPE_WHOLE_SUBTREE,
