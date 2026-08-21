@@ -148,7 +148,10 @@ def integer_match(session: Session) -> Result:
         # ordering rule the 389 DS schema omits on uidNumber — see
         # docs/server-findings.md.)
         outcome, entries = session.search(TEST_BASE, SCOPE_WHOLE_SUBTREE, "(uidNumber=0100)")
-        if outcome.result_code == 0 and any(e.dn == dn for e in entries):
+        # DN case is not significant (RFC 4514); AD-style servers
+        # return canonical casing (OU=..., DC=...) regardless of the
+        # case used at add time.
+        if outcome.result_code == 0 and any(e.dn.lower() == dn.lower() for e in entries):
             return Result("4517.4.4", Status.PASS)
         return Result("4517.4.4", Status.FAIL, detail="integerMatch equality failed")
     finally:
