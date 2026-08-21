@@ -23,6 +23,7 @@ supported_features = [
   "1.3.6.1.4.1.4203.1.5.1", # allOperationalAttributes (RFC 3673)
   "1.3.6.1.4.1.4203.1.5.2", # @objectClass selection (RFC 4529)
   "1.3.6.1.4.1.4203.1.5.3", # true/false filters (RFC 4526)
+  "1.3.6.1.1.14",            # modify-increment (RFC 4525)
 ]
 supported_control = [
   "1.2.840.113556.1.4.319",   # simple paged results (RFC 2696)

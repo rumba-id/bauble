@@ -9,7 +9,6 @@ from bauble.suites._helpers import (
     TEST_BASE,
     bind_admin,
     cleanup,
-    test_entry_attrs,
 )
 
 _CORE = frozenset({Profile.CORE})
@@ -143,9 +142,20 @@ def increment_multiple_values_error(session: Session) -> Result:
     dn = f"uid=incr-multi,{TEST_BASE}"
     cleanup(session, dn)
 
-    attrs = test_entry_attrs("incr-multi")
-    attrs["uidNumber"] = ["1000"]
-    session.add(dn, attrs)
+    # posixAccount: uidNumber is not in inetOrgPerson's MAY, and the
+    # entry must exist for the (invalid) increment to be evaluated.
+    attrs: dict[str, list[str | bytes]] = {
+        "objectClass": ["inetOrgPerson", "posixAccount"],
+        "cn": ["IncrMulti"],
+        "sn": ["Test"],
+        "uid": ["incr-multi"],
+        "uidNumber": ["1000"],
+        "gidNumber": ["1000"],
+        "homeDirectory": ["/home/incr-multi"],
+    }
+    add = session.add(dn, attrs)
+    if add.result_code != 0:
+        return Result("4525.2.3", Status.FAIL, detail=f"test entry add failed: {add.result_code}")
     try:
         # Build a ModifyRequest with operation=3 (increment) and two values.
         raw = RawConnection(session.host, session.port)
@@ -186,7 +196,9 @@ def increment_multiple_values_error(session: Session) -> Result:
         modify_request = b"\x66" + _len(len(modify_contents)) + modify_contents
         payload = _seq(_int(2) + modify_request)
 
-        response = raw._send_and_receive(payload)  # type: ignore[reportPrivateUsage]
+        # Bind as admin: AD-style servers reject anonymous writes
+        # before evaluating the request.
+        response = raw.bind_then_send_raw(payload, ADMIN_DN, ADMIN_PW)
         outcome = _parse_ldap_result(response)
         if outcome is None:
             return Result("4525.2.3", Status.FAIL, detail="no valid response")
@@ -227,10 +239,25 @@ def increment_non_integer_error(session: Session) -> Result:
     dn = f"uid=incr-str,{TEST_BASE}"
     cleanup(session, dn)
 
-    session.add(dn, test_entry_attrs("incr-str"))
+    # The entry must exist: the (invalid) increment of cn is evaluated
+    # against a live entry, not a missing one.
+    attrs: dict[str, list[str | bytes]] = {
+        "objectClass": ["inetOrgPerson", "posixAccount"],
+        "cn": ["IncrStr"],
+        "sn": ["Test"],
+        "uid": ["incr-str"],
+        "uidNumber": ["1000"],
+        "gidNumber": ["1000"],
+        "homeDirectory": ["/home/incr-str"],
+    }
+    add = session.add(dn, attrs)
+    if add.result_code != 0:
+        return Result("4525.2.4", Status.FAIL, detail=f"test entry add failed: {add.result_code}")
     try:
         raw = RawConnection(session.host, session.port)
-        outcome = raw.modify_increment(dn, "cn", 1, message_id=1)
+        outcome = raw.modify_increment(
+            dn, "cn", 1, message_id=1, bind_dn=ADMIN_DN, bind_password=ADMIN_PW
+        )
         # constraintViolation = 19, objectClassViolation = 65, unwillingToPerform = 53
         if outcome.result_code == 0:
             return Result("4525.2.4", Status.FAIL, detail="increment on cn succeeded")
