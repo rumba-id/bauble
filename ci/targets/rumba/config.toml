@@ -1,0 +1,30 @@
+[server]
+realm = "BAUBLE.TEST"
+domain = "bauble.test"
+dns_hostname = "dc1.bauble.test"
+netbios_name = "DC1"
+functional_level = "Win2016"
+
+[database]
+url = "postgres://rumba:rumba@rumba-postgres:5432/rumba"
+migrations_dir = "/var/lib/rumbad/migrations"
+max_connections = 10
+
+[ldap]
+bind_address = "0.0.0.0:10389"
+# Conformance runs require RFC 4513 anonymous simple bind (4511.4.2.1).
+allow_anonymous_bind = true
+enable_tls = false
+enable_gc = true
+bind_address_gc = "0.0.0.0:13268"
+
+[kdc]
+bind_address = "0.0.0.0:10088"
+
+[health]
+bind_address = "0.0.0.0:18080"
+enabled = true
+
+[logging]
+level = "debug"
+json = false

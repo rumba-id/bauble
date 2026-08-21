@@ -1,0 +1,18 @@
+dn: ou=people,dc=bauble,dc=test
+changetype: add
+objectClass: organizationalUnit
+ou: people
+
+dn: uid=alice,ou=people,dc=bauble,dc=test
+changetype: add
+objectClass: inetOrgPerson
+cn: Alice Anderson
+sn: Anderson
+uid: alice
+
+dn: uid=bob,ou=people,dc=bauble,dc=test
+changetype: add
+objectClass: inetOrgPerson
+cn: Bob Brown
+sn: Brown
+uid: bob

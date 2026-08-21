@@ -1,0 +1,38 @@
+# Capability statement for Rumba (rumbad), domain bauble.test
+# Derived from live root DSE probe 2026-08-21.
+[server]
+writable = true
+resettable = false
+
+[features]
+# AD-schema server: no alias/referral object classes (MS-ADTS);
+# person lists sn as MAY (MS-ADSC) unlike RFC 4519's MUST.
+alias_entries = false
+referral_entries = false
+person_sn_must = false
+naming_context = true
+alt_server = false
+supported_extension = [
+  "1.3.6.1.4.1.1466.20037",  # StartTLS
+  "1.3.6.1.4.1.4203.1.11.3", # Who Am I? (RFC 4532)
+  "1.3.6.1.4.1.4203.1.11.1", # Password Modify (RFC 3062)
+  "1.3.6.1.4.1.4203.1.19.1",
+  "1.3.6.1.4.1.1466.20078",
+]
+supported_features = [
+  "1.3.6.1.4.1.4203.1.5.1", # allOperationalAttributes (RFC 3673)
+  "1.3.6.1.4.1.4203.1.5.3", # true/false filters (RFC 4526)
+]
+supported_control = [
+  "1.2.840.113556.1.4.319",   # simple paged results (RFC 2696)
+  "1.2.840.113556.1.4.473",
+  "1.2.840.113556.1.4.801",
+  "1.2.840.113556.1.4.841",
+  "1.2.840.113556.1.4.417",
+  "1.2.840.113556.1.4.2064",
+  "1.2.840.113556.1.4.2065",
+  "1.2.840.113556.1.4.1338",
+  "1.2.840.113556.1.4.529",
+  "1.2.840.113556.1.4.1504",
+]
+supported_sasl_mechanisms = ["GSSAPI", "GSS-SPNEGO", "NTLM", "PLAIN"]
