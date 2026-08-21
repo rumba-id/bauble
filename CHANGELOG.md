@@ -10,6 +10,24 @@ optional controls and extended operations, the wire smoke tests no longer
 inflate the verdict, and the CLI gains probe and exit-code affordances.
 All four goldens regenerated after live verification.
 
+Capability model. The runner now probes the live root DSE at start and unions
+advertised controls, extensions, features, and SASL mechanisms into the
+capability statement. Optional controls and extended operations gate on those
+OIDs via `requires_features`, so unadvertised features report NOT_APPLICABLE
+instead of FAIL. The advertise-then-test pattern drives NOT_APPLICABLE only when
+the server genuinely does not claim support. Cancel (RFC 3909) and proxy-authz
+(RFC 4370) behaviorals gate on advertisement. Class-B requirements are closed
+with recorded reasons; the full-coverage plan is rewritten as an accurate record.
+
+- `bauble run` probes the live root DSE and unions advertised controls, extensions,
+  features, and SASL mechanisms into the capability statement (`src/bauble/runner.py`).
+- Optional controls and extended operations gate on advertised OIDs via
+  `requires_features`, so unadvertised features report NOT_APPLICABLE instead of FAIL.
+- Cancel (RFC 3909) and proxy-authz (RFC 4370) behaviorals gate on advertisement
+  (`src/bauble/suites/rfc3909.py`, `src/bauble/suites/rfc4370.py`).
+- Class-B requirements closed with recorded reasons; full-coverage plan rewritten
+  as an accurate record (`docs/full-coverage-plan.md`).
+
 - The four always-pass wire smoke tests (messageID 0, indefinite-length BER,
   BOOLEAN 0x01, truncated PDU) no longer report PASS unconditionally.
   Indefinite-length now asserts the bind is not accepted as success; the

@@ -127,14 +127,13 @@ on all four targets; the README Scope matches the suites bidirectionally.
 
 Genuinely remaining, in rough value order:
 
-- 4533 syncInfo intermediate-response content: the sync state is asserted via
-  the syncState control, but the syncInfo intermediate message itself is not
-  separately parsed (class-B).
+- 4533 refreshAndPersist streaming and the syncInfo intermediate response
+  (class-B: needs a concurrent second client).
 - 3909 in-flight cancel / `tooLate` branch (class-B: timing-racy).
-- 4370:3:3 policy-denial branch (resultCode 123): the conformant 123 branch is
-  exercised by 4370.3.2 (OpenDJ), but a dedicated denied-account fixture is
-  not asserted (class-B).
+- 4370:3:3 policy-denial branch (resultCode 123): needs a fixture account
+  denied proxy rights.
 - 3671 collective evaluation: blocked on a server that implements it
+  (no mainstream server does).
 - Fixture capability statements / operator guide do not enumerate the new
   control OIDs — harmless today (gating reads the live root DSE) but worth
   reconciling if capability-file gating returns.

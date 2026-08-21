@@ -296,6 +296,68 @@ def build_abandon_request(message_id: int, abandoned_message_id: int) -> bytes:
     return _encode_sequence(_encode_integer(message_id) + abandon_pdu)
 
 
+def build_add_request(
+    message_id: int,
+    dn: str,
+    attributes: dict[str, list[str | bytes]],
+) -> bytes:
+    """Build an LDAPMessage containing an AddRequest (RFC 4511 §4.7).
+
+    Accepts bytes attribute values (e.g. userCertificate), which ldap3's
+    add path mishandles.
+    """
+    entry_ber = _encode_octet_string(dn)
+    partials: list[bytes] = []
+    for name, values in attributes.items():
+        type_ber = _encode_octet_string(name)
+        val_ber = b"".join(_encode_octet_string(v) for v in values)
+        vals_set = b"\x31" + _encode_length(len(val_ber)) + val_ber
+        partials.append(_encode_sequence(type_ber + vals_set))
+    attr_list = _encode_sequence(b"".join(partials))
+    contents = entry_ber + attr_list
+    add_request = b"\x68" + _encode_length(len(contents)) + contents
+    return _encode_sequence(_encode_integer(message_id) + add_request)
+
+
+def build_cancel_request(message_id: int, cancel_id: int) -> bytes:
+    """Build an LDAPMessage containing a Cancel ExtendedRequest (RFC 3909).
+
+    ``cancelRequestValue ::= SEQUENCE { cancelID MessageID }`` with implicit
+    tags, carried as the requestValue of the 1.3.6.1.1.8 extended request.
+    """
+    cancel_value = _encode_sequence(_encode_integer(cancel_id))
+    oid = b"1.3.6.1.1.8"
+    name_ber = b"\x80" + _encode_length(len(oid)) + oid
+    value_ber = b"\x81" + _encode_length(len(cancel_value)) + cancel_value
+    contents = name_ber + value_ber
+    extended_request = b"\x77" + _encode_length(len(contents)) + contents
+    return _encode_sequence(_encode_integer(message_id) + extended_request)
+
+
+def build_extended_request(
+    message_id: int,
+    request_name: str,
+    request_value: bytes | None = None,
+    controls: list[bytes] | None = None,
+) -> bytes:
+    """Build an LDAPMessage containing an ExtendedRequest (RFC 4511 §4.12).
+
+    ``request_name`` is the dotted OID string; ``request_value`` and
+    ``controls`` are optional (controls are pre-built Control BERs, as
+    produced by :func:`build_control`).
+    """
+    oid = request_name.encode()
+    contents = b"\x80" + _encode_length(len(oid)) + oid
+    if request_value is not None:
+        contents += b"\x81" + _encode_length(len(request_value)) + request_value
+    extended_request = b"\x77" + _encode_length(len(contents)) + contents
+    msg = _encode_integer(message_id) + extended_request
+    if controls:
+        controls_ber = b"".join(controls)
+        msg += b"\xa0" + _encode_length(len(controls_ber)) + controls_ber
+    return _encode_sequence(msg)
+
+
 def _parse_ldap_result(data: bytes) -> Outcome | None:
     """Parse a generic LDAPResult from a raw LDAP message.
 
@@ -435,6 +497,20 @@ def parse_response_controls(data: bytes) -> list[tuple[str, bytes]]:
     return _controls_of_message(last)
 
 
+def parse_all_response_controls(data: bytes) -> list[tuple[str, bytes]]:
+    """Extract ``(controlType, controlValue)`` pairs from EVERY complete
+    LDAPMessage in ``data``, in response order.
+
+    Unlike :func:`parse_response_controls` (last message only), this surfaces
+    per-entry controls such as the syncState control that an incremental
+    content-sync response attaches to each SearchResultEntry.
+    """
+    pairs: list[tuple[str, bytes]] = []
+    for msg in _split_messages(data):
+        pairs.extend(_controls_of_message(msg))
+    return pairs
+
+
 def parse_sort_result(control_value: bytes) -> int:
     """Parse the ``sortResult`` ENUMERATED from a sort-response control value.
 
@@ -557,6 +633,57 @@ def parse_search_entries(data: bytes) -> list[dict[str, list[bytes]]]:
     return entries
 
 
+def parse_search_result_entry(data: bytes) -> dict[str, list[bytes]]:
+    """Parse a bare SearchResultEntry (no LDAPMessage wrapper).
+
+    Pre/Post-Read response control values (RFC 4527) carry a bare
+    ``[APPLICATION 4]`` PDU, not a full LDAPMessage.
+    """
+    if len(data) < 2 or data[0] != 0x64:
+        return {}
+    pos = 1
+    entry_len, pos = _parse_length(data, pos)
+    end = min(pos + entry_len, len(data))
+    if pos >= end or data[pos] != 0x04:  # objectName LDAPDN
+        return {}
+    pos += 1
+    dn_len, pos = _parse_length(data, pos)
+    pos += dn_len
+    if pos >= end or data[pos] != 0x30:  # PartialAttributeList
+        return {}
+    pos += 1
+    attrs_len, pos = _parse_length(data, pos)
+    attrs_end = min(pos + attrs_len, end)
+    result: dict[str, list[bytes]] = {}
+    while pos + 1 < len(data) and pos + 1 <= attrs_end:
+        if data[pos] != 0x30:  # each attribute is a SEQUENCE
+            break
+        pos += 1
+        a_len, pos = _parse_length(data, pos)
+        a_end = min(pos + a_len, attrs_end)
+        if pos >= a_end or data[pos] != 0x04:  # type OCTET STRING
+            break
+        pos += 1
+        t_len, pos = _parse_length(data, pos)
+        attr_type = data[pos : pos + t_len].decode("utf-8", errors="replace")
+        pos += t_len
+        values: list[bytes] = []
+        if pos < a_end and data[pos] == 0x31:  # vals SET OF
+            pos += 1
+            set_len, pos = _parse_length(data, pos)
+            set_end = min(pos + set_len, a_end)
+            while pos + 1 <= set_end and pos + 1 < len(data):
+                if data[pos] != 0x04:
+                    break
+                pos += 1
+                v_len, pos = _parse_length(data, pos)
+                values.append(data[pos : pos + v_len])
+                pos += v_len
+        result[attr_type] = values
+        pos = a_end
+    return result
+
+
 def parse_search_response(data: bytes) -> tuple[int, list[dict[str, list[bytes]]]]:
     """Parse a raw search response stream.
 
@@ -583,6 +710,7 @@ def build_search_request(
     attributes: list[str],
     scope: int = 0,
     filter_ber: bytes | None = None,
+    controls: list[bytes] | None = None,
 ) -> bytes:
     """Build an LDAPMessage containing a SearchRequest.
 
@@ -604,7 +732,27 @@ def build_search_request(
         base_ber + scope_ber + deref + size_limit + time_limit + types_only + filter_ber + attrs
     )
     search_request = b"\x63" + _encode_length(len(contents)) + contents
-    return _encode_sequence(_encode_integer(message_id) + search_request)
+    msg = _encode_integer(message_id) + search_request
+    if controls:
+        # controls [0] Controls is IMPLICIT over SEQUENCE OF: the [0] tag
+        # replaces the SEQUENCE OF tag, so the controls are concatenated.
+        controls_ber = b"".join(controls)
+        msg += b"\xa0" + _encode_length(len(controls_ber)) + controls_ber
+    return _encode_sequence(msg)
+
+
+def build_control(oid: str, criticality: bool = False, value: bytes | None = None) -> bytes:
+    """Build a Control SEQUENCE (RFC 4511 §4.1.12).
+
+    ``criticality`` is omitted when False (the DEFAULT); ``value`` is omitted
+    when None. The subentries and ManageDsaIT controls carry no value.
+    """
+    contents = _encode_octet_string(oid)
+    if criticality:
+        contents += b"\x01\x01\xff"  # BOOLEAN TRUE
+    if value is not None:
+        contents += _encode_octet_string(value)
+    return _encode_sequence(contents)
 
 
 def build_extensible_match_filter(attribute: str, rule: str, value: str) -> bytes:
@@ -675,26 +823,6 @@ class RawSession:
             return self._sock.recv(4096)
         except (TimeoutError, ConnectionError, OSError):
             return b""
-
-    def recv(self, timeout: float) -> bytes:
-        """Read until the peer closes the socket or ``timeout`` elapses.
-
-        Used by streaming sequences (e.g. a refreshAndPersist content sync)
-        where the response arrives as multiple PDUs on one persistent
-        connection. Returns everything read, or ``b""`` on timeout/closure.
-        """
-        assert self._sock is not None
-        self._sock.settimeout(timeout)
-        buf = b""
-        try:
-            while True:
-                chunk = self._sock.recv(4096)
-                if not chunk:
-                    break
-                buf += chunk
-        except (TimeoutError, ConnectionError, OSError):
-            pass
-        return buf
 
     def next_message_id(self) -> int:
         mid = self._next_message_id

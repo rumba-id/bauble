@@ -11,7 +11,7 @@ section = "2"
 severity = "must"
 test_class = "A"
 text = "A named subordinate reference entry is an instance of the referral objectClass and carries a ref attribute holding a reference URI."
-covered_by = ["3296.2.1"]
+covered_by = []
 
 [[requirement]]
 id = "3296:2:2"

@@ -53,7 +53,6 @@ def test_password_modify_request_value_structure() -> None:
     assert b"new-pass" in value
 
 
-
 def test_build_extensible_match_filter() -> None:
     filter_ber = build_extensible_match_filter("cn", "caseExactMatch", "alice")
     assert filter_ber[0] == 0xA9  # extensibleMatch [9] tag

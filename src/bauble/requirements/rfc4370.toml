@@ -1,0 +1,39 @@
+rfc = 4370
+title = "LDAP Proxied Authorization Control"
+
+# §2 Publishing Support / §3 Proxy Authorization Control
+# The control (2.16.840.1.113730.3.4.18) names an authorization identity for
+# a single operation. Criticality MUST be TRUE.
+
+[[requirement]]
+id = "4370:2:1"
+section = "2"
+severity = "should"
+test_class = "A"
+text = "Support for the Proxy Authorization Control is indicated by 2.16.840.1.113730.3.4.18 in supportedControl."
+covered_by = ["4370.2.1"]
+
+[[requirement]]
+id = "4370:3:1"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "The Proxy Authorization Control criticality MUST be TRUE; a control without the flag or with it FALSE is rejected with protocolError."
+covered_by = ["4370.3.1"]
+
+[[requirement]]
+id = "4370:3:2"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "A recognized proxy authorization identity causes the request to be executed as that identity."
+covered_by = ["4370.3.2"]
+
+[[requirement]]
+id = "4370:3:3"
+section = "3"
+severity = "must"
+test_class = "B"
+text = "When the requested authorization identity is not recognized or the client is not authorized to adopt it, resultCode 123 is returned."
+covered_by = []
+note = "Requires an account denied proxy rights by policy; not portable across fixtures."

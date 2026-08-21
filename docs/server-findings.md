@@ -22,6 +22,8 @@ that the investigation resolved as a suite bug instead.
 | uidNumber lacks an ORDERING rule | RFC 2307 defines `ORDERING integerOrderingMatch` on uidNumber; 389 DS's schema omits it, so greaterOrEqual filters on uidNumber silently match nothing. | `3698.2.7` FAIL |
 | Does not return a referral entry under ManageDsaIT | RFC 3296 §3: ManageDsaIT suppresses referral processing so the referral entry is returned as a normal entry; a base-scope search of `ou=remote` with ManageDsaIT returns no entry. | `3296.2.1` FAIL |
 | Does not advertise absolute-filter / language / @objectclass feature OIDs | 1.3.6.1.4.1.4203.1.5.2/.3/.4/.5 absent from supportedFeatures; the SHOULD-advertise checks report NOT_APPLICABLE. | `4526.2.3`, `3866.4.1`, `4529.3.3` NOT_APPLICABLE |
+| Loads a partial COSINE schema | RFC 4524 defines `account` and `pilotPerson`; 389 DS publishes `account` but not `pilotPerson`. | `4524.1` FAIL |
+| Executes under the binder's identity despite a critical proxy-authz control | RFC 4370 §3: the operation must be executed as the proxied identity or rejected with resultCode 123; a Who-Am-I carrying the control naming uid=alice returns the binder's authzId (`dn: cn=directory manager`) instead. | `4370.3.2` FAIL |
 
 ## OpenLDAP
 
@@ -31,6 +33,8 @@ that the investigation resolved as a suite bug instead.
 | Does not advertise the server-side sort control OIDs | 1.2.840.113556.1.4.473/.474 absent from supportedControl, though the sort operation itself works. | `2891.2.2` NOT_APPLICABLE |
 | Abandon with a large unknown messageID disconnects instead of discarding | RFC 4511 §4.11: servers MUST discard unknown messageIDs, and abandon has no response; OpenLDAP sends a Notice of Disconnection (protocolError) for messageIDs above its internal bound (~2^15) and closes the session. Small unknown IDs are discarded correctly. | `4511.4.11.2` FAIL |
 | Requires a non-empty AttributeSelection in Pre/Post-Read controls | An empty selection yields strongAuthRequired rather than a response control (probed against `ldapmodify -e preread`). | `4527.3.1.1`/`4527.3.2.1` behavior note |
+| Honors a non-critical Proxy Authorization Control | RFC 4370 §3: the control criticality MUST be TRUE and a FALSE flag MUST be rejected with protocolError; OpenLDAP executes the proxied request (resultCode 0) instead. | `4370.3.1` FAIL |
+| Advertises transaction OIDs but does not implement transactions | RFC 5805: txnStart/txnAbort are advertised in supportedExtension, but a txnStart extended operation returns protocolError. | `5805.2.1` PASS + behavioral gap |
 
 ## OpenDJ
 
@@ -44,7 +48,6 @@ that the investigation resolved as a suite bug instead.
 | Language ranges not implemented | `description;lang-en-` echoes the literal option (SHOULD-level, allowed). | `3866.3.1.1`, `3866.3.1.2` NOT_APPLICABLE |
 | Maintains 2 of the 4 operational attributes on the seed entry | creatorsName/createTimestamp yes; modifiersName/modifyTimestamp absent. | `4512.3.2` NOT_APPLICABLE |
 | ref attribute not returned under ManageDsaIT | RFC 3296: the referral entry's ref attribute is readable with ManageDsaIT; OpenDJ returns the entry without the ref attribute. | `3296.2.1` FAIL |
-| Rejects a request carrying an unrecognized trailing SEQUENCE component | RFC 4511 §4.1.1: servers MUST ignore trailing SEQUENCE components whose tags they do not recognize; OpenDJ returns protocolError (2). | `4511.4.1.1.4` FAIL |
 
 ## LLDAP
 

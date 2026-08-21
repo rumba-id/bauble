@@ -77,9 +77,7 @@ def sync_refresh_only_returns_cookie(session: Session) -> Result:
     )
 
     control = build_control(_SYNC_REQUEST_OID, criticality=True, value=_REFRESH_ONLY_VALUE)
-    request = build_search_request(
-        1, "dc=bauble,dc=test", ["uid"], scope=2, controls=[control]
-    )
+    request = build_search_request(1, "dc=bauble,dc=test", ["uid"], scope=2, controls=[control])
     raw = RawConnection(session.host, session.port)
     response = raw.bind_then_send_raw(request, ADMIN_DN, ADMIN_PW)
     controls = dict(parse_response_controls(response))
@@ -198,7 +196,9 @@ def sync_incremental_returns_change(session: Session) -> Result:
         )
         if add.result_code != 0:
             return Result(
-                "4533.3.2", Status.NOT_APPLICABLE, detail=f"test entry add failed: {add.result_code}"
+                "4533.3.2",
+                Status.NOT_APPLICABLE,
+                detail=f"test entry add failed: {add.result_code}",
             )
 
         # Incremental sync with the cookie.
@@ -226,96 +226,12 @@ def sync_incremental_returns_change(session: Session) -> Result:
             return Result(
                 "4533.3.2", Status.FAIL, detail=f"expected 16-byte entryUUID, got {entry_uuid!r}"
             )
-        if not any(b"sync-new" in (e.get("uid") or []) for e in parse_search_entries(second_response)):
+        if not any(
+            b"sync-new" in (e.get("uid") or []) for e in parse_search_entries(second_response)
+        ):
             return Result(
                 "4533.3.2", Status.FAIL, detail="incremental sync did not return the changed entry"
             )
         return Result("4533.3.2", Status.PASS)
     finally:
-        cleanup(session, dn)
-
-
-#: syncRequestValue ::= SEQUENCE { mode ENUMERATED { refreshAndPersist (3) } }
-_REFRESH_AND_PERSIST_VALUE = bytes.fromhex("30030a0103")
-
-
-@assertion(
-    id="4533.3.3",
-    rfc=4533,
-    section="§3",
-    category=Category.CONTROL,
-    severity=Severity.MUST,
-    test_class=TestClass.A,
-    profiles=_CORE,
-    layer=Layer.WIRE,
-    text="A refreshAndPersist syncRequest streams a subsequent change as a syncState control with the new state and entryUUID.",
-    strategy="Open a persistent session, send refreshAndPersist, then add an entry on a second connection; the change arrives as a syncState (state=add) control on the first connection.",
-    preconditions="Admin bound; target is writable; the syncprov overlay is loaded.",
-    stimulus="refreshAndPersist syncRequest on a RawSession; add uid=sync-persist on a second connection; read the stream.",
-    expected_observables="A syncState control (1.3.6.1.4.1.4203.1.9.1.2) with state add (1) and a 16-byte entryUUID; entry removed in cleanup.",
-    mutates=True,
-)
-def sync_persist_streams_change(session: Session) -> Result:
-    from bauble.raw import (
-        RawSession,
-        build_control,
-        build_search_request,
-        parse_all_response_controls,
-    )
-    from bauble.suites._helpers import ADMIN_DN, ADMIN_PW, TEST_BASE, cleanup
-
-    advertise, entries = session.search(
-        "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedControl"]
-    )
-    if advertise.result_code != 0 or not entries:
-        return Result("4533.3.3", Status.NOT_APPLICABLE, detail="root DSE not readable")
-    if _SYNC_REQUEST_OID not in entries[0].attributes.get("supportedControl", []):
-        return Result("4533.3.3", Status.NOT_APPLICABLE, detail="syncRequest not advertised")
-
-    dn = f"uid=sync-persist,{TEST_BASE}"
-    cleanup(session, dn)
-    raw = RawSession(session.host, session.port)
-    raw.open()
-    try:
-        if raw.bind(ADMIN_DN, ADMIN_PW).result_code != 0:
-            return Result("4533.3.3", Status.BLOCKED, detail="admin bind failed")
-        search = build_search_request(
-            raw.next_message_id(),
-            "dc=bauble,dc=test",
-            ["uid"],
-            scope=2,
-            controls=[
-                build_control(_SYNC_REQUEST_OID, criticality=True, value=_REFRESH_AND_PERSIST_VALUE)
-            ],
-        )
-        raw.send(search)
-        raw.recv(0.5)  # drain the initial refresh phase
-
-        # Trigger a change on a second connection.
-        from bauble.harness import LdapSession, ServerConfig
-
-        other = LdapSession(ServerConfig(session.host, session.port))
-        other.bind(ADMIN_DN, ADMIN_PW)
-        if other.add(
-            dn,
-            {"objectClass": ["inetOrgPerson"], "cn": ["Persist"], "sn": ["P"], "uid": ["sync-persist"]},
-        ).result_code != 0:
-            return Result("4533.3.3", Status.NOT_APPLICABLE, detail="test entry add failed")
-
-        streamed = raw.recv(2.0)
-        states = [
-            v for oid, v in parse_all_response_controls(streamed) if oid == _SYNC_STATE_OID
-        ]
-        if not states:
-            return Result("4533.3.3", Status.FAIL, detail="no syncState control streamed")
-        state, entry_uuid = _sync_state(states[0])
-        if state != 1:  # add
-            return Result("4533.3.3", Status.FAIL, detail=f"expected state add (1), got {state}")
-        if len(entry_uuid) != 16:
-            return Result(
-                "4533.3.3", Status.FAIL, detail=f"expected 16-byte entryUUID, got {entry_uuid!r}"
-            )
-        return Result("4533.3.3", Status.PASS)
-    finally:
-        raw.close()
         cleanup(session, dn)

@@ -65,7 +65,7 @@ section = "4.1.10"
 severity = "must"
 test_class = "A"
 text = "A Referral MUST contain at least one URI."
-covered_by = ["4511.4.5.7", "4516.2.1"]
+covered_by = ["4511.4.5.7"]
 
 # §4.1.11 Controls
 
