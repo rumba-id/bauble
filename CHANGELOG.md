@@ -5,6 +5,32 @@ restate coverage totals. Run `bauble coverage` for current figures.
 
 ## Unreleased
 
+Raw-layer correctness. The present filter in `build_search_request` no longer
+wraps the value in an implicit tag that matches no entries; StartTLS assertions
+open fresh connections to avoid TLS-state leakage; schema-tier element names now
+match their RFC definitions; and the informational/BCP corpus is complete with
+proper class-B records for untestable requirements.
+
+- `build_search_request` default present filter no longer wraps the value in an
+  implicit `[7]` tag — it now encodes just the OCTET STRING value, so searches
+  like `present(objectClass)` match entries as intended (`src/bauble/raw.py`).
+- StartTLS assertions open dedicated connections instead of reusing the shared
+  session, preventing TLS-state leakage into subsequent assertions
+  (`src/bauble/suites/rfc4513_security.py`).
+- RFC 3671 assertion no longer requires a non-existent collective attribute
+  control; it checks subschema publication of collective attribute definitions
+  instead (`src/bauble/suites/rfc3671.py`, `src/bauble/requirements/rfc3671.toml`).
+- Schema-tier element names corrected: 2926 uses `slpService`/`template-url-syntax`,
+  3703/4104 uses `pcimGroup`, 4876 uses `DUAConfigProfile`, 8284 uses
+  `JIDObject`/`jid`; RFC 5803 moved to class-B (no schema elements); `_declared`
+  matches any NAME-list position (`src/bauble/suites/schema.py`).
+- RFC 3687 `componentFilterMatch` OID corrected from `2.5.13.47` to the RFC value
+  `1.2.36.79672281.1.13.2` (`src/bauble/suites/rfc3687.py`).
+- Informational/BCP tier completed: 10 RFCs (1823, 2377, 2820, 2849, 3352,
+  3384, 3494, 4510, 4520, 4521) recorded as class-B with reasons
+  (`src/bauble/requirements/rfc*.toml`).
+- README scope lists every suite RFC bidirectionally; full-coverage plan corrected
+  to state what actually holds (`README.md`, `docs/full-coverage-plan.md`).
 Three suite defects whose FAILs were committed as golden contracts, plus
 the read-only default for bare `--server` runs. No goldens change without
 review: all four were regenerated after live verification.

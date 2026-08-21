@@ -51,14 +51,10 @@ def collective_schema_published(session: Session) -> Result:
     dn = subschema_dn(session)
     if dn is None:
         return Result("3671.2.1", Status.NOT_APPLICABLE, detail="subschemaSubentry not advertised")
-    outcome, entries = session.search(
-        dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["attributeTypes"]
-    )
+    outcome, entries = session.search(dn, SCOPE_BASE_OBJECT, "(objectClass=*)", ["attributeTypes"])
     if outcome.result_code != 0 or not entries:
         return Result("3671.2.1", Status.NOT_APPLICABLE, detail="subschema not readable")
-    definitions = " ".join(
-        str(v) for v in entries[0].attributes.get("attributeTypes", [])
-    ).lower()
+    definitions = " ".join(str(v) for v in entries[0].attributes.get("attributeTypes", [])).lower()
     if not definitions:
         return Result("3671.2.1", Status.NOT_APPLICABLE, detail="schema not loaded")
     elements = ("c-l", "c-ou", _COLLECTIVE_SUBENTRIES_ATTR)
@@ -69,5 +65,7 @@ def collective_schema_published(session: Session) -> Result:
         # The collective schema is not loaded; the SHOULD does not apply.
         return Result("3671.2.1", Status.NOT_APPLICABLE, detail="collective schema not loaded")
     return Result(
-        "3671.2.1", Status.FAIL, detail=f"partial collective schema: missing {set(elements) - set(present)}"
+        "3671.2.1",
+        Status.FAIL,
+        detail=f"partial collective schema: missing {set(elements) - set(present)}",
     )

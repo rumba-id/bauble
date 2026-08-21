@@ -25,6 +25,7 @@ for any modern LDAPv3 implementation.
 - [Design notes](docs/design-notes.md)
 - [RFC reference tree](docs/references.md)
 - [v2.x roadmap](docs/v2-roadmap.md)
+- [Full LDAPv3 coverage plan](docs/full-coverage-plan.md)
 - [Server findings](docs/server-findings.md)
 - [Operator guide](docs/operator-guide.md)
 - [v2.1 fidelity review](docs/v2.1-fidelity-review.md)
@@ -55,6 +56,7 @@ Targets the LDAPv3 RFC series and extensions:
 - **RFC 4513** — Authentication Methods and Security Mechanisms
 - **RFC 4514** — String Representation of Distinguished Names
 - **RFC 4515** — String Representation of Search Filters
+- **RFC 4516** — Uniform Resource Locator
 - **RFC 4517** — Syntaxes and Matching Rules
 - **RFC 4518** — Internationalized String Preparation
 - **RFC 4519** — Schema for User Applications
@@ -63,6 +65,15 @@ Targets the LDAPv3 RFC series and extensions:
 
 - **RFC 4530** — entryUUID
 - **RFC 5020** — entryDN
+- **RFC 3296** — Named Subordinate References
+- **RFC 3671** — Collective Attributes
+- **RFC 3672** — Subentries
+- **RFC 3673** — All Operational Attributes
+
+### Matching rule extensions
+
+- **RFC 3698** — Additional Matching Rules
+- **RFC 3687** — Component Matching Rules
 
 ### Control and operation extensions
 
@@ -73,13 +84,51 @@ Targets the LDAPv3 RFC series and extensions:
 - **RFC 3829** — Authorization Identity Controls
 - **RFC 3866** — Language Tags and Ranges
 - **RFC 3876** — Matched Values Control
+- **RFC 3909** — Cancel Operation
+- **RFC 2589** — Dynamic Directory Services
+- **RFC 4370** — Proxied Authorization Control
+- **RFC 4522** — Binary Encoding Option
 - **RFC 4525** — Modify-Increment
 - **RFC 4526** — Absolute True/False Filters
 - **RFC 4527** — Read Entry Controls
 - **RFC 4528** — Assertion Control
 - **RFC 4529** — Attributes by Object Class
+- **RFC 4531** — Turn Operation
 - **RFC 4532** — Who Am I?
+- **RFC 4533** — Content Synchronization Operation
+- **RFC 5805** — Transactions
 - **RFC 6171** — Don't Use Copy Control
+
+### Schema-presence checks
+
+Schema-definition RFCs are verified by subschema publication: when a server
+loads a schema, its defining object classes and attribute types must be
+published. The four GSER/ASN.1 encoding RFCs (3641, 3642, 3727, 4792) define no
+schema elements.
+
+- **RFC 2079** — URI Attribute — `labeledURI`
+- **RFC 2247** — Domains in DNs — `domain`, `dcObject`
+- **RFC 2307** — NIS Schema — `posixAccount`, `posixGroup`
+- **RFC 2713** — Java Objects Schema
+- **RFC 2714** — CORBA Objects Schema
+- **RFC 2739** — Calendar Attributes
+- **RFC 2798** — inetOrgPerson
+- **RFC 2926** — SLP Templates
+- **RFC 2985** — PKCS #9
+- **RFC 3112** — Authentication Password Schema
+- **RFC 3703** — Policy Core Schema
+- **RFC 4104** — Policy Core Extension Schema
+- **RFC 4403** — UDDIv3 Schema
+- **RFC 4523** — X.509 Certificate Schema
+- **RFC 4524** — COSINE Schema
+- **RFC 4876** — Configuration Profile Schema
+- **RFC 5803** — SCRAM Secrets Schema
+- **RFC 7612** — Printer Services Schema
+- **RFC 8284** — XMPP White Pages Schema
+
+Replication and transaction RFCs with no mainstream implementation (3928 LCUP,
+4373 LBURP, 2649 Operation Signatures) are recorded in the requirements corpus
+with untestable-class notes.
 
 ## Profiles
 

@@ -19,6 +19,7 @@ def _has_operational(attrs: dict[str, list[str | bytes]]) -> bool:
     lowered = {name.lower() for name in attrs}
     return any(name.lower() in lowered for name in _OPERATIONAL)
 
+
 _ALICE = f"uid=alice,{TEST_BASE}"
 
 

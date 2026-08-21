@@ -1,0 +1,15 @@
+rfc = 3494
+title = "Lightweight Directory Access Protocol version 2 (LDAPv2) to Historic Status"
+
+# Informational / BCP / format document: no testable directory-server
+# conformance requirements. Recorded so the corpus enumerates every
+# current-tier RFC in docs/references.md.
+
+[[requirement]]
+id = "3494:1:1"
+section = "1"
+severity = "must"
+test_class = "B"
+text = "Lightweight Directory Access Protocol version 2 (LDAPv2) to Historic Status imposes no testable directory-server conformance requirements."
+covered_by = []
+note = "Status-change document moving LDAPv2 to Historic; no server requirements."

@@ -1,0 +1,15 @@
+rfc = 4520
+title = "BCP 64: IANA Considerations for LDAP"
+
+# Informational / BCP / format document: no testable directory-server
+# conformance requirements. Recorded so the corpus enumerates every
+# current-tier RFC in docs/references.md.
+
+[[requirement]]
+id = "4520:1:1"
+section = "1"
+severity = "must"
+test_class = "B"
+text = "BCP 64: IANA Considerations for LDAP imposes no testable directory-server conformance requirements."
+covered_by = []
+note = "BCP governing IANA registrations; no directory-server conformance requirements."
