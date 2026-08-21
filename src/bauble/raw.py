@@ -676,6 +676,26 @@ class RawSession:
         except (TimeoutError, ConnectionError, OSError):
             return b""
 
+    def recv(self, timeout: float) -> bytes:
+        """Read until the peer closes the socket or ``timeout`` elapses.
+
+        Used by streaming sequences (e.g. a refreshAndPersist content sync)
+        where the response arrives as multiple PDUs on one persistent
+        connection. Returns everything read, or ``b""`` on timeout/closure.
+        """
+        assert self._sock is not None
+        self._sock.settimeout(timeout)
+        buf = b""
+        try:
+            while True:
+                chunk = self._sock.recv(4096)
+                if not chunk:
+                    break
+                buf += chunk
+        except (TimeoutError, ConnectionError, OSError):
+            pass
+        return buf
+
     def next_message_id(self) -> int:
         mid = self._next_message_id
         self._next_message_id += 1

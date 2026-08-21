@@ -44,6 +44,7 @@ that the investigation resolved as a suite bug instead.
 | Language ranges not implemented | `description;lang-en-` echoes the literal option (SHOULD-level, allowed). | `3866.3.1.1`, `3866.3.1.2` NOT_APPLICABLE |
 | Maintains 2 of the 4 operational attributes on the seed entry | creatorsName/createTimestamp yes; modifiersName/modifyTimestamp absent. | `4512.3.2` NOT_APPLICABLE |
 | ref attribute not returned under ManageDsaIT | RFC 3296: the referral entry's ref attribute is readable with ManageDsaIT; OpenDJ returns the entry without the ref attribute. | `3296.2.1` FAIL |
+| Rejects a request carrying an unrecognized trailing SEQUENCE component | RFC 4511 §4.1.1: servers MUST ignore trailing SEQUENCE components whose tags they do not recognize; OpenDJ returns protocolError (2). | `4511.4.1.1.4` FAIL |
 
 ## LLDAP
 
