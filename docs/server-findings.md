@@ -19,7 +19,8 @@ that the investigation resolved as a suite bug instead.
 | Does not implement `@objectclass` attribute selection | RFC 4529: `@person` in an attribute list must request the object class's attributes; 389 DS's own ldapsearch returns zero attributes for `@person`. | `4529.3.1` FAIL |
 | Sort control reports unwillingToPerform for an unknown sort attribute | RFC 2891 §1.1: an unrecognized attribute in the sort key yields sortResult noSuchAttribute (16) and the search proceeds; 389 DS returns sortResult 53. | `2891.2.3` FAIL |
 | Does not implement language ranges | RFC 3866 §3: range support is SHOULD, so non-implementation is not a conformance failure; a `description;lang-en-` request echoes the literal option. | `3866.3.1.1`, `3866.3.1.2` NOT_APPLICABLE |
-| uidNumber lacks an ORDERING rule | RFC 2307 defines `ORDERING integerOrderingMatch` on uidNumber; 389 DS's schema omits it, so greaterOrEqual filters on uidNumber silently match nothing. Documented, not asserted — the corpus requirement is about integerMatch equality. | — |
+| uidNumber lacks an ORDERING rule | RFC 2307 defines `ORDERING integerOrderingMatch` on uidNumber; 389 DS's schema omits it, so greaterOrEqual filters on uidNumber silently match nothing. | `3698.2.7` FAIL |
+| Does not return a referral entry under ManageDsaIT | RFC 3296 §3: ManageDsaIT suppresses referral processing so the referral entry is returned as a normal entry; a base-scope search of `ou=remote` with ManageDsaIT returns no entry. | `3296.2.1` FAIL |
 | Does not advertise absolute-filter / language / @objectclass feature OIDs | 1.3.6.1.4.1.4203.1.5.2/.3/.4/.5 absent from supportedFeatures; the SHOULD-advertise checks report NOT_APPLICABLE. | `4526.2.3`, `3866.4.1`, `4529.3.3` NOT_APPLICABLE |
 
 ## OpenLDAP
@@ -42,6 +43,7 @@ that the investigation resolved as a suite bug instead.
 | AuthzId response control not implemented | 2.16.840.1.113730.3.4.16 advertised, .15 (response) not; no response control returned. | `3829.2.1`, `3829.4.1` NOT_APPLICABLE |
 | Language ranges not implemented | `description;lang-en-` echoes the literal option (SHOULD-level, allowed). | `3866.3.1.1`, `3866.3.1.2` NOT_APPLICABLE |
 | Maintains 2 of the 4 operational attributes on the seed entry | creatorsName/createTimestamp yes; modifiersName/modifyTimestamp absent. | `4512.3.2` NOT_APPLICABLE |
+| ref attribute not returned under ManageDsaIT | RFC 3296: the referral entry's ref attribute is readable with ManageDsaIT; OpenDJ returns the entry without the ref attribute. | `3296.2.1` FAIL |
 
 ## LLDAP
 

@@ -12,10 +12,15 @@
 3062.3.2	pass
 3062.3.3	pass
 3062.3.4	pass
+3296.2.1	fail
 3673.2.1	pass
 3673.2.2	pass
+3687.3.2.2.1	not_applicable
+3687.5.1	not_applicable
+3698.2.1	pass
+3698.2.7	fail
 3829.2.1	pass
-3829.4.1	not_applicable
+3829.4.1	pass
 3829.4.2	pass
 3866.2.2.1	pass
 3866.2.5.1	pass
@@ -27,6 +32,10 @@
 3876.2.2	pass
 3876.2.3	pass
 3876.7.1	not_applicable
+3909.2.1	not_applicable
+3909.3.1	not_applicable
+4370.2.1	pass
+4370.3.1	pass
 4511.4.1.1.1	pass
 4511.4.1.1.2	untestable
 4511.4.1.1.3	untestable
@@ -37,6 +46,7 @@
 4511.5.1.3	untestable
 4511.5.1.4	untestable
 4512.3.2	pass
+4522.5.1	pass
 4525.2.1	not_applicable
 4525.2.2	not_applicable
 4525.2.3	not_applicable
@@ -57,6 +67,7 @@
 4530.2.4.1	pass
 4530.2.4.2	pass
 4530.2.4.3	pass
+4531.2.1	not_applicable
 4532.1.1	pass
 4532.3.2	pass
 5020.2.1	pass
