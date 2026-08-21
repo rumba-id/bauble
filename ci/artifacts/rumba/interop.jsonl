@@ -9,12 +9,14 @@
 {"assertion_id": "4511.4.2.2", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.2.3", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.2.6", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
+{"assertion_id": "4511.4.2.6.1", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.2.4", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "wire", "oid": "", "detail": null}
 {"assertion_id": "4511.4.2.5", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "wire", "oid": "", "detail": null}
 {"assertion_id": "4511.4.2.7", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "wire", "oid": "", "detail": null}
 {"assertion_id": "4511.4.2.8", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "wire", "oid": "", "detail": null}
 {"assertion_id": "4511.4.2.9", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "wire", "oid": "", "detail": null}
 {"assertion_id": "4511.4.2.10", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "wire", "oid": "", "detail": null}
+{"assertion_id": "4511.4.2.6.2", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.10.1", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.10.2", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4511.4.10.3", "rfc": 4511, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
@@ -67,6 +69,8 @@
 {"assertion_id": "4515.3.10", "rfc": 4515, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4515.3.11", "rfc": 4515, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4515.3.12", "rfc": 4515, "status": "pass", "severity": "may", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
+{"assertion_id": "4516.2.1", "rfc": 4516, "status": "not_applicable", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": "feature referral_entries not supported"}
+{"assertion_id": "4516.2.2", "rfc": 4516, "status": "not_applicable", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": "feature referral_entries not supported"}
 {"assertion_id": "4517.4.1", "rfc": 4517, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4517.4.2", "rfc": 4517, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "4517.4.3", "rfc": 4517, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["interop"], "layer": "semantic", "oid": "", "detail": null}
