@@ -14,8 +14,8 @@
 {"assertion_id": "3045.2.2", "rfc": 3045, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "3673.2.1", "rfc": 3673, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "3673.2.2", "rfc": 3673, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "", "detail": null}
-{"assertion_id": "3829.2.1", "rfc": 3829, "status": "not_applicable", "severity": "should", "test_class": "A", "profiles": ["core"], "layer": "capability", "oid": "2.16.840.1.113730.3.4.16", "detail": "OIDs not advertised"}
-{"assertion_id": "3829.4.1", "rfc": 3829, "status": "not_applicable", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "2.16.840.1.113730.3.4.16", "detail": "no authzId response control returned"}
+{"assertion_id": "3829.2.1", "rfc": 3829, "status": "pass", "severity": "should", "test_class": "A", "profiles": ["core"], "layer": "capability", "oid": "2.16.840.1.113730.3.4.16", "detail": null}
+{"assertion_id": "3829.4.1", "rfc": 3829, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "2.16.840.1.113730.3.4.16", "detail": null}
 {"assertion_id": "3829.4.2", "rfc": 3829, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "2.16.840.1.113730.3.4.16", "detail": null}
 {"assertion_id": "3866.2.5.1", "rfc": 3866, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "", "detail": null}
 {"assertion_id": "3866.2.2.1", "rfc": 3866, "status": "pass", "severity": "must", "test_class": "A", "profiles": ["core"], "layer": "semantic", "oid": "", "detail": null}
