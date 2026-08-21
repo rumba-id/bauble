@@ -597,7 +597,7 @@ def build_search_request(
     time_limit = _encode_integer(0)
     types_only = b"\x01\x01\x00"
     if filter_ber is None:
-        present = _encode_octet_string("objectClass")
+        present = b"objectClass"
         filter_ber = b"\x87" + _encode_length(len(present)) + present
     attrs = _encode_sequence(b"".join(_encode_octet_string(a) for a in attributes))
     contents = (
