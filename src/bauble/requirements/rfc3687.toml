@@ -1,0 +1,42 @@
+rfc = 3687
+title = "LDAP and X.500 Component Matching Rules"
+
+# RFC 3687 defines component matching rules for complex attribute syntaxes.
+# The two matching rules a server may advertise (componentFilterMatch, rdnMatch)
+# are covered via capability assertions. The component-filter evaluation
+# semantics and the component-wise equality rules are class-B: they require BER
+# ComponentFilter construction and are not implemented by mainstream servers.
+
+[[requirement]]
+id = "3687:5:1"
+section = "5"
+severity = "must"
+test_class = "A"
+text = "componentFilterMatch (1.2.36.79672281.1.13.2) matches user-selected components of a complex attribute value."
+covered_by = ["3687.5.1"]
+
+[[requirement]]
+id = "3687:3.2.2.1:1"
+section = "3.2.2.1"
+severity = "must"
+test_class = "A"
+text = "rdnMatch (1.2.36.79672281.1.13.3) matches a component RDN of a distinguished name."
+covered_by = ["3687.3.2.2.1"]
+
+[[requirement]]
+id = "3687:4:1"
+section = "4"
+severity = "must"
+test_class = "B"
+text = "A ComponentFilter (item / and / or / not of ComponentAssertions) evaluates with three-valued logic over component values."
+covered_by = []
+note = "Requires BER ComponentFilter construction; not portably testable and rarely implemented."
+
+[[requirement]]
+id = "3687:6:1"
+section = "6"
+severity = "must"
+test_class = "B"
+text = "allComponentsMatch and directoryComponentsMatch provide component-wise equality matching for complex attribute values."
+covered_by = []
+note = "Not implemented by mainstream servers; no portable assertion exists."
