@@ -116,13 +116,24 @@ attribute, a supported control, or a supported extended operation. bauble
 takes a capability statement from the operator declaring which optional
 features the target server implements.
 
-When a feature is declared unsupported, its presence test auto-passes. The
-server genuinely does not implement the feature, so its absence is
-conformant, not a failure. Assertions declare their applicability with
-`requires_features` (currently the RFC 4525 increment assertions gate on
-the advertised feature OID); a bare `--server` run starts from a
-non-writable statement so mutations require `--allow-mutation` or an
-explicit `writable = true`.
+The operator can declare capabilities in a TOML file, but bauble also probes
+the live root DSE at run start and unions the advertised controls,
+extensions, features, and SASL mechanisms into the statement
+(:meth:`bauble.capability.Capability.merged_with`). A file is therefore
+usually only needed for the schema-level flags and write access; `bauble
+probe` prints a skeleton.
+
+When a feature is declared (or probed) unsupported, its presence test
+auto-passes. The server genuinely does not implement the feature, so its
+absence is conformant, not a failure. Assertions declare their
+applicability with `requires_features` — the RFC 4525 increment assertions
+gate on the advertised feature OID, the optional controls and extended
+operations (paged results, sort, password modify, who-am-I) gate on their
+`supported_control` / `supported_extension` OIDs, and the referral, alias,
+and person-schema assertions gate on the `referral_entries` /
+`alias_entries` / `person_sn_must` declarations; a bare `--server` run
+starts from a non-writable statement so mutations require
+`--allow-mutation` or an explicit `writable = true`.
 
 ## Execution model: prerequisites and blocked propagation
 
@@ -185,14 +196,17 @@ Safety boundary: bauble never seeds or wipes a server it does not own.
 A conformance verdict for a profile: every mandatory, testable assertion in
 the profile is `PASS` or `NOT_APPLICABLE`, with no `FAIL`. Optional (`SHOULD`/
 `MAY`) failures are reported as warnings, not conformance failures.
+
 ## Reporting
 
 bauble emits four reporters over one record format:
 
 - A **journal** — JSON lines, the raw machine-readable record of every
-  assertion and its result, denormalized so it is self-contained. This is
-  the source of truth, suitable for archival and for diffing results
-  across runs or server versions.
+  assertion and its result, denormalized so it is self-contained. Each
+  record also carries a run timestamp, the bauble version, and the target
+  identifier, so a journal diff across runs or server versions is
+  self-describing. This is the source of truth, suitable for archival and
+  for diffing results across runs or server versions.
 - A **summary** — human rollup: per-RFC and per-profile verdicts, a
   per-layer rollup, a per-OID capability table, and an overall verdict.
 - **text** — per-assertion lines plus a status count.

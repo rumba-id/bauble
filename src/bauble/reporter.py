@@ -10,8 +10,10 @@ from __future__ import annotations
 import json
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Protocol, TextIO, cast
 
+from bauble import __version__
 from bauble.model import Result
 from bauble.registry import Registry
 
@@ -47,6 +49,9 @@ class JournalRecord:
     layer: str = "semantic"
     oid: str = ""
     detail: str | None = None
+    timestamp: str = ""
+    bauble_version: str = ""
+    target: str = ""
 
 
 @dataclass(frozen=True)
@@ -60,8 +65,11 @@ class ProfileVerdict:
     untestable: int
 
 
-def to_records(results: list[Result], registry: Registry) -> list[JournalRecord]:
+def to_records(
+    results: list[Result], registry: Registry, *, target: str = "", timestamp: str = ""
+) -> list[JournalRecord]:
     """Enrich Results with their assertions' static metadata."""
+    ts = timestamp or datetime.now(UTC).isoformat(timespec="seconds")
     records: list[JournalRecord] = []
     for result in results:
         assertion = registry.get(result.assertion_id)
@@ -76,6 +84,9 @@ def to_records(results: list[Result], registry: Registry) -> list[JournalRecord]
                 layer=assertion.layer.value,
                 oid=assertion.oid,
                 detail=result.detail,
+                timestamp=ts,
+                bauble_version=__version__,
+                target=target,
             )
         )
     return records
@@ -97,6 +108,9 @@ def journal_dumps(records: list[JournalRecord]) -> str:
                     "layer": record.layer,
                     "oid": record.oid,
                     "detail": record.detail,
+                    "timestamp": record.timestamp,
+                    "bauble_version": record.bauble_version,
+                    "target": record.target,
                 }
             )
         )
@@ -138,6 +152,9 @@ def journal_loads(text: str) -> list[JournalRecord]:
                 layer=str(data.get("layer", "semantic")),
                 oid=str(data.get("oid", "")),
                 detail=detail,
+                timestamp=str(data.get("timestamp", "")),
+                bauble_version=str(data.get("bauble_version", "")),
+                target=str(data.get("target", "")),
             )
         )
     return records

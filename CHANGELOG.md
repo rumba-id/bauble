@@ -5,32 +5,30 @@ restate coverage totals. Run `bauble coverage` for current figures.
 
 ## Unreleased
 
-Raw-layer correctness. The present filter in `build_search_request` no longer
-wraps the value in an implicit tag that matches no entries; StartTLS assertions
-open fresh connections to avoid TLS-state leakage; schema-tier element names now
-match their RFC definitions; and the informational/BCP corpus is complete with
-proper class-B records for untestable requirements.
+Correctness and usability pass. The advertise-then-test gate now covers the
+optional controls and extended operations, the wire smoke tests no longer
+inflate the verdict, and the CLI gains probe and exit-code affordances.
+All four goldens regenerated after live verification.
 
-- `build_search_request` default present filter no longer wraps the value in an
-  implicit `[7]` tag — it now encodes just the OCTET STRING value, so searches
-  like `present(objectClass)` match entries as intended (`src/bauble/raw.py`).
-- StartTLS assertions open dedicated connections instead of reusing the shared
-  session, preventing TLS-state leakage into subsequent assertions
-  (`src/bauble/suites/rfc4513_security.py`).
-- RFC 3671 assertion no longer requires a non-existent collective attribute
-  control; it checks subschema publication of collective attribute definitions
-  instead (`src/bauble/suites/rfc3671.py`, `src/bauble/requirements/rfc3671.toml`).
-- Schema-tier element names corrected: 2926 uses `slpService`/`template-url-syntax`,
-  3703/4104 uses `pcimGroup`, 4876 uses `DUAConfigProfile`, 8284 uses
-  `JIDObject`/`jid`; RFC 5803 moved to class-B (no schema elements); `_declared`
-  matches any NAME-list position (`src/bauble/suites/schema.py`).
-- RFC 3687 `componentFilterMatch` OID corrected from `2.5.13.47` to the RFC value
-  `1.2.36.79672281.1.13.2` (`src/bauble/suites/rfc3687.py`).
-- Informational/BCP tier completed: 10 RFCs (1823, 2377, 2820, 2849, 3352,
-  3384, 3494, 4510, 4520, 4521) recorded as class-B with reasons
-  (`src/bauble/requirements/rfc*.toml`).
-- README scope lists every suite RFC bidirectionally; full-coverage plan corrected
-  to state what actually holds (`README.md`, `docs/full-coverage-plan.md`).
+- The four always-pass wire smoke tests (messageID 0, indefinite-length BER,
+  BOOLEAN 0x01, truncated PDU) no longer report PASS unconditionally.
+  Indefinite-length now asserts the bind is not accepted as success; the
+  other three are class B (client-side requirements) and report UNTESTABLE.
+  Dead code removed from `Capability.supports` and the wire suite.
+- `bauble run` probes the live root DSE and unions the advertised controls,
+  extensions, features, and SASL mechanisms into the capability statement.
+  The optional controls and extended operations (paged results, sort,
+  password modify, who-am-I) gate on those OIDs via `requires_features`, so
+  an unadvertised feature reports NOT_APPLICABLE instead of FAIL — LLDAP's
+  false paged-results and sort FAILs become NOT_APPLICABLE. OpenLDAP
+  implements sort without advertising it, so its fixture declares the
+  RFC 2891 OIDs to keep the behavioral test running.
+- New `bauble probe --server <uri>` command prints a capability TOML
+  skeleton from a live server. `bauble run --exit-code` exits 1 when a MUST
+  class-A assertion fails, so CI can gate on the run. The journal records a
+  run timestamp, the bauble version, and the target identifier.
+- Turn (RFC 4531) and Transactions (RFC 5805) moved from Core to Extended.
+  Raw-layer BER builders and parsers gained direct unit tests.
 Three suite defects whose FAILs were committed as golden contracts, plus
 the read-only default for bare `--server` runs. No goldens change without
 review: all four were regenerated after live verification.
@@ -64,12 +62,35 @@ review: all four were regenerated after live verification.
   server: mutations require `--allow-mutation` or a capability file
   declaring `writable = true`, matching the documented isolation model.
 
-Documentation reconciled with the code in the same pass: RFC 4516 removed
-from the README scope (no suite or corpus exists for it), the design
+The full-coverage series landed: suites and corpora for the remaining
+behavior RFCs — RFC 4516 (LDAP URL), 3698 (integerOrderingMatch), 3687
+(component matching), 4522 (binary encoding), 3909 (cancel), 4370
+(proxied authorization), 4531 (turn), 3296 (named subordinate
+references), 3672 (subentries), 3671 (collective attributes), 2589
+(dynamic entries), 4533 (content synchronization), and 5805
+(transactions) — plus schema-presence checks for the schema tier.
+RFC 3928, 4373, and 2649 (no mainstream implementation) and the
+informational/BCP tier are recorded corpus-only. Behaviorals gate on
+the live root DSE advertisement, so an unadvertised OID reports
+NOT_APPLICABLE instead of relying on the capability file. The fixture
+gained dds, syncprov, collective, and subentry schema. The last
+class-A partial and technically-testable class-B requirements are
+closed; every remaining uncovered requirement is class-B with a
+recorded reason.
+
+Rumba (rumbad) is exercised as a conformance target: the capability
+model gained schema-level gates (`alias_entries`, `referral_entries`,
+`person_sn_must`) for AD-flavored schema deviations, a CI target
+config ships under `ci/targets/rumba/`, and its deviations are
+recorded in `docs/server-findings.md`. Raw-layer fixes landed
+alongside: implicit tagging for the SASL bind, admin-bind helpers,
+case-insensitive attribute and DN lookups, and the 3829 response
+controls read from the raw result.
+
+Documentation reconciled with the code in the same pass: the design
 notes' coverage-boundary and fixtures sections updated to the shipped
-raw-wire reality, the never-emitted `NA` status dropped, the operator
-guide's capability-gating description corrected, and the v2.1 fidelity
-review's committed requirement count annotated as historical.
+raw-wire reality, the never-emitted `NA` status dropped, and the
+operator guide's capability-gating description corrected.
 
 ## v2.3.1 — 2026-08-16
 
@@ -187,9 +208,8 @@ The fidelity audit caught and fixed real defects:
   result code the standard requires.
 
 The audit surfaced a genuine server finding: 389 DS does not implement RFC
-4529 `@objectclass` expansion. `docs/v2.1-fidelity-review.md` records the
-method, the fixes, and the PARTIAL candidates that seed the v2.2 coverage
-work.
+4529 `@objectclass` expansion (see `docs/server-findings.md`). Its PARTIAL
+candidates seeded the v2.2 coverage work.
 
 The requirements model gained a `note` field; accepted cross-RFC links and
 intrinsic untestability reasons are now documented in the corpus and shown by

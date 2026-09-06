@@ -120,9 +120,29 @@ def test_to_records_enriches_from_registry() -> None:
             text="anonymous bind",
         )
     )
-    records = to_records([Result("4511.4.2.1", Status.PASS, detail="ok")], registry)
+    from bauble import __version__
+
+    records = to_records(
+        [Result("4511.4.2.1", Status.PASS, detail="ok")],
+        registry,
+        target="ldap://host:389",
+        timestamp="2026-01-01T00:00:00+00:00",
+    )
     assert records == [
-        JournalRecord("4511.4.2.1", 4511, "pass", "must", "A", ("interop",), "semantic", "", "ok")
+        JournalRecord(
+            "4511.4.2.1",
+            4511,
+            "pass",
+            "must",
+            "A",
+            ("interop",),
+            "semantic",
+            "",
+            "ok",
+            "2026-01-01T00:00:00+00:00",
+            __version__,
+            "ldap://host:389",
+        )
     ]
 
 

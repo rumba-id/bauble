@@ -28,6 +28,7 @@ _BOB_DN = "uid=bob,ou=people,dc=bauble,dc=test"
     stimulus="Password Modify extended request for bob with a new password.",
     expected_observables="ExtendedResponse success (0); password restored in cleanup; confidentialityRequired (13) reports NOT_APPLICABLE.",
     oid="1.3.6.1.4.1.4203.1.11.1",
+    requires_features=("supported_extension:1.3.6.1.4.1.4203.1.11.1",),
 )
 def password_modify_accepted(session: Session) -> Result:
     bind_admin(session)
@@ -79,6 +80,7 @@ def password_modify_accepted(session: Session) -> Result:
     stimulus="Password Modify extended request for bob with an incorrect oldPasswd.",
     expected_observables="ExtendedResponse resultCode non-zero; the password is unchanged.",
     oid="1.3.6.1.4.1.4203.1.11.1",
+    requires_features=("supported_extension:1.3.6.1.4.1.4203.1.11.1",),
 )
 def password_modify_wrong_old_passwd(session: Session) -> Result:
     session.bind(_BOB_DN, _BOB_PW)
@@ -112,6 +114,7 @@ def password_modify_wrong_old_passwd(session: Session) -> Result:
     stimulus="Password Modify extended request while the session is anonymous.",
     expected_observables="ExtendedResponse resultCode non-zero (operation rejected).",
     oid="1.3.6.1.4.1.4203.1.11.1",
+    requires_features=("supported_extension:1.3.6.1.4.1.4203.1.11.1",),
 )
 def password_modify_anonymous_rejected(session: Session) -> Result:
     bound = session.bind(None, None)

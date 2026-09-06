@@ -185,7 +185,9 @@ uv run bauble run --profile interop --server ldap://host:389 --reporter journal
 uv run bauble run --profile interop --target --reporter journal --out run.jsonl
 ```
 
-Use `--fresh-target` to force a fresh container (opt-in, slower).
+Use `--fresh-target` to force a fresh container (opt-in, slower). Pass
+`--exit-code` to exit `1` when a MUST class-A assertion fails, so CI can
+gate directly on the run.
 
 ### Additional targets
 
@@ -222,6 +224,16 @@ supported_control = []
 ```
 
 Pass it with `--capability bauble.toml`. Unsupported features auto-pass.
+
+The suite also probes the server's root DSE at run start and unions the
+advertised controls, extensions, features, and SASL mechanisms into the
+capability statement, so a file is usually only needed for the schema-level
+flags (`alias_entries`, `referral_entries`, `person_sn_must`) and write
+access. Generate a skeleton from a live server with:
+
+```bash
+uv run bauble probe --server ldap://host:389
+```
 
 ## Development
 

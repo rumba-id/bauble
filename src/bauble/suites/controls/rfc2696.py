@@ -26,6 +26,7 @@ _PAGED_OID = "1.2.840.113556.1.4.319"
     stimulus="SearchRequest over the base with a paged-results control (size=2).",
     expected_observables="SearchResultDone resultCode success (0).",
     oid="1.2.840.113556.1.4.319",
+    requires_features=("supported_control:1.2.840.113556.1.4.319",),
 )
 def paged_results_accepted(session: Session) -> Result:
     outcome, _ = session.search(
@@ -59,6 +60,7 @@ def paged_results_accepted(session: Session) -> Result:
     stimulus="Paged SearchRequest over ou=people (size=1), iterating with the returned cookie.",
     expected_observables="The first page returns a non-empty cookie; the final page returns an empty cookie.",
     oid="1.2.840.113556.1.4.319",
+    requires_features=("supported_control:1.2.840.113556.1.4.319",),
 )
 def paged_results_cookie_exhausts(session: Session) -> Result:
     from bauble.harness import LdapSession, ServerConfig

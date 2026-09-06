@@ -13,10 +13,10 @@ import argparse
 import sys
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Protocol, cast, runtime_checkable
+from typing import Protocol, TextIO, cast, runtime_checkable
 from urllib.parse import urlparse
 
-from bauble.capability import Capability, load_capability
+from bauble.capability import Capability, load_capability, probe_capability
 from bauble.harness import LdapSession, ServerConfig
 from bauble.model import Assertion, Category, Profile, Result, Severity, Status, TestClass
 from bauble.registry import Registry, default_registry
@@ -163,6 +163,52 @@ def _topo_sort(assertions: list[Assertion]) -> list[Assertion]:
     return out
 
 
+def _probe_and_merge(session: Session, declared: Capability) -> Capability:
+    """Fold the server's live root-DSE advertisement into the declared statement."""
+    return declared.merged_with(probe_capability(session))
+
+
+def _conformance_failed(results: list[Result], registry: Registry) -> bool:
+    """Whether any mandatory-testable assertion failed.
+
+    SHOULD/MAY failures are warnings, not conformance failures; only a FAIL
+    on a MUST, class-A assertion breaks the gate.
+    """
+    for result in results:
+        if result.status is not Status.FAIL:
+            continue
+        assertion = registry.get(result.assertion_id)
+        if assertion.severity is Severity.MUST and assertion.test_class is TestClass.A:
+            return True
+    return False
+
+
+def _write_probe_toml(capability: Capability, out: TextIO) -> None:
+    """Emit a capability TOML skeleton from a live probe."""
+
+    def oid_list(name: str, values: frozenset[str]) -> None:
+        if not values:
+            out.write(f"{name} = []\n")
+            return
+        out.write(f"{name} = [\n")
+        out.writelines(f'  "{value}",\n' for value in sorted(values))
+        out.write("]\n")
+
+    out.write("# capability skeleton probed from the live root DSE.\n")
+    out.write("# Schema-level flags (alias_entries, referral_entries, person_sn_must)\n")
+    out.write("# cannot be probed; set them by hand.\n")
+    out.write("[server]\n")
+    out.write("writable = false\n")
+    out.write("resettable = false\n")
+    out.write("\n[features]\n")
+    out.write(f"naming_context = {'true' if capability.naming_context else 'false'}\n")
+    out.write(f"alt_server = {'true' if capability.alt_server else 'false'}\n")
+    oid_list("supported_extension", capability.supported_extension)
+    oid_list("supported_control", capability.supported_control)
+    oid_list("supported_features", capability.supported_features)
+    oid_list("supported_sasl_mechanisms", capability.supported_sasl_mechanisms)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """CLI entry point: ``bauble run [--profile ...] [--dry-run|--server ...|--target]``."""
     args = _parse(argv)
@@ -179,6 +225,17 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         discover()
         sys.stdout.write(audit_text(default_registry()))
+        return 0
+    if args.command == "probe":
+        if not args.server:
+            print("specify --server <uri> to probe", file=sys.stderr)
+            return 2
+        session = LdapSession(_server_config_from_uri(args.server, args.starttls))
+        try:
+            probed = probe_capability(session)
+        finally:
+            session.unbind()
+        _write_probe_toml(probed, sys.stdout)
         return 0
     if args.command != "run":
         return 2
@@ -208,22 +265,24 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             target.ensure_running()
         session = LdapSession(target.server_config(use_start_tls=args.starttls))
+        capability = _probe_and_merge(session, capability)
         try:
             results = run(selector, registry, capability, session)
         finally:
             session.unbind()
         # Container left running for reuse; self-cleaning assertions keep the
         # DIT at base seed.  Use --fresh-target for a forced reset.
-        _render(results, registry, args.reporter, args.out)
-        return 0
+        _render(results, registry, args.reporter, args.out, target=target.name)
+        return 1 if (args.exit_code and _conformance_failed(results, registry)) else 0
     if args.server:
         session = LdapSession(_server_config_from_uri(args.server, args.starttls))
+        capability = _probe_and_merge(session, capability)
         try:
             results = run(selector, registry, capability, session)
         finally:
             session.unbind()
-        _render(results, registry, args.reporter, args.out)
-        return 0
+        _render(results, registry, args.reporter, args.out, target=args.server)
+        return 1 if (args.exit_code and _conformance_failed(results, registry)) else 0
     print("specify --server <uri> or --target for a live run", file=sys.stderr)
     return 2
 
@@ -233,9 +292,11 @@ def _render(
     registry: Registry,
     reporter_name: str,
     out_path: str | None,
+    *,
+    target: str = "",
 ) -> None:
     """Route results through the chosen reporter to a file or stdout."""
-    records = to_records(results, registry)
+    records = to_records(results, registry, target=target)
     reporter = get_reporter(reporter_name)
     if out_path:
         try:
@@ -305,8 +366,18 @@ def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
         help="output format (default: text)",
     )
     run_parser.add_argument("--out", help="write output to a file (default: stdout)")
+    run_parser.add_argument(
+        "--exit-code",
+        action="store_true",
+        help="exit 1 when a MUST class-A assertion fails (for CI gating)",
+    )
     sub.add_parser("coverage", help="print coverage facts from the assertion registry")
     sub.add_parser("audit", help="print the assertion-fidelity audit")
+    probe_parser = sub.add_parser("probe", help="print a capability TOML from a live server")
+    probe_parser.add_argument("--server", help="LDAP server URI (e.g. ldap://host:389)")
+    probe_parser.add_argument(
+        "--starttls", action="store_true", help="issue StartTLS after connecting"
+    )
     return parser.parse_args(argv)
 
 
