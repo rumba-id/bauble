@@ -1,0 +1,15 @@
+rfc = 2820
+title = "Access Control Requirements for LDAP"
+
+# Informational / BCP / format document: no testable directory-server
+# conformance requirements. Recorded so the corpus enumerates every
+# current-tier RFC in docs/references.md.
+
+[[requirement]]
+id = "2820:1:1"
+section = "1"
+severity = "must"
+test_class = "B"
+text = "Access Control Requirements for LDAP imposes no testable directory-server conformance requirements."
+covered_by = []
+note = "Informational requirements framework; defines no testable protocol behavior."

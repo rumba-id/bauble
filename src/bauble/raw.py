@@ -81,8 +81,11 @@ def build_sasl_bind_request(
     """Build a SASL BindRequest (AuthenticationChoice sasl [3])."""
     mech = _encode_octet_string(mechanism)
     sasl_contents = mech + (_encode_octet_string(credentials) if credentials is not None else b"")
-    sasl_seq = b"\x30" + _encode_length(len(sasl_contents)) + sasl_contents
-    auth_element = b"\xa3" + _encode_length(len(sasl_seq)) + sasl_seq
+    # RFC 4511 §4.2: AuthenticationChoice sasl [3] SaslCredentials —
+    # the context tag [3] stands for the SaslCredentials SEQUENCE
+    # itself (implicit tagging), so the children follow directly
+    # under a3 without an inner SEQUENCE wrapper.
+    auth_element = b"\xa3" + _encode_length(len(sasl_contents)) + sasl_contents
     return build_bind_request_auth(message_id, version, dn, auth_element)
 
 
@@ -594,7 +597,7 @@ def build_search_request(
     time_limit = _encode_integer(0)
     types_only = b"\x01\x01\x00"
     if filter_ber is None:
-        present = _encode_octet_string("objectClass")
+        present = b"objectClass"
         filter_ber = b"\x87" + _encode_length(len(present)) + present
     attrs = _encode_sequence(b"".join(_encode_octet_string(a) for a in attributes))
     contents = (

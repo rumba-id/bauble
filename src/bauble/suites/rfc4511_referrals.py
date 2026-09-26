@@ -25,6 +25,7 @@ _DEREF_ALWAYS = 3
     preconditions="Admin bound; seed contains the alias entry uid=alice-alias pointing at uid=alice.",
     stimulus="Two wholeSubtree searches for (objectClass=alias): one with derefNever, one with derefAlways.",
     expected_observables="derefNever returns the alias entry; derefAlways follows it, so the alias entry is absent from the results.",
+    requires_features=("alias_entries",),
 )
 def alias_dereferenced_always(session: Session) -> Result:
     from bauble.suites._helpers import bind_admin
@@ -67,6 +68,7 @@ def alias_dereferenced_always(session: Session) -> Result:
     preconditions="Admin bound; seed contains the referral entry ou=remote.",
     stimulus="WholeSubtree search over dc=bauble,dc=test.",
     expected_observables="SearchResultDone carries referrals (a continuation reference for ou=remote).",
+    requires_features=("referral_entries",),
 )
 def referral_returned(session: Session) -> Result:
     outcome, _ = session.search(

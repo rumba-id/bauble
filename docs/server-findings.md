@@ -12,6 +12,7 @@ that the investigation resolved as a suite bug instead.
 
 | Finding | Evidence | Verdict |
 |---|---|---|
+| Subtree search over a referral entry returns entries, not a continuation reference | RFC 4511 §4.5.3: a search crossing a subordinate referral returns a SearchResultReference; 389 DS returns the referral entry itself as a normal entry (deref of `ou=remote` yields no referral URI). | `4511.4.5.7` FAIL |
 | Rejects empty AND/OR filters | RFC 4526 §2: "SHALL allow 'and' and 'or' filter choices with zero elements"; (&) and (|) are protocolError (2) instead of true/false. | `4526.2.1`, `4526.2.2` FAIL |
 | Unsupported AuthenticationChoice returns protocolError instead of authMethodNotSupported | RFC 4511 §4.2: "Servers that do not support a choice supplied by a client return a BindResponse with the resultCode set to authMethodNotSupported." 389 DS returns 2. | `4511.4.2.10` FAIL |
 | Accepts a language RANGE option on add | RFC 3866 §3: "Any attempt to add or update an attribute description with a language range option SHALL be treated as an undefined attribute type and result in an error." 389 DS accepts the add. | `3866.3.3` FAIL |
@@ -63,6 +64,22 @@ interface's actual limits.
 | `@objectclass` raw searches denied | The @person attribute selection is not honored (50). | `4529.3.1`, `4529.3.2` FAIL |
 | Extensible-match filters not supported | RFC 4511 §4.5.1.7 defines the extensibleMatch filter choice; LLDAP's filter parser does not implement it, so (uid:caseExactMatch:=alice) matches nothing. | `4517.4.6` FAIL |
 | Password Modify ignores oldPasswd | RFC 3062: an incorrect oldPasswd must fail and leave the password unchanged; LLDAP changes it anyway. | `3062.3.3` FAIL |
+
+## Rumba (rumbad)
+
+Verified against rumbad, 2026-08-21. Project policy: where AD and
+RFC behavior conflict, Rumba implements the AD behavior.
+
+| Finding | Evidence | Verdict |
+|---|---|---|
+| `alias` and `referral` object classes not in schema | RFC 4511 §4.5.3 alias dereferencing and continuation references require these classes. AD's schema does not define them; Rumba rejects adds with these classes as unknown object class. Declared `alias_entries = false` / `referral_entries = false` in the capability statement. | `4511.4.5.6`, `4511.4.5.7` NOT_APPLICABLE |
+| `person` lists `sn` as MAY | RFC 4519 §3 requires `sn` (MUST) on person; Rumba's schema follows MS-ADSC, where person has sn in MAY. An inetOrgPerson add without sn is accepted. Declared `person_sn_must = false`. | `4511.4.7.4`, `4512.4.5` NOT_APPLICABLE |
+| Anonymous simple bind rejected by default | `allow_anonymous_bind = false` (rumbad default) returns 50. RFC 4513 permits anonymous simple bind. Configuration, not deviation; the conformance deployment enables it. | `4511.4.2.1` behavior note |
+| Search base outside all naming contexts returns a referral | A base-scope search for a DN under no hosted naming context returns result 10 with `ldap://<dc-host>/`, matching AD's partition-routing behavior. Bases inside a naming context return noSuchObject (32) with a matchedDN. | behavior note |
+| Bind version != 3 closes the connection without a response | RFC 4511 §4.2 requires a BindResponse with protocolError (2). Rumba drops the connection. Bug. | `4511.4.2.7` FAIL |
+| Unsupported SASL mechanism returns protocolError (2) | RFC 4511 §4.2 requires authMethodNotSupported (7). AD returns 7. Bug. | `4511.4.2.9`, `4511.4.2.10` FAIL |
+| Search result DNs use uppercase RDN types for AD classes | CN, OU, DC, O, L, ST, C are uppercased; other types (uid) keep stored casing. DN case is not significant (RFC 4514). | behavior note |
+| Seed's `referral` entry rejected at load | Consequence of the missing referral class above; assertion 4511.4.5.4 cannot run against Rumba. | `4511.4.5.4` environment |
 
 ## Investigated and resolved as suite bugs (not findings)
 

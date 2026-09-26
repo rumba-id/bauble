@@ -1,0 +1,15 @@
+rfc = 2377
+title = "Naming Plan for Internet Directory-Enabled Applications"
+
+# Informational / BCP / format document: no testable directory-server
+# conformance requirements. Recorded so the corpus enumerates every
+# current-tier RFC in docs/references.md.
+
+[[requirement]]
+id = "2377:1:1"
+section = "1"
+severity = "must"
+test_class = "B"
+text = "Naming Plan for Internet Directory-Enabled Applications imposes no testable directory-server conformance requirements."
+covered_by = []
+note = "Informational naming-plan recommendation; no normative server requirements."

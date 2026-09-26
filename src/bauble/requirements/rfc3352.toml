@@ -1,0 +1,15 @@
+rfc = 3352
+title = "Connection-less Lightweight Directory Access Protocol (CLDAP) to Historic Status"
+
+# Informational / BCP / format document: no testable directory-server
+# conformance requirements. Recorded so the corpus enumerates every
+# current-tier RFC in docs/references.md.
+
+[[requirement]]
+id = "3352:1:1"
+section = "1"
+severity = "must"
+test_class = "B"
+text = "Connection-less Lightweight Directory Access Protocol (CLDAP) to Historic Status imposes no testable directory-server conformance requirements."
+covered_by = []
+note = "Status-change document moving CLDAP to Historic; no server requirements."

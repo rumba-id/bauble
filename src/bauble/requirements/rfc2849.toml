@@ -1,0 +1,15 @@
+rfc = 2849
+title = "The LDAP Data Interchange Format (LDIF) - Technical Specification"
+
+# Informational / BCP / format document: no testable directory-server
+# conformance requirements. Recorded so the corpus enumerates every
+# current-tier RFC in docs/references.md.
+
+[[requirement]]
+id = "2849:1:1"
+section = "1"
+severity = "must"
+test_class = "B"
+text = "The LDAP Data Interchange Format (LDIF) imposes no testable directory-server conformance requirements."
+covered_by = []
+note = "Defines the LDIF file format consumed by directory tools; a server has no LDIF behavior on the wire."

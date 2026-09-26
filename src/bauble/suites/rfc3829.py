@@ -83,14 +83,12 @@ def authzid_response_on_bind(session: Session) -> Result:
             detail=f"bind failed: {result.result_code}",
         )
 
-    # Check for response control
-    response_controls: list = getattr(conn.result, "controls", None) or []  # type: ignore[reportUnknownVariableType]
-    found = False
-    for c in response_controls:  # type: ignore[reportUnknownVariableType]
-        if getattr(c, "controlType", None) == _AUTHZID_RESPONSE_OID:  # type: ignore[reportUnknownArgumentType]
-            found = True
-            break
-    if found:
+    # Check for response control. ldap3 exposes response controls as
+    # a dict keyed by control OID.
+    # ldap3 exposes response controls as a dict keyed by control OID
+    # on the raw result (conn.result is a dict, not an object).
+    response_controls: dict = conn.result.get("controls") or {}  # type: ignore[reportUnknownVariableType]
+    if _AUTHZID_RESPONSE_OID in response_controls:
         return Result("3829.4.1", Status.PASS)
     return Result(
         "3829.4.1",
@@ -133,12 +131,13 @@ def authzid_no_response_on_failed_bind(session: Session) -> Result:
             Status.FAIL,
             detail="bind unexpectedly succeeded with wrong password",
         )
-    response_controls: list = getattr(conn.result, "controls", None) or []  # type: ignore[reportUnknownVariableType]
-    for c in response_controls:  # type: ignore[reportUnknownVariableType]
-        if getattr(c, "controlType", None) == _AUTHZID_RESPONSE_OID:  # type: ignore[reportUnknownArgumentType]
-            return Result(
-                "3829.4.2",
-                Status.FAIL,
-                detail="authzId response control present on a failed bind",
-            )
+    # ldap3 exposes response controls as a dict keyed by control OID
+    # on the raw result (conn.result is a dict, not an object).
+    response_controls: dict = conn.result.get("controls") or {}  # type: ignore[reportUnknownVariableType]
+    if _AUTHZID_RESPONSE_OID in response_controls:
+        return Result(
+            "3829.4.2",
+            Status.FAIL,
+            detail="authzId response control present on a failed bind",
+        )
     return Result("3829.4.2", Status.PASS)

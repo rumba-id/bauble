@@ -1,0 +1,8 @@
+rfc = 5803
+title = "LDAP Schema for Storing SCRAM Secrets"
+
+# RFC 5803 defines no LDAP schema elements: it specifies how the
+# authPassword attribute (RFC 3112) is used to store SCRAM secrets.
+# Class-B informational tier — no conformance surface to presence-check.
+
+# class B — no requirements

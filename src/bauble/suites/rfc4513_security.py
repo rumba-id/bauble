@@ -1,5 +1,6 @@
 """RFC 4513 §3 — StartTLS and Transport Layer Security."""
 
+from bauble.harness import LdapSession, ServerConfig
 from bauble.model import Category, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, SCOPE_WHOLE_SUBTREE, Session
 from bauble.suites._base import assertion
@@ -10,10 +11,23 @@ _SECURITY = frozenset({Profile.EXTENDED})
 _STARTTLS_OID = "1.3.6.1.4.1.1466.20037"
 
 
+def _fresh_session(session: Session) -> LdapSession:
+    """A fresh connection for transport-state assertions.
+
+    StartTLS mutates the connection it runs on. The runner's session is
+    shared across assertions, so each StartTLS assertion must run on its
+    own connection or TLS state leaks into later assertions (the second
+    StartTLS is then correctly rejected as already-TLS, not because the
+    server misbehaves).
+    """
+    fresh = LdapSession(ServerConfig(host=session.host, port=session.port))
+    fresh._ensure_open()  # type: ignore[reportPrivateUsage]
+    return fresh
+
+
 def _starttls(session: Session) -> int:
-    """Perform StartTLS on the session. Returns resultCode."""
-    outcome = session.start_tls()
-    return outcome.result_code
+    """Perform StartTLS on a fresh connection. Returns resultCode."""
+    return _fresh_session(session).start_tls().result_code
 
 
 @assertion(
@@ -54,14 +68,15 @@ def starttls_succeeds(session: Session) -> Result:
     expected_observables="Second StartTLS returns operationsError (1).",
 )
 def starttls_rejected_when_active(session: Session) -> Result:
-    first = _starttls(session)
+    tls_session = _fresh_session(session)
+    first = tls_session.start_tls().result_code
     if first != 0:
         return Result(
             "4513.3.1.1-2",
             Status.NOT_APPLICABLE,
             detail=f"initial StartTLS failed: resultCode={first}",
         )
-    second = _starttls(session)
+    second = tls_session.start_tls().result_code
     if second != 0:
         return Result("4513.3.1.1-2", Status.PASS)
     return Result(
@@ -88,8 +103,9 @@ def starttls_rejected_when_active(session: Session) -> Result:
     ),
 )
 def capabilities_refreshed_after_tls(session: Session) -> Result:
+    tls_session = _fresh_session(session)
     # Read before TLS.
-    pre, pre_entries = session.search(
+    pre, pre_entries = tls_session.search(
         "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedSASLMechanisms"]
     )
     pre_mechs: set[str | bytes] = set()
@@ -97,7 +113,7 @@ def capabilities_refreshed_after_tls(session: Session) -> Result:
         pre_mechs = set(pre_entries[0].attributes.get("supportedSASLMechanisms", []))
 
     # StartTLS.
-    tls_result = _starttls(session)
+    tls_result = tls_session.start_tls().result_code
     if tls_result != 0:
         return Result(
             "4513.3.1.5",
@@ -106,7 +122,7 @@ def capabilities_refreshed_after_tls(session: Session) -> Result:
         )
 
     # Read after TLS.
-    post, post_entries = session.search(
+    post, post_entries = tls_session.search(
         "", SCOPE_BASE_OBJECT, "(objectClass=*)", ["supportedSASLMechanisms"]
     )
     post_mechs: set[str | bytes] = set()
@@ -136,8 +152,9 @@ def capabilities_refreshed_after_tls(session: Session) -> Result:
     expected_observables="Post-TLS search succeeds (anonymous access).",
 )
 def authorization_resets_after_tls(session: Session) -> Result:
+    tls_session = _fresh_session(session)
     # Bind as admin first.
-    bind_result = session.bind(ADMIN_DN, ADMIN_PW)
+    bind_result = tls_session.bind(ADMIN_DN, ADMIN_PW)
     if bind_result.result_code != 0:
         return Result(
             "4513.3.2",
@@ -146,7 +163,7 @@ def authorization_resets_after_tls(session: Session) -> Result:
         )
 
     # StartTLS.
-    tls_result = _starttls(session)
+    tls_result = tls_session.start_tls().result_code
     if tls_result != 0:
         return Result(
             "4513.3.2",
@@ -155,7 +172,7 @@ def authorization_resets_after_tls(session: Session) -> Result:
         )
 
     # Search without re-binding — should succeed as anonymous.
-    outcome, entries = session.search(TEST_BASE, SCOPE_WHOLE_SUBTREE, "(objectClass=*)")
+    outcome, entries = tls_session.search(TEST_BASE, SCOPE_WHOLE_SUBTREE, "(objectClass=*)")
     if outcome.result_code == 0 and entries:
         return Result("4513.3.2", Status.PASS)
     return Result(
@@ -179,14 +196,15 @@ def authorization_resets_after_tls(session: Session) -> Result:
     expected_observables="Bind succeeds (resultCode 0) over TLS.",
 )
 def simple_bind_over_starttls(session: Session) -> Result:
-    tls_result = _starttls(session)
+    tls_session = _fresh_session(session)
+    tls_result = tls_session.start_tls().result_code
     if tls_result != 0:
         return Result(
             "4513.2.2",
             Status.NOT_APPLICABLE,
             detail=f"StartTLS failed: resultCode={tls_result}",
         )
-    bind_result = session.bind(ADMIN_DN, ADMIN_PW)
+    bind_result = tls_session.bind(ADMIN_DN, ADMIN_PW)
     if bind_result.result_code == 0:
         return Result("4513.2.2", Status.PASS)
     return Result(

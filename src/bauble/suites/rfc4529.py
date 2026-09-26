@@ -3,7 +3,7 @@
 from bauble.model import Category, Layer, Profile, Result, Severity, Status, TestClass
 from bauble.session import SCOPE_BASE_OBJECT, Session
 from bauble.suites._base import assertion
-from bauble.suites._helpers import TEST_BASE
+from bauble.suites._helpers import ADMIN_DN, ADMIN_PW, TEST_BASE
 
 _CORE = frozenset({Profile.CORE})
 
@@ -62,8 +62,10 @@ def _search_raw(
     search_request = b"\x63" + _ber_len(len(search_contents)) + search_contents
     payload = _ber_seq(_ber_int(1) + search_request)
 
+    # Bind as admin: the @objectclass selector is under test, not
+    # anonymous access; AD-style servers hide the DIT from anonymous.
     raw = RawConnection(session.host, session.port)
-    return parse_search_response(raw.bind_then_send_raw(payload))
+    return parse_search_response(raw.bind_then_send_raw(payload, ADMIN_DN, ADMIN_PW))
 
 
 @assertion(

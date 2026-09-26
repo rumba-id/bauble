@@ -1,0 +1,15 @@
+rfc = 3384
+title = "LDAPv3 Replication Requirements"
+
+# Informational / BCP / format document: no testable directory-server
+# conformance requirements. Recorded so the corpus enumerates every
+# current-tier RFC in docs/references.md.
+
+[[requirement]]
+id = "3384:1:1"
+section = "1"
+severity = "must"
+test_class = "B"
+text = "LDAPv3 Replication Requirements imposes no testable directory-server conformance requirements."
+covered_by = []
+note = "Informational replication-requirements survey; superseded in practice by RFC 4533 and defines no protocol behavior."

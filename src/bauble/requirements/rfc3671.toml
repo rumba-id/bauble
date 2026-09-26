@@ -1,0 +1,23 @@
+rfc = 3671
+title = "Collective Attributes in the Lightweight Directory Access Protocol"
+
+# RFC 3671 defines no LDAP control. §2 defines the collective attribute
+# schema (c-l, c-ou, ... collectiveAttributeSubentries); §3 defines the
+# inheritance requirement.
+
+[[requirement]]
+id = "3671:2:1"
+section = "2"
+severity = "should"
+test_class = "A"
+text = "When the collective schema is loaded, the subschema publishes its defining attribute types."
+covered_by = ["3671.2.1"]
+
+[[requirement]]
+id = "3671:3:1"
+section = "3"
+severity = "must"
+test_class = "B"
+text = "Collective attributes are returned to entries within the scope of their collective attribute subentry."
+covered_by = []
+note = "OpenLDAP loads the collective schema (c-l, c-st, ...) but does not evaluate collective attributes; a search does not merge them into returned entries. No portable assertion exists."

@@ -1,0 +1,15 @@
+rfc = 1823
+title = "The LDAP Application Program Interface"
+
+# Informational / BCP / format document: no testable directory-server
+# conformance requirements. Recorded so the corpus enumerates every
+# current-tier RFC in docs/references.md.
+
+[[requirement]]
+id = "1823:1:1"
+section = "1"
+severity = "must"
+test_class = "B"
+text = "The LDAP Application Program Interface imposes no testable directory-server conformance requirements."
+covered_by = []
+note = "Informational API specification for clients; defines no directory-server protocol behavior."
