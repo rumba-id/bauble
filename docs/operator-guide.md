@@ -37,7 +37,7 @@ API; the fixture ships user-config JSONs).
 
 On your own server:
 
-```sh
+```bash
 ldapadd -x -H ldap://host:389 -D "$BAUBLE_ADMIN_DN" -w "$BAUBLE_ADMIN_PW" \
   -f src/bauble/fixtures/seed.ldif
 ```
@@ -57,22 +57,20 @@ Adjustments you may need:
 
 ## Declaring capability
 
-The runner gates assertions on a capability statement (a TOML file,
-defaulting to the fixture's statement under `--target`). Point `--server`
-runs at the default statement, which declares nothing — so for a real
-server, write one. It is the declared lever the suite uses to decide
-between FAIL (server claims or should have the feature) and
-NOT_APPLICABLE (server genuinely does not implement it).
+The runner gates assertions on a capability statement. Fixture targets ship
+one under `--target`. For a `--server` run, bauble probes the live root DSE
+first and unions the advertised controls, extensions, features, and SASL
+mechanisms into the statement, so a hand-written file is usually only needed
+for the schema-level flags and write access.
 
-Probe your server's root DSE first:
+Generate a skeleton with `bauble probe`:
 
-```sh
-ldapsearch -x -H ldap://host:389 -D "$BAUBLE_ADMIN_DN" -w "$BAUBLE_ADMIN_PW" \
-  -b "" -s base "(objectClass=*)" \
-  supportedControl supportedExtension supportedFeatures supportedSASLMechanisms namingContexts
+```bash
+uv run bauble probe --server ldap://host:389
 ```
 
-Then write `capability.toml`:
+Then hand-write only what cannot be probed (schema flags, write access) into
+`capability.toml` and pass it with `--capability`:
 
 ```toml
 [server]
@@ -86,11 +84,14 @@ supported_extension = ["1.3.6.1.4.1.4203.1.11.1", "1.3.6.1.4.1.4203.1.11.3"]
 supported_features = ["1.3.6.1.4.1.4203.1.5.1"]
 supported_control = ["1.2.840.113556.1.4.319"]
 supported_sasl_mechanisms = ["EXTERNAL", "PLAIN"]
+alias_entries = true          # false if the schema lacks the alias object class
+referral_entries = true       # false if the schema lacks the referral object class
+person_sn_must = true         # false if person does not require sn (AD schema)
 ```
 
 Run with it:
 
-```sh
+```bash
 BAUBLE_ADMIN_DN="cn=Manager,dc=example,dc=com" \
 BAUBLE_ADMIN_PW="secret" \
 uv run bauble run --server ldap://host:389 --capability capability.toml \
@@ -102,12 +103,12 @@ of failing against a read-only server — and a bare `--server` run
 without a capability file starts non-writable, so mutations need
 `writable = true` in the file or the `--allow-mutation` flag.
 `supported_features` gates the feature-dependent assertions (the
-RFC 4525 increment pair). The advertise assertions (for example
-`2891.2.2`, `3062.3.2`) probe the server's live root DSE directly and
-report NOT_APPLICABLE when the OID is absent; `supported_control`,
-`supported_extension`, and `supported_sasl_mechanisms` are declaration
-fields for the runner's applicability model — no current assertion gates
-on them.
+RFC 4525 increment pair); `alias_entries`, `referral_entries`, and
+`person_sn_must` declare schema-level gates for the referral, alias,
+and person-schema assertions. The behavioral assertions for the optional
+controls and extended operations (paged results, sort, password modify,
+who-am-I) gate on `supported_control` / `supported_extension` — populated
+automatically by the root-DSE probe, and overridable in the file.
 
 ## Adjustments the suite makes for you
 

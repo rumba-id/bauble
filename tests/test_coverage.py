@@ -69,8 +69,8 @@ def test_corpus_covered_by_links_all_resolve() -> None:
 def test_uncovered_requirements_are_listed() -> None:
     """A requirement whose covered_by is empty must surface under gaps."""
     text = coverage_text(default_registry())
-    # 4511:4.1.10:1 (Referral MUST contain >=1 URI) has no covering assertion.
-    assert "4511:4.1.10:1" in text
+    # 4511:4.1.11:4 (response-control criticality) has no covering assertion.
+    assert "4511:4.1.11:4" in text
     assert "Not fully covered requirements" in text
 
 

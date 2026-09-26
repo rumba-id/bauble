@@ -1,0 +1,39 @@
+rfc = 4533
+title = "The Lightweight Directory Access Protocol (LDAP) Content Synchronization Operation"
+
+# §2 The syncRequest control / §3 Sync operation
+# refreshOnly mode returns the entries plus a syncDone control with a cookie.
+# refreshAndPersist mode streams subsequent changes as syncState controls.
+
+[[requirement]]
+id = "4533:2:1"
+section = "2"
+severity = "should"
+test_class = "A"
+text = "Servers supporting content synchronization advertise 1.3.6.1.4.1.4203.1.9.1.1 in supportedControl."
+covered_by = ["4533.2.1"]
+
+[[requirement]]
+id = "4533:3:1"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "A refreshOnly syncRequest returns a syncDone control carrying a cookie."
+covered_by = ["4533.3.1"]
+
+[[requirement]]
+id = "4533:3:2"
+section = "3"
+severity = "must"
+test_class = "A"
+text = "An incremental syncRequest with a cookie returns only the change, as a syncState control with the new state and entryUUID."
+covered_by = ["4533.3.2"]
+
+[[requirement]]
+id = "4533:3:3"
+section = "3"
+severity = "must"
+test_class = "B"
+text = "A refreshAndPersist syncRequest streams subsequent changes as syncState controls with add/modify/delete states."
+covered_by = []
+note = "Persistent streaming is timing-dependent and requires a second concurrent client; not portably assertable."

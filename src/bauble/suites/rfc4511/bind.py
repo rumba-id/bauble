@@ -279,3 +279,27 @@ def unsupported_auth_choice_rejected(session: Session) -> Result:
         Status.FAIL,
         detail=f"expected 7 (authMethodNotSupported), got {outcome.result_code}",
     )
+
+
+@assertion(
+    id="4511.4.2.6.2",
+    rfc=4511,
+    section="§4.2",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_INTEROP,
+    layer=Layer.SEMANTIC,
+    text="When locating the bind name, the server SHALL NOT dereference aliases.",
+    strategy="Bind with the alias entry's DN and the target's password; the bind must not succeed.",
+    preconditions="Seed contains the alias entry uid=alice-alias pointing at uid=alice.",
+    stimulus="Simple BindRequest with name uid=alice-alias and alice's password.",
+    expected_observables="A non-success resultCode (the alias is not followed).",
+)
+def bind_does_not_deref_alias(session: Session) -> Result:
+    outcome = session.bind("uid=alice-alias,ou=people,dc=bauble,dc=test", _ALICE_PW)
+    if outcome.result_code != 0:
+        return Result("4511.4.2.6.2", Status.PASS)
+    return Result(
+        "4511.4.2.6.2", Status.FAIL, detail="bind followed the alias to the target entry"
+    )

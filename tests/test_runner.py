@@ -133,3 +133,32 @@ def test_server_run_defaults_to_read_only() -> None:
 
     assert resolve_capability(_args(allow_mutation=False)).writable is False
     assert resolve_capability(_args(allow_mutation=True)).writable is True
+
+
+def test_conformance_failed_counts_must_a() -> None:
+    from bauble.runner import _conformance_failed  # type: ignore[reportPrivateUsage]
+
+    registry = Registry()
+    registry.register(_assertion("1.0.0.1"))  # MUST / A
+    registry.register(_assertion("1.0.0.2"))  # MUST / A
+    results = [Result("1.0.0.1", Status.PASS), Result("1.0.0.2", Status.FAIL)]
+    assert _conformance_failed(results, registry) is True
+
+
+def test_conformance_failed_ignores_should_and_warning_failures() -> None:
+    from bauble.runner import _conformance_failed  # type: ignore[reportPrivateUsage]
+
+    registry = Registry()
+    registry.register(
+        Assertion(
+            id="1.0.0.1",
+            rfc=1,
+            section="§1",
+            category=Category.PROTOCOL,
+            severity=Severity.SHOULD,
+            test_class=TestClass.A,
+            profiles=frozenset({Profile.INTEROP}),
+            text="x",
+        )
+    )
+    assert _conformance_failed([Result("1.0.0.1", Status.FAIL)], registry) is False

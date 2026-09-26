@@ -7,12 +7,15 @@ not implement that feature (and is not non-conformant for its absence).
 
 from __future__ import annotations
 
+import os
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-__all__ = ["Capability", "load_capability"]
+from bauble.session import SCOPE_BASE_OBJECT, Session
+
+__all__ = ["Capability", "load_capability", "probe_capability"]
 
 
 @dataclass(frozen=True)
@@ -69,7 +72,6 @@ class Capability:
                 return self.referral_entries
             case "person_sn_must":
                 return self.person_sn_must
-                return self.extended_operation is not None
             case _:
                 if feature.startswith("supported_extension:"):
                     return feature.split(":", 1)[1] in self.supported_extension
@@ -82,6 +84,30 @@ class Capability:
                 if _is_oid(feature):
                     return feature in self.supported_features
                 return False
+
+    def merged_with(self, probed: Capability) -> Capability:
+        """Union a live root-DSE probe into this declared statement.
+
+        Declared scalar gates (``writable``/``resettable`` and the schema
+        flags) win; the probed advertisement OIDs and root-DSE booleans are
+        unioned in, so a server that advertises a feature is tested for it
+        even when the operator's file is silent.
+        """
+        return Capability(
+            writable=self.writable,
+            resettable=self.resettable,
+            alt_server=self.alt_server or probed.alt_server,
+            naming_context=self.naming_context or probed.naming_context,
+            supported_extension=self.supported_extension | probed.supported_extension,
+            supported_control=self.supported_control | probed.supported_control,
+            supported_features=self.supported_features | probed.supported_features,
+            supported_sasl_mechanisms=self.supported_sasl_mechanisms
+            | probed.supported_sasl_mechanisms,
+            alias_entries=self.alias_entries,
+            referral_entries=self.referral_entries,
+            person_sn_must=self.person_sn_must,
+            extended_operation=self.extended_operation,
+        )
 
 
 def _is_oid(value: str) -> bool:
@@ -127,3 +153,53 @@ def _str_list(value: object) -> list[str]:
         return []
     items = cast(list[object], value)
     return [str(item) for item in items]
+
+
+def probe_capability(session: Session) -> Capability:
+    """Read a server's advertised features from its root DSE.
+
+    The root DSE publishes ``supportedControl``, ``supportedExtension``,
+    ``supportedFeatures``, ``supportedSASLMechanisms``, ``namingContexts``,
+    and ``altServer`` (RFC 4512 §5.1). Probing turns those live facts into
+    a :class:`Capability` so ``--server`` runs do not need a hand-written
+    capability file. The returned statement is never ``writable``.
+
+    Servers that deny anonymous root-DSE reads (389 DS, LLDAP) are retried
+    under the ``BAUBLE_ADMIN_DN``/``BAUBLE_ADMIN_PW`` credentials. On
+    failure an empty :class:`Capability` is returned, so :meth:`merged_with`
+    leaves the declared statement unchanged.
+    """
+    attrs = [
+        "supportedControl",
+        "supportedExtension",
+        "supportedFeatures",
+        "supportedSASLMechanisms",
+        "namingContexts",
+        "altServer",
+    ]
+    outcome, entries = session.search("", SCOPE_BASE_OBJECT, "(objectClass=*)", attrs)
+    if outcome.result_code != 0 or not entries:
+        admin_dn = os.environ.get("BAUBLE_ADMIN_DN", "cn=admin,dc=bauble,dc=test")
+        admin_pw = os.environ.get("BAUBLE_ADMIN_PW", "bauble-admin")
+        session.bind(admin_dn, admin_pw)
+        outcome, entries = session.search("", SCOPE_BASE_OBJECT, "(objectClass=*)", attrs)
+    if outcome.result_code != 0 or not entries:
+        return Capability(writable=False)
+
+    published = entries[0].attributes
+
+    def values(name: str) -> list[str]:
+        for key, value in published.items():
+            if key.lower() == name.lower():
+                return [str(v) for v in value]
+        return []
+
+    return Capability(
+        writable=False,
+        alt_server=bool(values("altServer")),
+        naming_context=bool(values("namingContexts")),
+        supported_extension=frozenset(values("supportedExtension")),
+        supported_control=frozenset(values("supportedControl")),
+        supported_features=frozenset(values("supportedFeatures")),
+        supported_sasl_mechanisms=frozenset(values("supportedSASLMechanisms")),
+    )

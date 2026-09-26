@@ -348,3 +348,38 @@ def truncated_pdu_handled(session: Session) -> Result:
             pass
     # No crash is the pass criterion (consistent with the other resilience tests).
     return Result("4511.5.1.4", Status.PASS)
+
+
+@assertion(
+    id="4511.4.1.1.4",
+    rfc=4511,
+    section="§4.1.1",
+    category=Category.PROTOCOL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    layer=Layer.WIRE,
+    text="Servers MUST ignore trailing SEQUENCE components whose tags they do not recognize.",
+    strategy="Append an unknown SEQUENCE component to a valid BindRequest; the bind must still succeed.",
+    preconditions="Admin credentials available.",
+    stimulus="Raw BindRequest with an unrecognized trailing SEQUENCE component appended.",
+    expected_observables="BindResponse success (0) — the trailing component is ignored.",
+)
+def ignore_trailing_sequence(session: Session) -> Result:
+    from bauble.raw import RawConnection
+    from bauble.suites._helpers import ADMIN_DN, ADMIN_PW
+
+    auth = b"\x80" + _ber_len(len(ADMIN_PW)) + ADMIN_PW.encode()  # simple [0]
+    bind_contents = _ber_int(3) + _ber_octet(ADMIN_DN) + auth
+    bind_request = b"\x60" + _ber_len(len(bind_contents)) + bind_contents
+    trailing = _ber_seq(_ber_octet("bauble-unknown-component"))
+    msg = _ber_seq(_ber_int(1) + bind_request + trailing)
+    raw = RawConnection(session.host, session.port)
+    outcome = raw.raw_send(msg)
+    if outcome.result_code == 0:
+        return Result("4511.4.1.1.4", Status.PASS)
+    return Result(
+        "4511.4.1.1.4",
+        Status.FAIL,
+        detail=f"trailing component not ignored: {outcome.result_code}",
+    )

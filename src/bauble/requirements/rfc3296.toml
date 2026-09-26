@@ -1,0 +1,22 @@
+rfc = 3296
+title = "Named Subordinate References in LDAP Directories"
+
+# §2 Named Subordinate References
+# A referral objectClass entry holds a ref attribute whose values are URIs
+# naming subordinate entries held by other servers.
+
+[[requirement]]
+id = "3296:2:1"
+section = "2"
+severity = "must"
+test_class = "A"
+text = "A named subordinate reference entry is an instance of the referral objectClass and carries a ref attribute holding a reference URI."
+covered_by = []
+
+[[requirement]]
+id = "3296:2:2"
+section = "2"
+severity = "must"
+test_class = "A"
+text = "A search that includes a named subordinate reference entry returns a continuation reference naming the subordinate entry."
+covered_by = ["4511.4.5.7"]
