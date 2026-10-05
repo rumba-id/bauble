@@ -86,3 +86,36 @@ def star_plus_returns_both(session: Session) -> Result:
             detail=f"no operational attributes returned for '* +': keys={sorted(attrs)}",
         )
     return Result("3673.2.2", Status.PASS)
+
+
+@assertion(
+    id="3673.2.1.1",
+    rfc=3673,
+    section="§2",
+    category=Category.DATA_MODEL,
+    severity=Severity.MUST,
+    test_class=TestClass.A,
+    profiles=_CORE,
+    layer=Layer.SEMANTIC,
+    text="The '+' selector returns every operational attribute the server maintains for the entry.",
+    strategy="Search an entry with ['+']; verify that known operational attributes (entryUUID, createTimestamp, modifyTimestamp, creatorsName, modifiersName) are all present.",
+    preconditions="Admin bound; seed entry uid=alice exists.",
+    stimulus="Search uid=alice requesting only '+' (operational attributes).",
+    expected_observables="All standard operational attributes present in the result.",
+)
+def plus_returns_all_operational(session: Session) -> Result:
+    bind_admin(session)
+    outcome, entries = session.search(_ALICE, SCOPE_BASE_OBJECT, "(objectClass=*)", ["+"])
+    if outcome.result_code != 0 or not entries:
+        return Result("3673.2.1.1", Status.FAIL, detail=f"search failed: {outcome.result_code}")
+    attrs = {name.lower() for name in entries[0].attributes}
+    # These are the standard operational attributes that RFC 4512/3045/5020 require.
+    expected_attrs = {"entryuuid", "createtimestamp", "modifytimestamp", "creatorsname", "modifiersname"}
+    missing = expected_attrs - attrs
+    if missing:
+        return Result(
+            "3673.2.1.1",
+            Status.FAIL,
+            detail=f"missing operational attributes: {sorted(missing)}; got={sorted(attrs)}",
+        )
+    return Result("3673.2.1.1", Status.PASS)
