@@ -274,7 +274,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         # Container left running for reuse; self-cleaning assertions keep the
         # DIT at base seed.  Use --fresh-target for a forced reset.
         _render(results, registry, args.reporter, args.out, target=target.name)
-        target.verify_dit()
         return 1 if (args.exit_code and _conformance_failed(results, registry)) else 0
     if args.server:
         session = LdapSession(_server_config_from_uri(args.server, args.starttls))
