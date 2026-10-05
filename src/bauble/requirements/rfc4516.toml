@@ -1,0 +1,47 @@
+rfc = 4516
+title = "Lightweight Directory Access Protocol (LDAP): Uniform Resource Locator"
+
+[[requirement]]
+id = "4516:2:1"
+section = "2"
+severity = "must"
+test_class = "B"
+text = "The LDAP URL scheme is ldap:// or ldaps://, followed by optional host, port, base DN, attributes, scope, filter, and extensions."
+covered_by = []
+note = "RFC 4516 defines client-side URL syntax for specifying LDAP servers and search requests. Servers do not implement or parse LDAP URLs — clients construct them to address servers. No server-side conformance requirement exists."
+
+[[requirement]]
+id = "4516:3:1"
+section = "3"
+severity = "must"
+test_class = "B"
+text = "An LDAP URL with no host component implies the local machine; an empty string for the host is treated as the loopback address."
+covered_by = []
+note = "Client-side behavior for resolving localhost in LDAP URLs. No server-side testable requirement."
+
+[[requirement]]
+id = "4516:4:1"
+section = "4"
+severity = "must"
+test_class = "B"
+text = "The scope component (base, oneLevel, subtree) must be one of the three defined LDAP search scopes."
+covered_by = []
+note = "Client-side validation of scope values in LDAP URLs. No server-side testable requirement."
+
+[[requirement]]
+id = "4516:5:1"
+section = "5"
+severity = "must"
+test_class = "B"
+text = "The filter component must be a valid LDAP filter string as defined by RFC 4515."
+covered_by = []
+note = "Client-side validation of filter syntax in LDAP URLs. No server-side testable requirement."
+
+[[requirement]]
+id = "4516:7:1"
+section = "7"
+severity = "must"
+test_class = "B"
+text = "The ldaps:// scheme implies use of TLS (RFC 2830) for the connection."
+covered_by = []
+note = "Client-side behavior: ldaps:// URLs trigger TLS. Server-side TLS handling is covered by RFC 4513 assertions."

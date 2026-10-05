@@ -16,6 +16,7 @@ covered_by = ["3673.2.1"]
 [[requirement.obligation]]
 id = "3673:2:1:all"
 text = "Requesting '+' returns ALL operational attributes."
+covered_by = ["3673.2.1.1"]
 
 [[requirement]]
 id = "3673:2:2"

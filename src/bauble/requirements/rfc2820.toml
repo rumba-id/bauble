@@ -1,9 +1,11 @@
 rfc = 2820
-title = "Access Control Requirements for LDAP"
+title = "LDAP Access Control Requirements"
 
-# Informational / BCP / format document: no testable directory-server
-# conformance requirements. Recorded so the corpus enumerates every
-# current-tier RFC in docs/references.md.
+# RFC 2820 is a framework document that defines what access control features
+# LDAP implementations SHOULD provide. It does not define protocol-level
+# behaviors that can be tested on the wire. The actual enforcement of access
+# controls is reflected in standard LDAP result codes (RFC 4511) and the
+# authorization identity control (RFC 3829).
 
 [[requirement]]
 id = "2820:1:1"
@@ -12,4 +14,4 @@ severity = "must"
 test_class = "B"
 text = "Access Control Requirements for LDAP imposes no testable directory-server conformance requirements."
 covered_by = []
-note = "Informational requirements framework; defines no testable protocol behavior."
+note = "RFC 2820 is a framework document that tells implementers WHAT access control features to build, not HOW. Server-side enforcement is reflected in standard result codes (unauthorizedAccess=32 per RFC 4511) and the authorization identity control (RFC 3829)."

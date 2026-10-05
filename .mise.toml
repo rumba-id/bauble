@@ -6,11 +6,9 @@
 pipx = "latest"
 uv = "latest"
 yamllint = "latest"
-
-node = "24"
-"npm:markdownlint-cli" = "latest"
-
 podman = "latest"
+"cargo:https://github.com/akiomik/mado" = { version = "tag:v0.3.2", crate = "mado", bin = "mado" }
+rust = "stable"
 
 [settings]
 idiomatic_version_file_enable_tools = ["python"]
