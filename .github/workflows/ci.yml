@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: uv sync
+      - run: uv sync --all-extras
       - run: uv run ruff check
       - run: uv run ruff format --check
       - run: uv run pyright
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: sudo apt-get update && sudo apt-get install -y podman
-      - run: uv sync
+      - run: uv sync --all-extras
       - run: BAUBLE_LIVE=1 uv run pytest ${{ matrix.smoke }}
       - name: Verdict regression gate (full core profile vs golden)
         run: |
