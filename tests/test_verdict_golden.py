@@ -42,6 +42,7 @@ def _run_full_profile(target: str, out_path: Path) -> None:
         "-m",
         "bauble",
         "run",
+        "--fresh-target",
         "--profile",
         "core",
         "--target",
