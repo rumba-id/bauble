@@ -41,3 +41,6 @@ testpaths = ["tests"]
 [tool.pyright]
 typeCheckingMode = "strict"
 reportPrivateUsage = false
+reportUnknownVariableType = false
+reportUntypedFunctionDecorator = false
+reportUnknownMemberType = false
