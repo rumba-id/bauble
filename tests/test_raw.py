@@ -67,7 +67,7 @@ def test_build_extensible_match_filter() -> None:
 from hypothesis import HealthCheck, given, settings
 from hypothesis.strategies import binary, integers, text
 
-from bauble.raw import (  # type: ignore[reportPrivateUsage]
+from bauble.raw import (  # pyright: ignore[reportPrivateUsage]
     _encode_integer,
     _encode_length,
     _encode_octet_string,
@@ -241,7 +241,7 @@ def test_encode_integer_positive_no_leading_zero(value: int) -> None:
 @given(integers(min_value=0, max_value=2**31 - 1))
 def test_round_trip_build_and_parse_bind_request(message_id: int) -> None:
     """Build a bind request and verify message ID is preserved."""
-    from bauble.raw import _build_bind_request  # type: ignore[reportPrivateUsage]
+    from bauble.raw import _build_bind_request  # pyright: ignore[reportPrivateUsage]
 
     payload = _build_bind_request(message_id, 3, "dc=test", "secret")
     parsed = parse_message_id(payload)
