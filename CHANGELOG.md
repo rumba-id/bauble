@@ -3,6 +3,21 @@
 All notable changes to bauble. Entries describe what changed; they do not
 restate coverage totals. Run `bauble coverage` for current figures.
 
+## [2.4.0] — 2026-10-05
+
+### Added
+- Fixture targets gained DIT drift verification: each podman target now exposes
+  `verify_dit()` which queries the server for all entries and compares against the
+  base seed (6 entries). The runner calls it automatically after every `--target` run.
+- Raw BER layer gained property-based tests via hypothesis: round-trip invariants for
+  `_encode_length`, `_encode_integer`, `_encode_octet_string`, and `_encode_sequence`.
+- LLDAP fixture now passes `LLDAP_JWT_SECRET` to the container (was missing).
+
+### Fixed
+- LLDAP container startup failure caused by missing JWT secret.
+- Pyright errors from hypothesis decorators and private test imports.
+
+
 ## Unreleased
 
 Correctness and usability pass. The advertise-then-test gate now covers the
