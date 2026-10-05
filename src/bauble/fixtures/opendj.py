@@ -186,3 +186,68 @@ class OpenDJTarget:
             use_ssl=use_ssl,
             use_start_tls=use_start_tls,
         )
+
+    def verify_dit(self) -> None:
+        """Verify the DIT matches the base seed (6 entries, expected DNs)."""
+        result = _podman(
+            [
+                "podman",
+                "exec",
+                self.name,
+                "/opt/opendj/bin/ldapsearch",
+                "--hostname",
+                "127.0.0.1",
+                "--port",
+                "1389",
+                "--bindDN",
+                self.admin_dn,
+                "--bindPassword",
+                self.admin_pw,
+                "--baseDN",
+                _BASE_DN,
+                "--searchScope",
+                "sub",
+                "(objectClass=*)",
+            ],
+            check=False,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"DIT verify failed: ldapsearch returned {result.returncode}: "
+                f"{result.stderr.decode('utf-8', errors='replace').strip()}"
+            )
+        # Parse DN lines from OpenDJ's LDIF output.
+        dns_found = [
+            line.split("dn: ", 1)[1].strip()
+            for line in result.stdout.decode("utf-8", errors="replace").splitlines()
+            if line.startswith("dn: ")
+        ]
+        found_set = set(dns_found)
+        missing = _EXPECTED_DNS - found_set
+        extra = found_set - _EXPECTED_DNS
+        if missing or extra:
+            parts: list[str] = []
+            if missing:
+                parts.append(f"missing: {sorted(missing)}")
+            if extra:
+                parts.append(f"extra: {sorted(extra)}")
+            raise RuntimeError(
+                f"DIT drift detected in {self.name!r}: " + "; ".join(parts)
+                + f" (found {len(dns_found)}, expected {_seed_entry_count()})"
+            )
+
+
+# Expected base seed entries — used for DIT drift verification.
+_EXPECTED_DNS = frozenset({
+    "dc=bauble,dc=test",
+    "ou=people,dc=bauble,dc=test",
+    "uid=alice,ou=people,dc=bauble,dc=test",
+    "uid=bob,ou=people,dc=bauble,dc=test",
+    "uid=alice-alias,ou=people,dc=bauble,dc=test",
+    "ou=remote,dc=bauble,dc=test",
+})
+
+
+def _seed_entry_count() -> int:
+    """Return the number of entries in the base seed."""
+    return len(_EXPECTED_DNS)

@@ -101,7 +101,9 @@ class LLDAPTarget:
                 "LLDAP_LDAP_PORT=13890",
                 "-e",
                 "LLDAP_HTTP_PORT=17170",
+
                 self.image,
+
             ]
         )
         self._wait_ready()

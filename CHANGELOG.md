@@ -46,6 +46,17 @@ with recorded reasons; the full-coverage plan is rewritten as an accurate record
   class-A assertion fails, so CI can gate on the run. The journal records a
   run timestamp, the bauble version, and the target identifier.
 - Turn (RFC 4531) and Transactions (RFC 5805) moved from Core to Extended.
+- Fixture targets gained DIT drift verification: each podman target now exposes
+  `verify_dit()` which queries the server for all entries and compares against the
+  base seed (6 entries). The runner calls it automatically after every `--target` run,
+  failing with a clear error if missing or extra DNs are detected. Covers OpenLDAP,
+  389 Directory Server, OpenDJ, and LLDAP (`src/bauble/fixtures/*.py`).
+- Raw BER layer gained property-based tests via hypothesis: round-trip invariants for
+  `_encode_length`, `_encode_integer`, `_encode_octet_string`, and `_encode_sequence`
+  across full valid ranges; definite-length absence checks; short/medium/long form
+  boundary tests (`tests/test_raw.py`).
+- LLDAP fixture now passes `LLDAP_JWT_SECRET` to the container (was missing, causing
+  startup failure). The secret is deterministic for testing (`src/bauble/fixtures/lldap.py`).
   Raw-layer BER builders and parsers gained direct unit tests.
 Three suite defects whose FAILs were committed as golden contracts, plus
 the read-only default for bare `--server` runs. No goldens change without
