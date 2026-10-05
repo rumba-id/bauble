@@ -94,6 +94,7 @@ def test_probe_capability_reads_root_dse() -> None:
             attributes: list[str] | None = None,
             controls: tuple[Control, ...] = (),
             deref_aliases: int = 0,
+            entries: list[Entry] | None = None,
         ) -> tuple[Outcome, list[Entry]]:
             return Outcome(result_code=0), [
                 Entry(
@@ -133,6 +134,7 @@ def test_probe_capability_falls_back_to_empty() -> None:
             attributes: list[str] | None = None,
             controls: tuple[Control, ...] = (),
             deref_aliases: int = 0,
+            entries: list[Entry] | None = None,
         ) -> tuple[Outcome, list[Entry]]:
             return Outcome(result_code=32), []
 
