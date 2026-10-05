@@ -137,7 +137,7 @@ Genuinely remaining, in rough value order:
 - Fixture capability statements / operator guide do not enumerate the new
   control OIDs — harmless today (gating reads the live root DSE) but worth
   reconciling if capability-file gating returns.
-- Pre-existing markdownlint defects in `server-findings.md` (a `|` inside a
+- Pre-existing mado lint defects in `server-findings.md` (a `|` inside a
   quoted cell) and the older plan documents.
 
 ## Definition of done

@@ -1,0 +1,84 @@
+[lint]
+respect-ignore = true
+rules = [
+  "MD001",
+  "MD002",
+  "MD003",
+  "MD004",
+  "MD006",
+  "MD009",
+  "MD010",
+  "MD012",
+  "MD013",
+  "MD014",
+  "MD018",
+  "MD019",
+  "MD020",
+  "MD021",
+  "MD022",
+  "MD023",
+  "MD025",
+  "MD026",
+  "MD027",
+  "MD028",
+  "MD029",
+  "MD030",
+  "MD031",
+  "MD032",
+  "MD033",
+  "MD034",
+  "MD035",
+  "MD036",
+  "MD037",
+  "MD038",
+  "MD039",
+  "MD040",
+  "MD041",
+  "MD046",
+  "MD047",
+]
+exclude = [
+  ".github/workflows/*.yml",
+  ".github/workflows/*.yaml",
+  "LICENSE.md",
+]
+
+[lint.md003]
+style = "atx"
+
+[lint.md004]
+style = "dash"
+
+[lint.md007]
+indent = 2
+
+[lint.md013]
+line-length = 100
+code-blocks = false
+tables = false
+
+[lint.md029]
+style = "ordered"
+
+[lint.md033]
+allowed-elements = [
+  "a",
+  "br",
+  "details",
+  "div",
+  "figcaption",
+  "figure",
+  "img",
+  "picture",
+  "source",
+  "strong",
+  "sub",
+  "summary",
+  "sup",
+]
+
+[lint.md035]
+style = "consistent"
+
+[lint.md046]
+style = "fenced"
