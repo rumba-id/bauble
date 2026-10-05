@@ -67,7 +67,7 @@ def test_build_extensible_match_filter() -> None:
 from hypothesis import HealthCheck, given, settings
 from hypothesis.strategies import binary, integers, text
 
-from bauble.raw import (
+from bauble.raw import (  # type: ignore[reportPrivateUsage]
     _encode_integer,
     _encode_length,
     _encode_octet_string,
