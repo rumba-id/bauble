@@ -232,20 +232,23 @@ class OpenDJTarget:
             if extra:
                 parts.append(f"extra: {sorted(extra)}")
             raise RuntimeError(
-                f"DIT drift detected in {self.name!r}: " + "; ".join(parts)
+                f"DIT drift detected in {self.name!r}: "
+                + "; ".join(parts)
                 + f" (found {len(dns_found)}, expected {_seed_entry_count()})"
             )
 
 
 # Expected base seed entries — used for DIT drift verification.
-_EXPECTED_DNS = frozenset({
-    "dc=bauble,dc=test",
-    "ou=people,dc=bauble,dc=test",
-    "uid=alice,ou=people,dc=bauble,dc=test",
-    "uid=bob,ou=people,dc=bauble,dc=test",
-    "uid=alice-alias,ou=people,dc=bauble,dc=test",
-    "ou=remote,dc=bauble,dc=test",
-})
+_EXPECTED_DNS = frozenset(
+    {
+        "dc=bauble,dc=test",
+        "ou=people,dc=bauble,dc=test",
+        "uid=alice,ou=people,dc=bauble,dc=test",
+        "uid=bob,ou=people,dc=bauble,dc=test",
+        "uid=alice-alias,ou=people,dc=bauble,dc=test",
+        "ou=remote,dc=bauble,dc=test",
+    }
+)
 
 
 def _seed_entry_count() -> int:

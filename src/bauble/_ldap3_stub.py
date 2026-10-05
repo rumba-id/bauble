@@ -38,6 +38,7 @@ LDAP_MOD_REPLACE: str = "MODIFY_REPLACE"
 # Protocol — the ldap3.Connection surface we use
 # ---------------------------------------------------------------------------
 
+
 class _Ldap3Connection(Protocol):
     """Minimal protocol matching the subset of ldap3.Connection used by bauble."""
 

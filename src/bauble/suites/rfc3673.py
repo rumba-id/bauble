@@ -110,7 +110,13 @@ def plus_returns_all_operational(session: Session) -> Result:
         return Result("3673.2.1.1", Status.FAIL, detail=f"search failed: {outcome.result_code}")
     attrs = {name.lower() for name in entries[0].attributes}
     # These are the standard operational attributes that RFC 4512/3045/5020 require.
-    expected_attrs = {"entryuuid", "createtimestamp", "modifytimestamp", "creatorsname", "modifiersname"}
+    expected_attrs = {
+        "entryuuid",
+        "createtimestamp",
+        "modifytimestamp",
+        "creatorsname",
+        "modifiersname",
+    }
     missing = expected_attrs - attrs
     if missing:
         return Result(

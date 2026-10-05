@@ -97,7 +97,6 @@ def test_encode_length_never_uses_indefinite(length: int) -> None:
     assert encoded[0] != 0x80
 
 
-
 @given(integers(min_value=0, max_value=65535))
 def test_encode_length_deterministic(length: int) -> None:
     """Same input always produces the same encoding."""
@@ -116,7 +115,6 @@ def test_encode_parse_integer_round_trip(value: int) -> None:
     int_len, pos = _parse_length(encoded, 1)
     decoded = int.from_bytes(encoded[pos : pos + int_len], "big")
     assert decoded == value
-
 
 
 @given(integers(min_value=0, max_value=2**63 - 1))
@@ -154,7 +152,6 @@ def test_encode_octet_string_never_indefinite(data: bytes) -> None:
     assert encoded[1] != 0x80
 
 
-
 @given(text(min_size=0, max_size=1024))
 def test_encode_parse_text_as_octet_string_round_trip(s: str) -> None:
     """UTF-8 text round-trips through OCTET STRING encoding."""
@@ -182,7 +179,6 @@ def test_encode_sequence_never_indefinite(contents: bytes) -> None:
     """SEQUENCE length encoding first byte is never 0x80."""
     encoded = _encode_sequence(contents)
     assert encoded[1] != 0x80
-
 
 
 @given(integers(min_value=0, max_value=127))

@@ -219,7 +219,6 @@ def bad_protocol_version(session: Session) -> Result:
     expected_observables="Server disconnects without a valid response.",
     layer=Layer.WIRE,
 )
-
 def malformed_pdu_disconnects(session: Session) -> Result:
     raw = RawConnection(session.host, session.port)
     response = raw.send_malformed(b"\xff\xff\xff\xff")

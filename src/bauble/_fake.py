@@ -19,7 +19,6 @@ def _success(_op: str, _args: dict[str, object]) -> Outcome:
     return Outcome(result_code=0)
 
 
-
 class FakeSession:
     """In-memory Session whose responses are scriptable.
 
@@ -114,12 +113,14 @@ class FakeSession:
         # The suffix (everything after the first RDN) must match the parent DN.
         child_suffix = ",".join(child_parts[1:])
         return child_suffix == parent
+
     @staticmethod
     def _is_descendant(ancestor: str, descendant: str) -> bool:
         """True when ``descendant`` is under ``ancestor`` in the DIT."""
         if not ancestor or descendant == ancestor:
             return False
         return descendant.endswith("," + ancestor)
+
     def add(self, dn: str, attributes: dict[str, list[str | bytes]]) -> Outcome:
         return self._respond("add", dn=dn, attributes=attributes)
 
