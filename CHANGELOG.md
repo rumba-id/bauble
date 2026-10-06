@@ -3,6 +3,13 @@
 All notable changes to bauble. Entries describe what changed; they do not
 restate coverage totals. Run `bauble coverage` for current figures.
 
+
+## [2.4.1] — 2026-10-05
+
+### Fixed
+- Removed auto DIT verification from runner. It raised RuntimeError on unhandled exceptions and crashed the process with exit code 1.
+- Added --fresh-target to verdict_golden tests. Each test now starts with a clean container to avoid DIT drift from smoke test mutations.
+- Regenerated OpenDJ golden file. Verdict for 3673.2.1.1 updated to reflect actual server behavior.
 ## [2.4.0] — 2026-10-05
 
 ### Added
